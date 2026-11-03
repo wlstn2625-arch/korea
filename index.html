@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>새로운 대한민국</title>
+  <meta name="description" content="대한민국 대통령이 되어 헌법부터 세율·국방·외교·교육·검경까지 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 시작 화면 -->
+  <section id="start" class="screen">
+    <div class="start-card">
+      <div class="start-emblem">🇰🇷</div>
+      <h1>새로운 대한민국</h1>
+      <p class="sub">당신은 제21대 대한민국 대통령입니다.<br>헌법·세제·국방·외교·교육·검경… 지금의 대한민국 그대로에서 시작해<br>하나씩 바꿔 당신만의 대한민국을 만드세요.</p>
+      <label class="field">대통령 이름
+        <input id="pres-name" maxlength="12" placeholder="이름을 입력하세요" value="">
+      </label>
+      <div class="field">소속
+        <div id="party-pick" class="party-pick"></div>
+      </div>
+      <div class="start-actions">
+        <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
+        <button id="btn-continue" class="btn big hidden">이어하기</button>
+      </div>
+      <p class="hint">모든 제도는 2026년 하반기 대한민국 현행 제도를 기준으로 시작합니다. 정책을 바꿀 때마다 이득과 손해가 생기고, 부작용이 터지면 AI 참모가 해결책을 판단해 결과를 도출합니다.</p>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="game" class="screen hidden">
+    <header class="topbar">
+      <div class="brand">🇰🇷 <b>새로운 대한민국</b></div>
+      <div class="date" id="hdr-date"></div>
+      <div class="kpis">
+        <div class="kpi"><span>지지율</span><b id="hdr-appr"></b></div>
+        <div class="kpi"><span>정치자본</span><b id="hdr-pcap"></b></div>
+        <div class="kpi"><span>여당 의석</span><b id="hdr-seats"></b></div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-settings" class="btn ghost" title="설정">⚙️</button>
+        <button id="btn-end" class="btn primary">분기 종료 ▶</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="side">
+        <div class="panel">
+          <h3>국가 지표</h3>
+          <div id="stat-list" class="stat-list"></div>
+        </div>
+        <div class="panel">
+          <h3>외교 관계</h3>
+          <div id="rel-list" class="bar-list"></div>
+        </div>
+        <div class="panel">
+          <h3>세력별 지지도</h3>
+          <div id="fac-list" class="bar-list"></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <nav class="tabs" id="tabs">
+          <button data-tab="policy" class="active">📜 정책 결정</button>
+          <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
+          <button data-tab="report">📊 국정 보고서</button>
+          <button data-tab="trend">📈 추이</button>
+          <button data-tab="log">🗂️ 국정 기록</button>
+        </nav>
+
+        <div id="tab-policy" class="tab active">
+          <div class="custom-box">
+            <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">— 목록에 없는 어떤 정책이든 입력하면 AI가 효과를 분석합니다</span></div>
+            <div class="custom-row">
+              <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화, 4년제 대학 무상화…" maxlength="120">
+              <button id="btn-custom" class="btn primary">AI 분석</button>
+            </div>
+          </div>
+          <div id="cat-chips" class="chips"></div>
+          <div id="policy-list" class="policy-list"></div>
+        </div>
+
+        <div id="tab-crisis" class="tab">
+          <div class="crisis-head">
+            <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
+            <span class="muted" id="ai-mode-label"></span>
+          </div>
+          <div id="crisis-list"></div>
+          <h3 class="sec">최근 처리 결과</h3>
+          <div id="resolved-list"></div>
+        </div>
+
+        <div id="tab-report" class="tab"><div id="report-body"></div></div>
+        <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
+        <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
+      </main>
+    </div>
+  </section>
+
+  <!-- 모달 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-x" id="modal-x">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/claude.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>

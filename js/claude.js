@@ -1,0 +1,211 @@
+/* =========================================================
+ *  Claude AI 연동 (선택 사항)
+ *  - API 키를 넣으면 Claude가 직접 정책 효과 분석, 위기 해결 판단, 분기 논평을 수행
+ *  - 키가 없거나 오류가 나면 규칙 기반 AI 참모(engine.js)로 자동 대체
+ *  - API 키는 이 브라우저의 localStorage에만 저장되며 Anthropic API로만 전송됨
+ * ========================================================= */
+
+const ClaudeAI = (() => {
+  // 로컬 번들(js/vendor) 우선, 실패 시 CDN
+  const SDK_LOCAL = new URL('vendor/anthropic-sdk.mjs', document.currentScript.src).href;
+  const SDK_CDN = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.135.0/+esm';
+  const CFG_KEY = 'newkorea_claude_cfg';
+  let client = null, clientKey = null, sdkPromise = null;
+
+  const MODELS = [
+    { id: 'claude-opus-5-5', name: 'Claude Opus 5.5 (기본·고품질)' },
+    { id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5 (빠름)' },
+    { id: 'claude-haiku-5-5', name: 'Claude Haiku 5.5 (가장 빠르고 저렴)' },
+  ];
+
+  function cfg() {
+    try { return { model: 'claude-opus-5-5', effort: 'low', ...JSON.parse(localStorage.getItem(CFG_KEY) || '{}') }; }
+    catch { return { model: 'claude-opus-5-5', effort: 'low' }; }
+  }
+  function setCfg(c) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch {} client = null; }
+  function enabled() { return !!cfg().apiKey; }
+
+  async function getClient() {
+    const c = cfg();
+    if (!c.apiKey) throw new Error('API 키가 없습니다.');
+    if (client && clientKey === c.apiKey) return client;
+    if (!sdkPromise) sdkPromise = import(SDK_LOCAL).catch(() => import(SDK_CDN));
+    sdkPromise.catch(() => { sdkPromise = null; });
+    const mod = await sdkPromise;
+    const Anthropic = mod.default || mod.Anthropic;
+    // 브라우저에서 직접 호출: 개인용 게임이므로 사용자의 키를 사용자 브라우저에서만 사용
+    client = new Anthropic({ apiKey: c.apiKey, dangerouslyAllowBrowser: true, maxRetries: 2 });
+    clientKey = c.apiKey;
+    return client;
+  }
+
+  const SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
+- 모든 답변은 한국어로 작성합니다.
+- 실제 한국의 사례와 연구, 해외 사례를 근거로 들되 간결하게 씁니다.
+- 수치 효과는 게임 밸런스를 위해 현실적인 범위로 추정합니다(과장 금지).
+- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.`;
+
+  function stateSummary(s) {
+    const t = turnLabel(s.turn);
+    const st = Object.entries(s.stats).map(([k, v]) => `${STATS[k].name}=${Number(v).toFixed(STATS[k].dec)}${STATS[k].unit}`).join(', ');
+    const rel = Object.entries(s.rel).map(([k, v]) => `${RELATIONS[k].name}=${v.toFixed(0)}`).join(', ');
+    const fac = Object.entries(s.factions).map(([k, v]) => `${FACTIONS[k].name}=${v.toFixed(0)}`).join(', ');
+    const changed = [...POLICIES, ...s.customPolicies].filter(p => !optionOf(p, s.policies[p.id])?.cur).map(p => `${p.name}→${currentOption(p, s).label}`);
+    const rulingSeats = s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
+    return `[${t.year}년 ${t.q}분기, 임기 ${t.termYear}년차] 지지율 ${s.approval.toFixed(1)}%, 정치자본 ${Math.floor(s.pcap)}, 여당 의석 ${rulingSeats}/300
+지표: ${st}
+외교관계(0~100): ${rel}
+세력별 지지(0~100): ${fac}
+현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}`;
+  }
+
+  const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });
+
+  async function call({ system, user, schema, maxTokens = 4000 }) {
+    const c = cfg();
+    const cl = await getClient();
+    const params = {
+      model: c.model,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: user }],
+      output_config: { effort: c.effort || 'low', ...(schema ? { format: { type: 'json_schema', schema } } : {}) },
+    };
+    let resp;
+    if (c.model === 'claude-haiku-5-5') {
+      resp = await cl.messages.create(params);
+    } else {
+      // 안전 분류기에 의한 거절 시 서버 측 대체 모델로 자동 재시도
+      resp = await cl.beta.messages.create({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' });
+    }
+    if (resp.stop_reason === 'refusal') throw new Error('Claude가 요청을 거절했습니다.');
+    if (resp.stop_reason === 'max_tokens') throw new Error('응답이 너무 길어 잘렸습니다.');
+    const text = resp.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    return schema ? JSON.parse(text) : text;
+  }
+
+  const clampObj = (o, lim) => { const r = {}; for (const k in o) { const v = Number(o[k]); if (!isFinite(v) || Math.abs(v) < 1e-9) continue; r[k] = clamp(v, -lim(k), lim(k)); } return r; };
+  const STAT_LIM = { gdp: 1, unemp: 1, infl: 1.5, debt: 10, fiscal: 7, tfr: 0.2, gini: 0.03 };
+  const statLim = k => STAT_LIM[k] ?? 15;
+
+  /* ---- 1) 자유 입력 정책 분석 ---- */
+  async function analyzePolicy(text, s) {
+    const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
+    const schema = {
+      type: 'object', additionalProperties: false,
+      required: ['name', 'cat', 'summary', 'lt', 'lean', 'pc', 'lag', 'e', 'rel', 'f', 'risks'],
+      properties: {
+        name: { type: 'string', description: '정책 이름(25자 이내)' },
+        cat: { type: 'string', enum: CATEGORIES.map(c => c.id) },
+        summary: { type: 'string', description: '정책 내용과 예상 이득·손해 요약(3~5문장)' },
+        lt: { type: 'string', enum: ['decree', 'law', 'const'] },
+        lean: { type: 'string', enum: ['L', 'R', 'N'] },
+        pc: { type: 'integer' }, lag: { type: 'integer' },
+        e: numObj(statKeys), rel: numObj(Object.keys(RELATIONS)), f: numObj(Object.keys(FACTIONS)),
+        risks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['tpl', 'title', 'desc', 'prob', 'sev'],
+          properties: { tpl: { type: 'string', enum: Object.keys(RISK_TEMPLATES) }, title: { type: 'string' }, desc: { type: 'string' }, prob: { type: 'number' }, sev: { type: 'integer' } } } },
+      },
+    };
+    const examples = POLICIES.slice(0, 40).filter((p, i) => i % 6 === 1).map(p => { const o = p.options.find(x => !x.cur); return `- ${p.name}/${o.label}: lt=${o.lt}, pc=${o.pc}, lag=${o.lag}, e=${JSON.stringify(o.e)}, f=${JSON.stringify(o.f)}`; }).join('\n');
+    const user = `대통령이 다음 정책을 새로 입안했습니다: "${text}"
+
+현재 국가 상황:
+${stateSummary(s)}
+
+이 정책을 게임 데이터로 변환하세요.
+- e: 각 지표의 장기 균형값 변화(현행 대비). 단위: gdp/unemp/infl/fiscal/debt는 %p, tfr은 명, gini는 0~1 지니계수 변화, 나머지는 0~100 지수 포인트. 관련 없는 지표는 0.
+- rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25).
+- lt: 대통령령으로 가능하면 decree, 법률 개정이면 law, 헌법 개정 필요하면 const. lean: 진보 L/보수 R/중립 N.
+- pc: 정치자본 비용(10~80), lag: 효과가 완전히 나타나기까지 분기 수(1~16).
+- risks: 현실적으로 예상되는 부작용 0~3개(prob 0~1, sev 1~3).
+참고용 기존 정책 데이터 예시:
+${examples}`;
+    const a = await call({ system: SYSTEM, user, schema });
+    a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
+    a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
+    a.r = (a.risks || []).slice(0, 3).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
+    delete a.risks;
+    return a;
+  }
+
+  /* ---- 2) 위기 해결 판단 ---- */
+  async function resolveCrisis(c, s, ruleEvals) {
+    const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
+    const schema = {
+      type: 'object', additionalProperties: false, required: ['choice', 'reasoning', 'custom'],
+      properties: {
+        choice: { type: 'integer', description: '선택한 해법 번호(0부터). 독자적인 새 해법을 제안하면 -1' },
+        reasoning: { type: 'string', description: '판단 근거(3~5문장): 왜 이 해법인지, 무엇을 얻고 무엇을 잃는지' },
+        custom: { type: 'object', additionalProperties: false, required: ['label', 'desc', 'e', 'f', 'ok', 'pc'],
+          properties: { label: { type: 'string' }, desc: { type: 'string' }, e: numObj(statKeys), f: numObj(Object.keys(FACTIONS)), ok: { type: 'number' }, pc: { type: 'integer' } } },
+      },
+    };
+    const p = c.pid && policyById(c.pid, s);
+    const opts = c.options.map((o, i) => {
+      const ev = ruleEvals.find(x => x.i === i);
+      return `${i}. ${o.label} — ${o.desc} | 효과(심각도 반영 전) e=${JSON.stringify(o.e || {})}, 외교=${JSON.stringify(o.rel || {})}, 세력=${JSON.stringify(o.f || {})}, 정치자본 ${o.pc || 0}, 기본 성공률 ${(o.ok * 100).toFixed(0)}%${o.rollback ? `, 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''} | 규칙 AI 점수 ${ev ? ev.score.toFixed(1) : '-'}`;
+    }).join('\n');
+    const user = `${c.good ? '기회' : '위기'} 발생: [${c.kind}] ${c.title}
+상황: ${c.desc}
+심각도: ${c.sev}/3${p ? `\n원인 정책: ${p.name} — ${currentOption(p, s).label}` : '\n원인: 외부 돌발 사건'}${c.facTarget ? `\n주요 이해관계자: ${FACTIONS[c.facTarget].name}` : ''}${c.relTarget ? `\n관련 국가: ${RELATIONS[c.relTarget].name}` : ''}
+
+현재 국가 상황:
+${stateSummary(s)}
+
+선택 가능한 해법(_target은 주요 이해관계자/관련 국가, _all은 전 세력):
+${opts}
+
+대통령을 대신해 가장 바람직한 해법을 판단하세요. 기존 해법이 모두 부적절하면 choice=-1로 하고 custom에 현실적인 새 해법을 설계하세요(e는 기존 해법과 비슷한 규모, ok는 0.3~0.9, pc는 5~30). choice가 0 이상이면 custom은 형식만 채우세요(0 값).`;
+    const r = await call({ system: SYSTEM, user, schema, maxTokens: 3000 });
+    let choice = Number.isInteger(r.choice) ? r.choice : 0;
+    if (choice === -1 && r.custom && r.custom.label) {
+      c.options.push({ label: '🤖 ' + r.custom.label, desc: r.custom.desc, e: clampObj(r.custom.e, k => statLim(k) / 3), f: clampObj(r.custom.f, () => 10), ok: clamp(r.custom.ok, 0.3, 0.9), pc: clamp(Math.round(r.custom.pc), 5, 30), claude: true });
+      choice = c.options.length - 1;
+    }
+    if (choice < 0 || choice >= c.options.length) choice = ruleEvals[0].i;
+    return { choice, reasoning: r.reasoning };
+  }
+
+  /* ---- 3) 분기 논평 ---- */
+  async function briefing(s, report) {
+    const diffs = Object.entries(report.diff).filter(([k, v]) => Math.abs(v) > (STATS[k].dec >= 2 ? 0.005 : 0.15)).map(([k, v]) => `${STATS[k].name} ${fmtStat(k, v, true)}`).join(', ');
+    const crises = s.resolved.filter(r => r.turn === report.turn).map(r => `${r.title}: ${r.sol} → ${r.success ? '성공' : '실패'}`).join('; ');
+    const user = `지난 분기 국정 결과를 대통령에게 보고하세요.
+이번 분기 시행 정책: ${report.enacted.length ? report.enacted.join('; ') : '없음'}
+진행 중 정책 효과: ${report.applied.map(a => a.src).join('; ') || '없음'}
+지표 변화: ${diffs || '큰 변화 없음'}
+지지율 변화: ${report.approvalDiff > 0 ? '+' : ''}${report.approvalDiff.toFixed(1)}%p
+위기 대응: ${crises || '없음'}
+${report.elections.join(' ')}
+
+현재 상황:
+${stateSummary(s)}
+
+형식: ① 총평(2문장) ② 이득과 손해(각 2~3개 불릿) ③ 다음 분기 권고(2~3개 구체적 정책 제안). 300자~500자. 마크다운 없이 줄바꿈과 •만 사용.`;
+    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+  }
+
+  /* ---- 4) 정책 자문 ---- */
+  async function advise(s, p, o, pv) {
+    const cur = currentOption(p, s);
+    const user = `대통령이 다음 제도 변경을 검토 중입니다.
+분야: ${p.name} (현재 제도: ${p.desc})
+변경: "${cur.label}" → "${o.label}" (${o.desc || ''})
+게임 내 추정 효과: ${JSON.stringify(pv.diff.e)} / 외교 ${JSON.stringify(pv.diff.rel)} / 세력 반응 ${JSON.stringify(pv.diff.f)}
+예상 부작용: ${pv.risks.map(r => r.title + '(' + Math.round(r.prob * 100) + '%)').join(', ') || '없음'}
+국회 통과 가능성: ${Math.round(pv.vote.prob * 100)}%
+
+현재 국가 상황:
+${stateSummary(s)}
+
+실제 한국과 해외 사례를 근거로 ① 핵심 이득 ② 핵심 손해·위험 ③ 성공 조건/보완책 ④ 추진 여부 권고(추진/보완 후 추진/보류)를 400자 내외로 제시하세요. 마크다운 없이 줄바꿈과 •만 사용.`;
+    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+  }
+
+  async function test() {
+    const r = await call({ system: '한 단어로 답하세요.', user: '연결 확인: "정상"이라고 답하세요.', maxTokens: 500 });
+    return r;
+  }
+
+  return { MODELS, cfg, setCfg, enabled, analyzePolicy, resolveCrisis, briefing, advise, test };
+})();
