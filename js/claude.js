@@ -71,7 +71,7 @@ const ClaudeAI = (() => {
   function stateSummary(s) {
     const t = turnLabel(s.turn);
     const st = Object.entries(s.stats).map(([k, v]) => `${STATS[k].name}=${Number(v).toFixed(STATS[k].dec)}${STATS[k].unit}`).join(', ');
-    const rel = Object.entries(s.rel).map(([k, v]) => `${RELATIONS[k].name}=${v.toFixed(0)}`).join(', ');
+    const rel = Object.keys(RELATIONS).map(k => `${RELATIONS[k].name}=${s.rel[k].toFixed(0)}`).join(', ');
     const fac = Object.entries(s.factions).map(([k, v]) => `${FACTIONS[k].name}=${v.toFixed(0)}`).join(', ');
     const changed = [...POLICIES, ...s.customPolicies].filter(p => !optionOf(p, s.policies[p.id])?.cur).map(p => `${p.name}→${currentOption(p, s).label}`);
     const rulingSeats = s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
@@ -80,7 +80,7 @@ const ClaudeAI = (() => {
 외교관계(0~100): ${rel}
 세력별 지지(0~100): ${fac}
 현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}
-국정 연합: ${(s.coalition || []).map(k => FACTIONS[k].name).join(', ') || '없음'}${s.war ? `\n전쟁 중: ${RELATIONS[s.war.k].name} (전황 ${s.war.score.toFixed(0)})` : ''}${s.annexed && s.annexed.nk ? '\n한반도 통일 달성' : ''}${s.bills && s.bills.length ? `\n국회 계류 법안 ${s.bills.length}건` : ''}`;
+국정 연합: ${(s.coalition || []).map(k => FACTIONS[k].name).join(', ') || '없음'}${s.war ? `\n전쟁 중: ${typeof cname === 'function' ? cname(s.war.k) : s.war.k} (전황 ${s.war.score.toFixed(0)})` : ''}${s.annexed && s.annexed.nk ? '\n한반도 통일 달성' : ''}${s.annexed && Object.keys(s.annexed).filter(k => k !== 'nk').length ? `\n합병한 나라: ${Object.keys(s.annexed).filter(k => k !== 'nk').map(k => typeof cname === 'function' ? cname(k) : k).join(', ')}` : ''}${s.bills && s.bills.length ? `\n국회 계류 법안 ${s.bills.length}건` : ''}`;
   }
 
   const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });

@@ -260,28 +260,7 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .cpanel .dacts { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .map { position: relative; align-self: start; max-width: 100%; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--sea); }
-.geo { display: block; width: 100%; height: auto; }
-.geo .sea { fill: var(--sea); }
-.geo path { stroke: var(--sea); stroke-width: 0.8; stroke-linejoin: round; transition: filter .15s; }
-.geo .nland { stroke: var(--sea); }
-.geo .prov { stroke: rgba(0,0,0,.28); stroke-width: 0.5; }
-.geo [data-c] { cursor: pointer; }
-.geo path[data-c]:hover { filter: brightness(1.15); }
-.geo .gsel { stroke: var(--accent); stroke-width: 1.6; }
-.geo .front { stroke: var(--enemy-fill); stroke-width: 3; stroke-dasharray: 8 6; }
-.geo .city circle { fill: var(--map-text); stroke: var(--map-halo); stroke-width: 1.5; }
-.geo .city text, .geo .glabel, .geo .gsub { fill: var(--map-text); paint-order: stroke; stroke: var(--map-halo); stroke-width: 3.5px; stroke-linejoin: round; }
-.geo .city text { font-size: 13px; }
-.geo .glabel { font-size: 22px; font-weight: 700; text-anchor: middle; }
-.geo .glabel.kr { fill: var(--map-text); }
-.geo .glabel.dim { opacity: .55; font-size: 16px; }
-.geo .gsub { font-size: 14px; text-anchor: middle; }
-.geo .glabel-g:hover .glabel { text-decoration: underline; }
-.farcard { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 9px; border-radius: 10px; border: 1px solid var(--line);
-  background: var(--card); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
-.farcard.us { right: 8px; bottom: 52px; } .farcard.eu { left: 8px; top: 8px; }
-.farcard.sel, .farcard:hover { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-.farcard small { color: var(--muted); font-size: 10.5px; }
+
 .ctile { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 8px; min-width: 64px;
   border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
 .ctile:hover, .ctile.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
@@ -308,10 +287,38 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 900px) {
   .world-grid { grid-template-columns: 1fr; }
   .grp { grid-template-columns: 1fr; gap: 6px; }
-  .geo-scroll { overflow-x: auto; }
-  .geo { min-width: 760px; }
-  .farcard { padding: 3px 5px; font-size: 10.5px; }
-  .farcard small { display: none; }
+
+  .map-tools input { min-width: 0; }
   .ctile { min-width: 0; padding: 4px 5px; font-size: 10.5px; }
   .cflag { font-size: 16px; }
 }
+
+/* ---------- 세계지도 ---------- */
+.map-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 10px; background: var(--card); border-bottom: 1px solid var(--line); }
+.map-tools input { flex: 1 1 200px; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card2); color: var(--text); font: inherit; font-size: 13px; }
+.map-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.quick { display: flex; gap: 5px; overflow-x: auto; padding: 7px 10px; background: var(--card); border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.quick .chip { flex: 0 0 auto; font-size: 12px; padding: 4px 9px; }
+.geo { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--card2); touch-action: none; cursor: grab; user-select: none; --u: 1; }
+.geo:active { cursor: grabbing; }
+.geo .sea { fill: var(--sea); }
+.geo path { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.geo .land { stroke: var(--sea); stroke-width: 0.6; }
+.geo .land.neutral { fill: var(--land-neutral); }
+.geo .prov { stroke: rgba(0,0,0,.3); stroke-width: 0.5; }
+.geo [data-c] { cursor: pointer; }
+.geo path[data-c]:hover { filter: brightness(1.15); }
+.geo .gsel { stroke: var(--accent); stroke-width: 2; }
+.geo .front { stroke: var(--enemy-fill); stroke-width: calc(var(--u) * 3px); stroke-dasharray: calc(var(--u) * 8px) calc(var(--u) * 6px); }
+.geo .clbl, .geo .city text, .geo .eu-mark text { fill: var(--map-text); paint-order: stroke; stroke: var(--map-halo); stroke-width: calc(var(--u) * 3px); stroke-linejoin: round; pointer-events: none; }
+.geo .clbl { font-size: calc(var(--u) * 12px); font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+.geo .clbl.kr { font-size: calc(var(--u) * 14px); }
+.geo .clbl.hide { display: none; }
+.geo .city { display: none; pointer-events: none; }
+.geo.zoomed .city { display: inline; }
+.geo .city circle { r: calc(var(--u) * 3px); fill: var(--map-text); stroke: var(--map-halo); stroke-width: calc(var(--u) * 1.2px); }
+.geo .city text { font-size: calc(var(--u) * 11px); }
+.geo .eu-mark circle { r: calc(var(--u) * 7px); fill: #1f3fa8; stroke: #f5c400; stroke-width: calc(var(--u) * 2px); }
+.geo .eu-mark text { font-size: calc(var(--u) * 12px); font-weight: 700; pointer-events: auto; }
+.geo .eu-mark.sel circle { stroke: var(--accent); stroke-width: calc(var(--u) * 3px); }
+@media (max-width: 900px) { .geo { aspect-ratio: 1 / 1.05; } .map-tools input { min-width: 0; } }

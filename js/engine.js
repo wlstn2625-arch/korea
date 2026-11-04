@@ -143,7 +143,8 @@ function newGame(partyKey, presidentName, difficulty = 'normal') {
 }
 
 function snapshot(s) {
-  return { turn: s.turn, stats: { ...s.stats }, rel: { ...s.rel }, approval: s.approval, factions: { ...s.factions } };
+  const rel = {}; for (const k in RELATIONS) rel[k] = s.rel[k];
+  return { turn: s.turn, stats: { ...s.stats }, rel, approval: s.approval, factions: { ...s.factions } };
 }
 
 function addLog(s, type, text, turn) {
