@@ -378,12 +378,15 @@ function restart() { clearSave(); S = null; closeModal(); $('game').classList.ad
 /* ---------------- 설정 ---------------- */
 $('btn-settings').onclick = () => {
   const c = ClaudeAI.cfg();
+  const host = ClaudeAI.hostMode();
   openModal(`<h2>⚙️ 설정</h2>
-    <h3 class="sec">🤖 Claude AI 연동 (선택)</h3>
-    <p class="muted">API 키를 넣으면 실제 Claude가 위기 해결 판단, 직접 입안 정책 분석, 분기 논평, 정책 자문을 수행합니다. 키가 없으면 내장 AI 참모(규칙 기반)가 판단합니다. 키는 이 브라우저(localStorage)에만 저장되고 Anthropic API로만 전송됩니다. API 사용량에 따라 요금이 발생합니다.</p>
-    <div class="settings-row"><label>Anthropic API 키</label><input id="cfg-key" type="password" placeholder="sk-ant-..." value="${esc(c.apiKey || '')}"></div>
-    <div class="settings-row"><label>모델</label><select id="cfg-model">${ClaudeAI.MODELS.map(m => `<option value="${m.id}" ${m.id === c.model ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
-    <div class="settings-row"><label>사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+    <h3 class="sec">🤖 Claude AI 연동</h3>
+    ${host ? `<p class="muted">claude.ai에서 열린 페이지라 <b>API 키 없이 내 Claude 계정</b>으로 실제 Claude가 위기 해결 판단, 직접 입안 정책 분석, 분기 논평, 정책 자문을 수행합니다. 처음 호출할 때 허용 여부를 묻고, 내 Claude 사용량이 쓰입니다.</p>
+    <label class="switch"><input type="checkbox" id="cfg-host" ${c.useHost !== false ? 'checked' : ''}><span></span> Claude 사용</label>`
+    : `<p class="muted">API 키를 넣으면 실제 Claude가 위기 해결 판단, 직접 입안 정책 분석, 분기 논평, 정책 자문을 수행합니다. 키가 없으면 내장 AI 참모(규칙 기반)가 판단합니다. 키는 이 브라우저(localStorage)에만 저장되고 Anthropic API로만 전송됩니다. API 사용량에 따라 요금이 발생합니다.</p>
+    <div class="settings-row"><label for="cfg-key">Anthropic API 키</label><input id="cfg-key" type="password" placeholder="sk-ant-..." value="${esc(c.apiKey || '')}"></div>
+    <div class="settings-row"><label for="cfg-model">모델</label><select id="cfg-model">${ClaudeAI.MODELS.map(m => `<option value="${m.id}" ${m.id === c.model ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
+    <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
     <h3 class="sec">게임</h3>
     <div class="modal-actions" style="justify-content:flex-start">
@@ -391,7 +394,7 @@ $('btn-settings').onclick = () => {
       <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
     </div>
     <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
-  const read = () => ({ apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value });
+  const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
   $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
   $('cfg-test').onclick = async () => {
     ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
@@ -402,9 +405,14 @@ $('btn-settings').onclick = () => {
     const root = document.documentElement; const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     root.dataset.theme = cur === 'light' ? 'dark' : 'light'; try { localStorage.setItem('newkorea_theme', root.dataset.theme); } catch {}
   };
-  $('cfg-reset').onclick = () => { if (confirm('현재 게임을 삭제하고 새로 시작할까요?')) restart(); };
+  $('cfg-reset').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.armed) return restart();
+    b.dataset.armed = '1'; b.textContent = '정말 삭제하고 새로 시작합니다 (한 번 더 클릭)';
+  };
 };
 
 /* ---------------- 초기화 ---------------- */
 try { const th = localStorage.getItem('newkorea_theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
 renderStart();
+ClaudeAI.whenReady(() => { if (S) renderCrises(); });

@@ -1,0 +1,2615 @@
+<title>새로운 대한민국</title>
+<meta name="description" content="대한민국 대통령이 되어 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b1220;
+  --bg2: #111a2e;
+  --card: #16213a;
+  --card2: #1c2a48;
+  --line: #2a3a5e;
+  --text: #e8eefc;
+  --muted: #8d9bbd;
+  --red: #e5484d;
+  --blue: #3e7bfa;
+  --green: #30a46c;
+  --amber: #f5a524;
+  --good: #3ccf8e;
+  --bad: #ff6b6b;
+  --mid: #f5c451;
+  --accent: #4f8cff;
+  --radius: 12px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f5fa; --bg2: #e9edf6; --card: #ffffff; --card2: #f4f6fb; --line: #d6dce9;
+    --text: #182033; --muted: #5d6882; --good: #188a5a; --bad: #d23c3c; --mid: #b98100; --accent: #2f6be0;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f5fa; --bg2: #e9edf6; --card: #ffffff; --card2: #f4f6fb; --line: #d6dce9;
+  --text: #182033; --muted: #5d6882; --good: #188a5a; --bad: #d23c3c; --mid: #b98100; --accent: #2f6be0;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg2); }
+body {
+  font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55;
+}
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+b { font-weight: 700; }
+h1, h2, h3 { margin: 0; }
+
+.btn {
+  font: inherit; border: 1px solid var(--line); background: var(--card2); color: var(--text);
+  padding: 8px 14px; border-radius: 9px; cursor: pointer; transition: .15s; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.ghost { background: transparent; }
+.btn.big { padding: 12px 22px; font-size: 16px; }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+
+/* ---------- 시작 ---------- */
+#start { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(229,72,77,.18), transparent 60%), radial-gradient(1000px 600px at 90% 100%, rgba(62,123,250,.2), transparent 60%), var(--bg); }
+.start-card { width: 100%; max-width: 620px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 32px 28px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.start-emblem { font-size: 56px; }
+.start-card h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin: 4px 0 10px; }
+.start-card .sub { color: var(--muted); margin: 0 0 22px; }
+.field { display: block; text-align: left; font-weight: 700; margin: 14px 0; }
+.field input { display: block; width: 100%; margin-top: 6px; padding: 11px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font: inherit; }
+.party-pick { display: grid; gap: 8px; margin-top: 6px; }
+.party-opt { text-align: left; border: 1px solid var(--line); background: var(--bg2); border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 400; }
+.party-opt.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,140,255,.3) inset; }
+.party-opt b { display: block; }
+.party-opt span { color: var(--muted); font-size: 13px; }
+.start-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+.hint { color: var(--muted); font-size: 12.5px; margin-top: 18px; }
+
+/* ---------- 상단바 ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); background: var(--bg2); border-bottom: 1px solid var(--line); }
+.brand { font-size: 16px; }
+.date { color: var(--muted); font-weight: 500; }
+.kpis { display: flex; gap: 14px; margin-left: auto; }
+.kpi { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.kpi span { font-size: 11px; color: var(--muted); }
+.kpi b { font-size: 17px; }
+.top-actions { display: flex; gap: 8px; }
+
+/* ---------- 레이아웃 ---------- */
+.layout { display: grid; grid-template-columns: 300px 1fr; gap: 14px; padding: 14px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); max-width: 1500px; margin: 0 auto; }
+.side { display: flex; flex-direction: column; gap: 12px; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+.panel h3 { font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+.stat-list { display: grid; gap: 3px; }
+.stat-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 2px 0; font-size: 13.5px; }
+.stat-row .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+.delta { font-size: 11.5px; margin-left: 5px; font-weight: 500; }
+.delta.good { color: var(--good); } .delta.bad { color: var(--bad); }
+.bar-list { display: grid; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: 74px 1fr 30px; align-items: center; gap: 8px; font-size: 12.5px; }
+.bar { height: 7px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.bar-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+.main { min-width: 0; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 12px; overflow-x: auto; }
+.tabs button { font: inherit; background: none; border: none; color: var(--muted); padding: 10px 12px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 700; }
+.badge { background: var(--red); color: #fff; border-radius: 10px; padding: 0 7px; font-size: 11px; margin-left: 3px; }
+.tab { display: none; }
+.tab.active { display: block; }
+
+/* ---------- 정책 ---------- */
+.custom-box { background: linear-gradient(135deg, rgba(79,140,255,.14), rgba(229,72,77,.08)); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; }
+.custom-head { margin-bottom: 8px; }
+.custom-row { display: flex; gap: 8px; }
+.custom-row input { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 20px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip .cnt { font-size: 11px; opacity: .8; margin-left: 3px; }
+.policy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+.pcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; display: flex; flex-direction: column; gap: 8px; }
+.pcard.changed { border-color: var(--accent); }
+.pcard h4 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pcard .pdesc { color: var(--muted); font-size: 12.5px; margin: 0; }
+.opts { display: grid; gap: 6px; }
+.opt { text-align: left; font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card2); color: var(--text); border-radius: 9px; padding: 7px 10px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.opt:hover { border-color: var(--accent); }
+.opt.current { border-color: var(--good); background: rgba(60,207,142,.1); cursor: default; }
+.opt.disabled { opacity: .5; }
+.opt .meta { display: flex; gap: 4px; flex-shrink: 0; }
+.tag { font-size: 10.5px; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.const { color: #ff9c9c; border-color: rgba(255,107,107,.5); }
+.tag.law { color: #9cc0ff; border-color: rgba(79,140,255,.5); }
+.tag.decree { color: #8fe3bd; border-color: rgba(60,207,142,.5); }
+.tag.cur { color: var(--good); border-color: var(--good); }
+.tag.new { color: var(--amber); border-color: var(--amber); }
+
+/* ---------- 모달 ---------- */
+.modal { position: fixed; inset: 0; background: rgba(5,10,20,.6); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; backdrop-filter: blur(3px); }
+.modal-card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px; width: 100%; max-width: 720px; padding: 22px 22px 18px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+.modal-x { position: absolute; right: 12px; top: 10px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.modal-card h2 { font-size: 20px; margin-bottom: 4px; padding-right: 26px; }
+.modal-card .lead { color: var(--muted); margin: 0 0 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.box { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.box h4 { margin: 0 0 6px; font-size: 13px; }
+.box ul { margin: 0; padding-left: 18px; }
+.box li { margin: 2px 0; }
+.box.gain h4 { color: var(--good); } .box.loss h4 { color: var(--bad); }
+.verdict { margin: 12px 0; padding: 11px 13px; border-radius: 10px; border-left: 4px solid var(--mid); background: var(--card2); }
+.verdict.good { border-color: var(--good); } .verdict.bad { border-color: var(--bad); }
+.vote { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 8px 0 14px; }
+.vote b { color: var(--text); }
+.prob { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.prob > i { display: block; height: 100%; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+.risk { font-size: 13px; margin: 4px 0; }
+.ai-box { white-space: pre-wrap; background: var(--card2); border: 1px dashed var(--accent); border-radius: 10px; padding: 12px; margin-top: 12px; font-size: 13.5px; }
+.ai-box .who { font-weight: 700; color: var(--accent); display: block; margin-bottom: 4px; }
+
+/* ---------- 위기 ---------- */
+.crisis-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; }
+.switch input { display: none; }
+.switch span { width: 38px; height: 22px; background: var(--line); border-radius: 12px; position: relative; transition: .2s; }
+.switch span::after { content: ''; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { left: 19px; }
+.ccard { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 10px; }
+.ccard.good { border-left-color: var(--good); }
+.ccard h4 { margin: 0 0 4px; font-size: 15px; }
+.ccard p { margin: 0 0 10px; color: var(--muted); }
+.sol { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--card2); border-radius: 9px; padding: 8px 10px; margin-bottom: 6px; }
+.sol .sd { font-size: 12.5px; color: var(--muted); }
+.sol .fx { font-size: 12px; margin-top: 2px; }
+.sol.best { border-color: var(--accent); }
+.rcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 8px; }
+.rcard .res { font-weight: 700; }
+.rcard .res.ok { color: var(--good); } .rcard .res.fail { color: var(--bad); }
+.rcard .why { font-size: 13px; color: var(--muted); margin-top: 4px; white-space: pre-wrap; }
+.sec { font-size: 14px; color: var(--muted); margin: 18px 0 8px; }
+.empty { color: var(--muted); padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+
+/* ---------- 보고서 / 추이 / 로그 ---------- */
+.rep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 10px 0; }
+.rep-item { background: var(--card2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font-size: 12.5px; }
+.rep-item b { display: block; font-size: 15px; }
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.tcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+.tcard .tt { display: flex; justify-content: space-between; font-size: 13px; }
+.tcard svg { width: 100%; height: 60px; display: block; margin-top: 6px; }
+.log { display: grid; gap: 4px; }
+.log-item { font-size: 13px; padding: 6px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
+.log-item.good { border-left: 3px solid var(--good); } .log-item.bad { border-left: 3px solid var(--bad); } .log-item.info { border-left: 3px solid var(--accent); }
+.log-item .t { color: var(--muted); font-size: 11.5px; margin-right: 6px; }
+
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--line); padding: 11px 18px; border-radius: 10px; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-width: calc(100% - 32px); }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ending { text-align: center; }
+.ending .grade { font-size: 72px; font-weight: 900; line-height: 1; margin: 10px 0; }
+.settings-row { margin: 12px 0; }
+.settings-row label { display: block; font-weight: 700; margin-bottom: 4px; }
+.settings-row input, .settings-row select { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font: inherit; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .main { order: -1; }
+  .side { display: grid; grid-template-columns: 1fr; }
+  .kpis { margin-left: 0; width: 100%; justify-content: space-between; order: 3; }
+  .policy-list { grid-template-columns: 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .topbar { gap: 8px; }
+  .top-actions { margin-left: auto; }
+}
+
+</style>
+<!-- 시작 화면 -->
+  <section id="start" class="screen">
+    <div class="start-card">
+      <div class="start-emblem">🇰🇷</div>
+      <h1>새로운 대한민국</h1>
+      <p class="sub">당신은 제21대 대한민국 대통령입니다.<br>헌법·세제·국방·외교·교육·검경… 지금의 대한민국 그대로에서 시작해<br>하나씩 바꿔 당신만의 대한민국을 만드세요.</p>
+      <label class="field">대통령 이름
+        <input id="pres-name" maxlength="12" placeholder="이름을 입력하세요" value="">
+      </label>
+      <div class="field">소속
+        <div id="party-pick" class="party-pick"></div>
+      </div>
+      <div class="start-actions">
+        <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
+        <button id="btn-continue" class="btn big hidden">이어하기</button>
+      </div>
+      <p class="hint">모든 제도는 2026년 하반기 대한민국 현행 제도를 기준으로 시작합니다. 정책을 바꿀 때마다 이득과 손해가 생기고, 부작용이 터지면 AI 참모가 해결책을 판단해 결과를 도출합니다.</p>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="game" class="screen hidden">
+    <header class="topbar">
+      <div class="brand">🇰🇷 <b>새로운 대한민국</b></div>
+      <div class="date" id="hdr-date"></div>
+      <div class="kpis">
+        <div class="kpi"><span>지지율</span><b id="hdr-appr"></b></div>
+        <div class="kpi"><span>정치자본</span><b id="hdr-pcap"></b></div>
+        <div class="kpi"><span>여당 의석</span><b id="hdr-seats"></b></div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-settings" class="btn ghost" title="설정">⚙️</button>
+        <button id="btn-end" class="btn primary">분기 종료 ▶</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="side">
+        <div class="panel">
+          <h3>국가 지표</h3>
+          <div id="stat-list" class="stat-list"></div>
+        </div>
+        <div class="panel">
+          <h3>외교 관계</h3>
+          <div id="rel-list" class="bar-list"></div>
+        </div>
+        <div class="panel">
+          <h3>세력별 지지도</h3>
+          <div id="fac-list" class="bar-list"></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <nav class="tabs" id="tabs">
+          <button data-tab="policy" class="active">📜 정책 결정</button>
+          <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
+          <button data-tab="report">📊 국정 보고서</button>
+          <button data-tab="trend">📈 추이</button>
+          <button data-tab="log">🗂️ 국정 기록</button>
+        </nav>
+
+        <div id="tab-policy" class="tab active">
+          <div class="custom-box">
+            <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">— 목록에 없는 어떤 정책이든 입력하면 AI가 효과를 분석합니다</span></div>
+            <div class="custom-row">
+              <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화, 4년제 대학 무상화…" maxlength="120">
+              <button id="btn-custom" class="btn primary">AI 분석</button>
+            </div>
+          </div>
+          <div id="cat-chips" class="chips"></div>
+          <div id="policy-list" class="policy-list"></div>
+        </div>
+
+        <div id="tab-crisis" class="tab">
+          <div class="crisis-head">
+            <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
+            <span class="muted" id="ai-mode-label"></span>
+          </div>
+          <div id="crisis-list"></div>
+          <h3 class="sec">최근 처리 결과</h3>
+          <div id="resolved-list"></div>
+        </div>
+
+        <div id="tab-report" class="tab"><div id="report-body"></div></div>
+        <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
+        <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
+      </main>
+    </div>
+  </section>
+
+  <!-- 모달 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-x" id="modal-x">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+<script>
+/* js/data.js */
+/* =========================================================
+ *  새로운 대한민국 — 게임 데이터
+ *  - 모든 정책의 '현행' 옵션은 2026년 하반기 대한민국 제도를 기준으로 함
+ *  - 효과(e)는 '현행' 대비 장기 균형값의 변화량(정책이 완전히 자리잡았을 때)
+ *  - 세력 반응(f)은 즉시 발생하는 지지도 변화
+ * ========================================================= */
+
+/* ---------- 국가 지표 ---------- */
+// good: +1 높을수록 좋음 / -1 낮을수록 좋음
+// w: AI 판단 시 1단위 변화의 가치(점수)
+const STATS = {
+  gdp:        { name: '경제성장률', unit: '%',  base: 1.8,  good: 1,  w: 10,  dec: 1, min: -8, max: 10 },
+  unemp:      { name: '실업률',     unit: '%',  base: 2.8,  good: -1, w: 8,   dec: 1, min: 1, max: 20 },
+  infl:       { name: '물가상승률', unit: '%',  base: 2.1,  good: -1, w: 5,   dec: 1, min: -3, max: 20, target: 2 },
+  debt:       { name: '국가채무비율', unit: '%', base: 51.6, good: -1, w: 0.8, dec: 1, min: 0, max: 250 },
+  fiscal:     { name: '재정수지',   unit: '%',  base: -4.0, good: 1,  w: 3,   dec: 1, min: -20, max: 10 },
+  tfr:        { name: '합계출산율', unit: '명', base: 0.80, good: 1,  w: 60,  dec: 2, min: 0.4, max: 2.5 },
+  gini:       { name: '지니계수',   unit: '',   base: 0.324, good: -1, w: 300, dec: 3, min: 0.2, max: 0.6 },
+  security:   { name: '안보',       unit: '',   base: 68, good: 1, w: 1.2, dec: 0, min: 0, max: 100 },
+  education:  { name: '교육 만족도', unit: '',  base: 46, good: 1, w: 1,   dec: 0, min: 0, max: 100 },
+  safety:     { name: '치안',       unit: '',   base: 76, good: 1, w: 1,   dec: 0, min: 0, max: 100 },
+  justice:    { name: '사법 신뢰도', unit: '',  base: 41, good: 1, w: 1,   dec: 0, min: 0, max: 100 },
+  housing:    { name: '주거 안정',  unit: '',   base: 37, good: 1, w: 1.1, dec: 0, min: 0, max: 100 },
+  env:        { name: '환경',       unit: '',   base: 48, good: 1, w: 0.8, dec: 0, min: 0, max: 100 },
+  innovation: { name: '산업 경쟁력', unit: '',  base: 72, good: 1, w: 1.2, dec: 0, min: 0, max: 100 },
+  welfare:    { name: '복지 수준',  unit: '',   base: 52, good: 1, w: 1,   dec: 0, min: 0, max: 100 },
+  freedom:    { name: '자유·인권',  unit: '',   base: 71, good: 1, w: 0.8, dec: 0, min: 0, max: 100 },
+  health:     { name: '의료 접근성', unit: '',  base: 62, good: 1, w: 1,   dec: 0, min: 0, max: 100 },
+  happiness:  { name: '국민 행복도', unit: '',  base: 42, good: 1, w: 1.5, dec: 0, min: 0, max: 100 },
+};
+
+const RELATIONS = {
+  us: { name: '미국', flag: '🇺🇸', base: 76 },
+  cn: { name: '중국', flag: '🇨🇳', base: 46 },
+  jp: { name: '일본', flag: '🇯🇵', base: 58 },
+  nk: { name: '북한', flag: '🇰🇵', base: 12 },
+  ru: { name: '러시아', flag: '🇷🇺', base: 28 },
+  eu: { name: 'EU',   flag: '🇪🇺', base: 66 },
+};
+
+/* ---------- 이해관계 세력 ---------- */
+// pop: 지지율 계산 시 가중치
+const FACTIONS = {
+  biz:    { name: '재계',     icon: '🏢', base: 45, pop: 0.05 },
+  labor:  { name: '노동계',   icon: '🦺', base: 45, pop: 0.10 },
+  youth:  { name: '청년층',   icon: '🎓', base: 42, pop: 0.16 },
+  elder:  { name: '노년층',   icon: '👴', base: 50, pop: 0.17 },
+  con:    { name: '보수층',   icon: '🔵', base: 40, pop: 0.14 },
+  lib:    { name: '진보층',   icon: '🟡', base: 60, pop: 0.14 },
+  mil:    { name: '군·안보',  icon: '🪖', base: 50, pop: 0.04 },
+  legal:  { name: '법조계',   icon: '⚖️', base: 45, pop: 0.02 },
+  teach:  { name: '교육계',   icon: '🏫', base: 48, pop: 0.04 },
+  medic:  { name: '의료계',   icon: '🩺', base: 35, pop: 0.02 },
+  farm:   { name: '농어민',   icon: '🌾', base: 45, pop: 0.04 },
+  local:  { name: '지방 주민', icon: '🏘️', base: 46, pop: 0.08 },
+};
+
+/* ---------- 정당 ---------- */
+const PARTIES = {
+  lib: { name: '진보 성향 여당', lean: 'L', seats: 170, desc: '국회 과반(170석)을 확보한 상태로 시작합니다. 진보 정책은 쉽게 통과되지만 보수층 반발이 큽니다.' },
+  con: { name: '보수 성향 여당', lean: 'R', seats: 108, desc: '여소야대(108석)로 시작합니다. 보수 정책은 야당의 벽에 부딪히기 쉽습니다. 고난이도.' },
+  ind: { name: '무소속 대통령', lean: 'N', seats: 12,  desc: '기반 정당이 거의 없습니다. 모든 법안이 협치에 달려 있습니다. 최고 난이도.' },
+};
+
+/* ---------- 정책 카테고리 ---------- */
+const CATEGORIES = [
+  { id: 'const',  name: '헌법·정치',   icon: '📜' },
+  { id: 'tax',    name: '세제',        icon: '💰' },
+  { id: 'econ',   name: '경제·산업',   icon: '🏭' },
+  { id: 'labor',  name: '노동',        icon: '🦺' },
+  { id: 'welfare',name: '복지·인구',   icon: '🍼' },
+  { id: 'house',  name: '부동산',      icon: '🏠' },
+  { id: 'edu',    name: '교육',        icon: '🏫' },
+  { id: 'defense',name: '국방',        icon: '🪖' },
+  { id: 'diplo',  name: '외교·통일',   icon: '🌏' },
+  { id: 'justice',name: '사법·검경',   icon: '⚖️' },
+  { id: 'civil',  name: '민법·사회',   icon: '👨‍👩‍👧' },
+  { id: 'env',    name: '에너지·환경', icon: '⚡' },
+  { id: 'health', name: '의료',        icon: '🩺' },
+];
+
+/*  정책 옵션 필드
+ *  lt   : 'decree'(시행령·행정, 국회 불필요) | 'law'(법률, 과반) | 'const'(개헌, 2/3+국민투표)
+ *  lean : 'L'(진보) | 'R'(보수) | 'N'(중립) — 국회 표결에 영향
+ *  pc   : 정치자본 비용
+ *  lag  : 효과가 완전히 나타나기까지 걸리는 분기 수
+ *  e    : 지표 장기 변화 (현행 대비)
+ *  rel  : 외교관계 변화
+ *  f    : 세력 지지도 즉시 변화
+ *  r    : 부작용 리스크 [템플릿, 제목, 설명, 발생확률, 심각도(1~3)]
+ */
+const POLICIES = [
+  /* ================= 헌법·정치 ================= */
+  { id: 'gov_form', cat: 'const', name: '정부 형태·대통령 임기',
+    desc: '1987년 체제(제9차 개정헌법) 이후 대통령 5년 단임제가 유지되고 있습니다.',
+    options: [
+      { id: 'single5', label: '대통령 5년 단임제', cur: true, desc: '현행. 장기집권 방지, 그러나 레임덕과 정책 단절 문제.' },
+      { id: 'two4', label: '대통령 4년 중임제', lt: 'const', lean: 'N', pc: 60, lag: 4,
+        desc: '미국식 4년 중임. 국정 연속성 강화, 중간평가 기능.',
+        e: { justice: 2, happiness: 1 }, f: { con: -3, lib: 3, youth: 4 },
+        r: [['social', '장기집권 의혹 확산', '야권이 "셀프 연임 개헌"이라며 공세에 나섰습니다.', 0.5, 2]] },
+      { id: 'parl', label: '의원내각제', lt: 'const', lean: 'N', pc: 80, lag: 6,
+        desc: '국회 다수당이 내각을 구성. 대통령은 상징적 국가원수로.',
+        e: { justice: 3, gdp: -0.1, security: -2 }, f: { con: -5, lib: -2, elder: -8, youth: 2 },
+        r: [['social', '정국 불안정', '연립정부 구성 협상이 길어지며 국정 공백 우려가 커졌습니다.', 0.6, 2]] },
+      { id: 'semi', label: '분권형 대통령제(이원집정부제)', lt: 'const', lean: 'N', pc: 70, lag: 6,
+        desc: '대통령은 외교·국방, 국회 선출 총리는 내치 담당.',
+        e: { justice: 2, happiness: 1 }, f: { con: 2, lib: 1, elder: -4 },
+        r: [['social', '대통령-총리 권한 충돌', '외교·내치의 경계를 두고 청와대와 총리실이 충돌했습니다.', 0.4, 1]] },
+    ] },
+  { id: 'assembly', cat: 'const', name: '국회 구조',
+    desc: '단원제 국회(300석: 지역구 254, 비례 46).',
+    options: [
+      { id: 'uni', label: '단원제 300석', cur: true, desc: '현행.' },
+      { id: 'bi', label: '양원제(상원 신설)', lt: 'const', lean: 'N', pc: 60, lag: 6,
+        desc: '지역대표형 상원 신설. 지방 목소리 강화, 입법 속도 저하.',
+        e: { fiscal: -0.1, justice: 1 }, f: { local: 12, youth: -6, con: -2 },
+        r: [['fiscal', '의원 정수 확대 반발', '"국회의원만 늘린다"는 여론이 들끓습니다.', 0.6, 1]] },
+      { id: 'cut200', label: '의원 정수 200석 감축', lt: 'const', lean: 'R', pc: 50, lag: 4,
+        desc: '의원 정수를 줄여 특권 축소. 대표성 약화.',
+        e: { fiscal: 0.02, justice: 1 }, f: { youth: 8, con: 6, lib: -5, local: -6 } },
+    ] },
+  { id: 'election', cat: 'const', name: '국회의원 선거제도',
+    desc: '소선거구제 + 준연동형 비례대표제(비례 46석).',
+    options: [
+      { id: 'semi_mmp', label: '소선거구 + 준연동형 비례', cur: true, desc: '현행. 위성정당 논란이 반복됨.' },
+      { id: 'mmp', label: '완전 연동형 비례대표제', lt: 'law', lean: 'L', pc: 35, lag: 4,
+        desc: '독일식. 정당 득표율대로 의석 배분, 다당제 촉진.',
+        e: { justice: 2, freedom: 2 }, f: { lib: 6, con: -8, youth: 3 } },
+      { id: 'fptp', label: '소선거구 단순다수제', lt: 'law', lean: 'R', pc: 30, lag: 4,
+        desc: '비례대표 폐지, 양당제 강화.',
+        e: { justice: -1, freedom: -1 }, f: { con: 6, lib: -8, youth: -3 } },
+      { id: 'mmd', label: '중대선거구제', lt: 'law', lean: 'N', pc: 30, lag: 4,
+        desc: '한 선거구에서 2~5명 선출. 지역주의 완화.',
+        e: { justice: 1 }, f: { local: -3, youth: 2 } },
+    ] },
+  { id: 'vote_age', cat: 'const', name: '선거 연령',
+    desc: '2019년 공직선거법 개정으로 만 18세 이상 선거권.',
+    options: [
+      { id: 'a18', label: '만 18세', cur: true, desc: '현행.' },
+      { id: 'a16', label: '만 16세로 하향', lt: 'law', lean: 'L', pc: 20, lag: 2,
+        desc: '고교생 대부분에게 투표권. 정치교육 강화 필요.',
+        e: { freedom: 2, education: -1 }, f: { youth: 6, elder: -6, teach: -4, lib: 4, con: -5 } },
+    ] },
+  { id: 'decentral', cat: 'const', name: '지방분권',
+    desc: '광역·기초 2단계 지방자치. 국세:지방세 ≈ 75:25.',
+    options: [
+      { id: 'current', label: '현행 지방자치 체제', cur: true, desc: '현행.' },
+      { id: 'federal', label: '연방제 수준 분권(지방세 50%)', lt: 'const', lean: 'L', pc: 60, lag: 8,
+        desc: '자치입법·재정권 대폭 이양. 지방소멸 대응, 지역 격차 위험.',
+        e: { gdp: 0.1, gini: 0.004, housing: 3, fiscal: -0.2, happiness: 2 }, f: { local: 18, con: -4, elder: -2 },
+        r: [['social', '수도권-지방 재정 갈등', '서울·경기가 재정 이전에 반발하고 있습니다.', 0.5, 2]] },
+      { id: 'megacity', label: '5극 3특 초광역권 육성', lt: 'law', lean: 'N', pc: 30, lag: 8,
+        desc: '수도권 외 4개 초광역 경제권 + 3개 특별자치도에 예산·기관 집중.',
+        e: { gdp: 0.1, housing: 3, fiscal: -0.2 }, f: { local: 10, biz: 2 } },
+      { id: 'merge', label: '광역 통폐합(시도 → 6개 광역주)', lt: 'law', lean: 'R', pc: 40, lag: 8,
+        desc: '행정 효율화, 지역 정체성 반발.',
+        e: { fiscal: 0.2, gdp: 0.05 }, f: { local: -10, biz: 4 },
+        r: [['protest', '지역 정체성 반발', '통폐합 대상 지역 주민들이 집회를 열었습니다.', 0.6, 2]] },
+    ] },
+  { id: 'capital', cat: 'const', name: '수도 위치',
+    desc: '수도 서울. 세종은 행정중심복합도시(관습헌법 판례, 2004).',
+    options: [
+      { id: 'seoul', label: '수도 서울 + 행정도시 세종', cur: true, desc: '현행.' },
+      { id: 'sejong', label: '세종 행정수도 완전 이전', lt: 'const', lean: 'L', pc: 60, lag: 10,
+        desc: '대통령실·국회 전부 세종으로. 수도권 과밀 해소.',
+        e: { housing: 5, fiscal: -0.3, gdp: 0.05, gini: -0.003 }, f: { local: 15, con: -6, elder: -3 },
+        r: [['fiscal', '이전 비용 폭증', '국회·대통령실 이전 비용이 예상치를 크게 웃돌았습니다.', 0.6, 2]] },
+    ] },
+  { id: 'nsa', cat: 'const', name: '국가보안법',
+    desc: '1948년 제정, 존치 중. 찬양·고무죄(7조) 논란.',
+    options: [
+      { id: 'keep', label: '존치', cur: true, desc: '현행.' },
+      { id: 'abolish', label: '전면 폐지(형법 보완)', lt: 'law', lean: 'L', pc: 40, lag: 2,
+        desc: '표현의 자유 확대, 안보 공백 우려.',
+        e: { freedom: 6, security: -3 }, rel: { nk: 3, us: -2 }, f: { lib: 10, con: -14, mil: -12, elder: -8 },
+        r: [['security', '간첩 사건 처벌 공백', '국정원이 적발한 간첩 사건 처리에 혼선이 빚어졌습니다.', 0.35, 2]] },
+      { id: 'art7', label: '제7조(찬양·고무)만 삭제', lt: 'law', lean: 'L', pc: 25, lag: 2,
+        desc: '유엔 인권위 권고 수용.',
+        e: { freedom: 3, security: -1 }, f: { lib: 6, con: -6, mil: -4 } },
+      { id: 'strengthen', label: '처벌 강화', lt: 'law', lean: 'R', pc: 25, lag: 2,
+        desc: '대공수사 강화.',
+        e: { freedom: -4, security: 2 }, rel: { nk: -3 }, f: { con: 8, lib: -12, mil: 6 } },
+    ] },
+
+  /* ================= 세제 ================= */
+  { id: 'income_tax', cat: 'tax', name: '소득세 최고세율',
+    desc: '과세표준 10억 원 초과 45% (지방소득세 포함 49.5%).',
+    options: [
+      { id: 't45', label: '최고 45%', cur: true, desc: '현행.' },
+      { id: 't50', label: '최고 50%로 인상', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '고소득자 증세.', e: { fiscal: 0.15, gini: -0.003, gdp: -0.05 }, f: { biz: -8, con: -6, lib: 6, labor: 4 },
+        r: [['brain', '고소득 인재 해외 이탈', '고액 연봉자와 전문직의 해외 이주 상담이 늘고 있습니다.', 0.3, 1]] },
+      { id: 't38', label: '최고 38%로 인하', lt: 'law', lean: 'R', pc: 25, lag: 4,
+        desc: '고소득자 감세, 투자 유인.', e: { fiscal: -0.25, gini: 0.004, gdp: 0.08 }, f: { biz: 8, con: 6, lib: -8, labor: -5 },
+        r: [['social', '부자 감세 논란', '"상위 1%만을 위한 감세"라는 비판이 확산되었습니다.', 0.5, 1]] },
+      { id: 'flat', label: '단일세율 20% (플랫택스)', lt: 'law', lean: 'R', pc: 45, lag: 4,
+        desc: '모든 소득에 20% 단일세율.', e: { fiscal: -0.9, gini: 0.015, gdp: 0.2, welfare: -3 }, f: { biz: 12, con: 6, lib: -15, labor: -12, youth: -3 },
+        r: [['fiscal', '세수 결손 대란', '세수가 연간 수십조 원 감소하며 재정 경고등이 켜졌습니다.', 0.7, 3]] },
+    ] },
+  { id: 'corp_tax', cat: 'tax', name: '법인세 최고세율',
+    desc: '2025년 세법개정으로 최고 25% 환원 (과표 3,000억 초과).',
+    options: [
+      { id: 'c25', label: '최고 25%', cur: true, desc: '현행.' },
+      { id: 'c20', label: '최고 20%로 인하', lt: 'law', lean: 'R', pc: 25, lag: 4,
+        desc: 'OECD 평균 수준. 기업 투자·유턴 유도.', e: { fiscal: -0.4, gdp: 0.15, innovation: 2, unemp: -0.1, gini: 0.002 }, f: { biz: 14, con: 6, lib: -8, labor: -6 } },
+      { id: 'c28', label: '최고 28%로 인상', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '대기업 증세.', e: { fiscal: 0.3, gdp: -0.12, innovation: -2, gini: -0.002 }, f: { biz: -14, lib: 6, labor: 5, con: -5 },
+        r: [['market', '기업 해외 이전 검토', '주요 대기업이 해외 생산기지 확대를 검토한다고 밝혔습니다.', 0.4, 2]] },
+    ] },
+  { id: 'vat', cat: 'tax', name: '부가가치세',
+    desc: '1977년 도입 이후 10% 유지.',
+    options: [
+      { id: 'v10', label: '10%', cur: true, desc: '현행.' },
+      { id: 'v13', label: '13%로 인상', lt: 'law', lean: 'N', pc: 40, lag: 2,
+        desc: '연 30조 원 이상 세수 확보. 서민 부담·물가 상승.',
+        e: { fiscal: 1.2, infl: 0.6, gdp: -0.2, gini: 0.003, happiness: -2 }, f: { youth: -8, elder: -6, biz: -4, labor: -6, con: -4, lib: -4 },
+        r: [['inflation', '물가 급등', '부가세 인상분이 가격에 전가되며 체감 물가가 치솟았습니다.', 0.6, 2]] },
+      { id: 'v8', label: '8%로 인하', lt: 'law', lean: 'R', pc: 25, lag: 2,
+        desc: '소비 진작, 세수 감소.', e: { fiscal: -0.8, infl: -0.3, gdp: 0.15 }, f: { youth: 4, elder: 3, biz: 4 },
+        r: [['fiscal', '세수 결손', '부가세 세수 감소로 하반기 추경이 불가피해졌습니다.', 0.5, 2]] },
+    ] },
+  { id: 'estate_tax', cat: 'tax', name: '상속·증여세',
+    desc: '최고세율 50%(대주주 할증 폐지), 유산세 방식.',
+    options: [
+      { id: 'e50', label: '최고 50% 유산세', cur: true, desc: '현행.' },
+      { id: 'heir', label: '유산취득세 전환 + 최고 40%', lt: 'law', lean: 'R', pc: 25, lag: 4,
+        desc: '상속인별 과세, 세부담 완화.', e: { fiscal: -0.1, gini: 0.002, gdp: 0.03 }, f: { biz: 8, elder: 5, con: 5, lib: -6 } },
+      { id: 'cgt', label: '상속세 폐지 → 자본이득세', lt: 'law', lean: 'R', pc: 40, lag: 6,
+        desc: '상속 시 과세 않고 처분 시 양도차익 과세.', e: { fiscal: -0.25, gini: 0.006, gdp: 0.08, innovation: 1 }, f: { biz: 14, elder: 6, con: 6, lib: -12, labor: -6 },
+        r: [['social', '부의 대물림 논란', '"재벌 세습 프리패스"라는 비판이 거셉니다.', 0.5, 2]] },
+      { id: 'e60', label: '최고 60%로 강화', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '부의 대물림 억제.', e: { fiscal: 0.08, gini: -0.003, gdp: -0.05 }, f: { biz: -10, elder: -5, lib: 6, con: -8 },
+        r: [['market', '가업승계 포기·매각 증가', '중견기업들이 가업승계 대신 사모펀드 매각을 택하고 있습니다.', 0.35, 1]] },
+    ] },
+  { id: 'property_tax', cat: 'tax', name: '종합부동산세',
+    desc: '2023년 완화된 기준(1주택 12억 공제) 유지.',
+    options: [
+      { id: 'cur', label: '현행 종부세', cur: true, desc: '현행.' },
+      { id: 'abolish', label: '종부세 폐지(재산세 통합)', lt: 'law', lean: 'R', pc: 25, lag: 4,
+        desc: '보유세 부담 완화.', e: { fiscal: -0.1, housing: -4, gini: 0.002 }, f: { con: 8, elder: 6, youth: -5, lib: -8, local: -5 } },
+      { id: 'raise', label: '보유세 실효세율 1%로 강화', lt: 'law', lean: 'L', pc: 35, lag: 6,
+        desc: '다주택자 보유세 대폭 인상.', e: { fiscal: 0.3, housing: 7, gini: -0.003, gdp: -0.05 }, f: { con: -12, elder: -8, youth: 6, lib: 6 },
+        r: [['protest', '조세 저항', '"세금 폭탄"에 반발한 1주택 은퇴자들이 집단 행동에 나섰습니다.', 0.5, 2]] },
+      { id: 'lvt', label: '국토보유세(토지 기본소득 연계)', lt: 'law', lean: 'L', pc: 50, lag: 6,
+        desc: '모든 토지에 과세 후 전 국민 균등 배당.', e: { fiscal: 0.1, housing: 8, gini: -0.006, welfare: 3, gdp: -0.05 }, f: { con: -15, elder: -10, youth: 8, lib: 10, farm: -8 },
+        r: [['legal', '이중과세 위헌 소송', '토지 소유자들이 헌법소원을 제기했습니다.', 0.6, 2]] },
+    ] },
+  { id: 'fin_tax', cat: 'tax', name: '금융투자소득세',
+    desc: '2024년 말 폐지 결정. 주식 양도세는 대주주(50억 이상)만 과세.',
+    options: [
+      { id: 'none', label: '폐지 상태 유지', cur: true, desc: '현행.' },
+      { id: 'introduce', label: '금투세 도입(5천만원 초과 20%)', lt: 'law', lean: 'L', pc: 30, lag: 2,
+        desc: '"소득 있는 곳에 과세". 개미투자자 반발.', e: { fiscal: 0.08, gini: -0.002, gdp: -0.05 }, f: { youth: -10, biz: -5, lib: 4, con: -6 },
+        r: [['market', '증시 이탈', '큰손 투자자들의 국내 증시 이탈 우려로 코스피가 급락했습니다.', 0.5, 2]] },
+    ] },
+  { id: 'carbon_tax', cat: 'tax', name: '탄소세',
+    desc: '탄소세 없음. 배출권거래제(K-ETS)로 대체.',
+    options: [
+      { id: 'none', label: '배출권거래제만 운영', cur: true, desc: '현행.' },
+      { id: 'tax', label: '탄소세 도입(톤당 5만원) + 배당', lt: 'law', lean: 'L', pc: 35, lag: 4,
+        desc: '세수를 국민에게 균등 배당.', e: { env: 8, gdp: -0.1, infl: 0.3, fiscal: 0.1, innovation: 1 }, f: { biz: -10, lib: 8, youth: 4, farm: -6, con: -5 },
+        r: [['inflation', '에너지 가격 상승', '전기·가스요금 인상 압박이 커지고 있습니다.', 0.5, 1]] },
+    ] },
+
+  /* ================= 경제·산업 ================= */
+  { id: 'chaebol', cat: 'econ', name: '재벌·대기업 규제',
+    desc: '2025년 상법 개정(이사 충실의무 주주로 확대, 집중투표제 의무화).',
+    options: [
+      { id: 'cur', label: '현행 규제', cur: true, desc: '현행.' },
+      { id: 'loosen', label: '대기업 규제 대폭 완화', lt: 'law', lean: 'R', pc: 30, lag: 4,
+        desc: '지주회사·출자 규제 완화, 상법 개정 일부 철회.', e: { gdp: 0.15, innovation: 3, gini: 0.004, justice: -2 }, f: { biz: 15, con: 6, lib: -10, labor: -8 } },
+      { id: 'tighten', label: '재벌 개혁 강화(금산분리·순환출자 해소)', lt: 'law', lean: 'L', pc: 35, lag: 6,
+        desc: '지배구조 투명화, 단기 투자 위축.', e: { gdp: -0.1, gini: -0.003, justice: 3, innovation: -1 }, f: { biz: -15, lib: 10, labor: 6, con: -6 },
+        r: [['market', '경영권 공격 우려', '해외 행동주의 펀드가 국내 대기업 지분을 대거 매입했습니다.', 0.35, 2]] },
+    ] },
+  { id: 'chip', cat: 'econ', name: '반도체·AI 산업 지원',
+    desc: 'K-칩스법(투자세액공제 최대 25%) + 국민성장펀드 150조.',
+    options: [
+      { id: 'cur', label: '현행 지원', cur: true, desc: '현행.' },
+      { id: 'mega', label: '국가 주도 AI·반도체 300조 투자', lt: 'law', lean: 'N', pc: 35, lag: 8,
+        desc: '보조금 직접 지급 + 전력·용수 인프라 국가 구축 + 반도체 특별법 주52시간 예외.',
+        e: { gdp: 0.35, innovation: 8, fiscal: -0.5, unemp: -0.2, env: -2 }, f: { biz: 12, youth: 4, labor: -6, local: 3 },
+        r: [['fiscal', '재정 부담 논란', '천문학적 지원 규모에 "재벌 퍼주기" 비판이 나옵니다.', 0.4, 2]] },
+      { id: 'cut', label: '기업 지원 축소', lt: 'law', lean: 'L', pc: 20, lag: 4,
+        desc: '선별 지원, 재정 절감.', e: { gdp: -0.15, innovation: -4, fiscal: 0.2 }, f: { biz: -12, lib: 2 },
+        r: [['market', '반도체 투자 해외 유출', '주요 반도체 기업이 미국 공장 증설을 우선하기로 했습니다.', 0.4, 2]] },
+    ] },
+  { id: 'bok', cat: 'econ', name: '한국은행 독립성·통화정책',
+    desc: '한국은행 독립 운영, 물가안정목표 2%.',
+    options: [
+      { id: 'cur', label: '한은 독립 + 물가목표 2%', cur: true, desc: '현행.' },
+      { id: 'dual', label: '고용 목표 추가(이중책무)', lt: 'law', lean: 'L', pc: 20, lag: 4,
+        desc: '미 연준처럼 완전고용도 목표에.', e: { unemp: -0.2, infl: 0.3 }, f: { labor: 6, biz: 2 } },
+      { id: 'control', label: '정부가 금리 결정 개입', lt: 'law', lean: 'N', pc: 40, lag: 2,
+        desc: '경기부양 쉬워지지만 신뢰 하락.', e: { gdp: 0.2, infl: 1.2, justice: -3, innovation: -1 }, f: { biz: 4, con: -6, elder: -6 },
+        r: [['market', '원화 가치 급락', '통화정책 독립성 훼손 우려로 외국인 자금이 이탈하며 환율이 치솟았습니다.', 0.6, 3]] },
+    ] },
+  { id: 'smb', cat: 'econ', name: '소상공인·자영업 정책',
+    desc: '자영업자 비중 약 20% (OECD 상위). 지역화폐·채무조정 지원.',
+    options: [
+      { id: 'cur', label: '현행 지원', cur: true, desc: '현행.' },
+      { id: 'support', label: '자영업 대규모 손실보상·채무탕감', lt: 'law', lean: 'L', pc: 25, lag: 2,
+        desc: '연체 채무 탕감, 지역화폐 확대.', e: { fiscal: -0.4, happiness: 2, gdp: 0.05, gini: -0.002 }, f: { local: 6, lib: 4, con: -4, youth: -2 },
+        r: [['social', '도덕적 해이 논란', '"성실 상환자만 바보"라는 여론이 일고 있습니다.', 0.4, 1]] },
+      { id: 'restructure', label: '자영업 구조조정·재취업 지원', lt: 'law', lean: 'R', pc: 25, lag: 6,
+        desc: '과당경쟁 업종 진입 규제·폐업 지원.', e: { gdp: 0.1, unemp: 0.3, innovation: 1, happiness: -1 }, f: { local: -6, biz: 4 } },
+    ] },
+  { id: 'trade', cat: 'econ', name: '통상 정책',
+    desc: 'FTA 59개국, 한미 관세협상 타결(상호관세 15%, 대미 투자 3,500억 달러).',
+    options: [
+      { id: 'cur', label: '현행 개방 통상', cur: true, desc: '현행.' },
+      { id: 'cptpp', label: 'CPTPP 가입', lt: 'law', lean: 'N', pc: 30, lag: 6,
+        desc: '아태 경제동반자협정 가입. 농어업 피해.', e: { gdp: 0.12, innovation: 2 }, rel: { jp: 4, us: 2, cn: -1 }, f: { farm: -18, biz: 8 },
+        r: [['protest', '농민 대규모 시위', '전국 농민단체가 트랙터를 몰고 상경했습니다.', 0.6, 2]] },
+      { id: 'protect', label: '보호무역 강화', lt: 'law', lean: 'N', pc: 25, lag: 4,
+        desc: '전략산업 보호관세.', e: { gdp: -0.2, infl: 0.3, innovation: -2 }, rel: { us: -3, cn: -4, eu: -4 }, f: { farm: 10, labor: 4, biz: -8 } },
+    ] },
+  { id: 'privatize', cat: 'econ', name: '공기업 운영',
+    desc: '한전·철도·가스 등 공기업 체제. 한전 누적부채 200조 원 이상.',
+    options: [
+      { id: 'cur', label: '공기업 유지', cur: true, desc: '현행.' },
+      { id: 'private', label: '전력·철도 단계적 민영화', lt: 'law', lean: 'R', pc: 40, lag: 6,
+        desc: '경쟁 도입, 요금 상승 우려.', e: { fiscal: 0.3, debt: -2, innovation: 2, infl: 0.2, welfare: -2 }, f: { labor: -15, biz: 10, lib: -10, con: 4 },
+        r: [['protest', '공공부문 총파업', '철도·발전 노조가 무기한 총파업에 돌입했습니다.', 0.7, 3]] },
+    ] },
+
+  /* ================= 노동 ================= */
+  { id: 'min_wage', cat: 'labor', name: '최저임금',
+    desc: '2026년 시간당 10,320원 (최저임금위원회 결정).',
+    options: [
+      { id: 'cur', label: '10,320원 (위원회 결정)', cur: true, desc: '현행.' },
+      { id: 'w12k', label: '12,000원으로 인상(+16%)', lt: 'decree', lean: 'L', pc: 25, lag: 2,
+        desc: '저임금 노동자 소득 증대, 소상공인 부담.', e: { gini: -0.006, unemp: 0.3, infl: 0.3, happiness: 2 }, f: { labor: 12, youth: 4, biz: -12, local: -6, con: -6 },
+        r: [['protest', '소상공인 반발', '편의점·식당 점주들이 "알바 대신 키오스크"를 외치며 집회를 열었습니다.', 0.6, 2]] },
+      { id: 'freeze', label: '동결', lt: 'decree', lean: 'R', pc: 15, lag: 2,
+        desc: '고용 안정, 실질임금 하락.', e: { gini: 0.003, unemp: -0.1, happiness: -1 }, f: { labor: -12, biz: 8, youth: -4 } },
+      { id: 'diff', label: '업종·지역별 차등 적용', lt: 'law', lean: 'R', pc: 25, lag: 4,
+        desc: '영세업종 낮은 최저임금 허용.', e: { unemp: -0.2, gini: 0.004, gdp: 0.05 }, f: { labor: -14, biz: 10, local: 2, lib: -6 } },
+    ] },
+  { id: 'work_hours', cat: 'labor', name: '근로시간',
+    desc: '주 52시간 상한(법정 40 + 연장 12). 주 4.5일제 시범사업 진행 중.',
+    options: [
+      { id: 'cur', label: '주 52시간제', cur: true, desc: '현행.' },
+      { id: 'd45', label: '주 4.5일제 법제화', lt: 'law', lean: 'L', pc: 30, lag: 6,
+        desc: '금요일 반일 근무. 생산성 향상 vs 비용 증가.', e: { happiness: 5, tfr: 0.02, gdp: -0.1, innovation: -1 }, f: { labor: 10, youth: 10, biz: -10 } },
+      { id: 'd4', label: '주 4일제(32시간)', lt: 'law', lean: 'L', pc: 45, lag: 8,
+        desc: '세계 최초 법정 주 4일제.', e: { happiness: 9, tfr: 0.04, gdp: -0.35, innovation: -3, unemp: -0.1 }, f: { labor: 14, youth: 15, biz: -18, con: -6 },
+        r: [['market', '중소기업 인력난', '중소 제조업체들이 생산라인 축소를 발표했습니다.', 0.5, 2]] },
+      { id: 'flex', label: '주 69시간 유연화', lt: 'law', lean: 'R', pc: 30, lag: 2,
+        desc: '연장근로 관리단위 확대.', e: { gdp: 0.1, happiness: -5, tfr: -0.02 }, f: { labor: -15, youth: -14, biz: 12 },
+        r: [['social', '"주69시간" 역풍', 'MZ세대가 "과로사 조장법"이라며 거세게 반발합니다.', 0.7, 2]] },
+    ] },
+  { id: 'retire_age', cat: 'labor', name: '정년',
+    desc: '법정 정년 60세 (2016년~). 국민연금 수급은 65세(2033년).',
+    options: [
+      { id: 'r60', label: '60세', cur: true, desc: '현행.' },
+      { id: 'r65', label: '65세로 단계적 연장', lt: 'law', lean: 'N', pc: 30, lag: 8,
+        desc: '소득 공백 해소, 청년 채용 위축 우려.', e: { welfare: 3, unemp: 0.1, gdp: 0.05, fiscal: 0.05 }, f: { elder: 12, labor: 8, youth: -10, biz: -8 },
+        r: [['social', '세대 갈등', '청년층이 "일자리 뺏기"라며 반발합니다.', 0.5, 2]] },
+      { id: 'none', label: '정년 폐지 + 임금피크·직무급', lt: 'law', lean: 'R', pc: 40, lag: 8,
+        desc: '연령 차별 철폐, 호봉제 개편.', e: { gdp: 0.1, welfare: 2, unemp: 0.1 }, f: { elder: 8, labor: -10, biz: 4, youth: -6 } },
+    ] },
+  { id: 'labor_union', cat: 'labor', name: '노조법(노란봉투법)',
+    desc: '2025년 노조법 2·3조 개정(하청 교섭권, 손배 제한) 2026년 시행.',
+    options: [
+      { id: 'cur', label: '개정 노조법 시행', cur: true, desc: '현행.' },
+      { id: 'repeal', label: '개정 노조법 폐지', lt: 'law', lean: 'R', pc: 30, lag: 2,
+        desc: '원청 교섭의무 삭제.', e: { gdp: 0.05, gini: 0.002 }, f: { labor: -18, biz: 12, lib: -8, con: 6 },
+        r: [['protest', '양대노총 총파업', '민주노총·한국노총이 공동 총파업을 선언했습니다.', 0.6, 2]] },
+      { id: 'flex_fire', label: '해고 요건 완화', lt: 'law', lean: 'R', pc: 40, lag: 4,
+        desc: '저성과자 해고 허용, 노동시장 유연화.', e: { gdp: 0.15, unemp: -0.1, happiness: -3, gini: 0.004 }, f: { labor: -20, biz: 15, youth: -4 },
+        r: [['protest', '노동계 총파업', '"쉬운 해고법"에 맞서 대규모 파업이 시작됐습니다.', 0.7, 3]] },
+    ] },
+  { id: 'platform', cat: 'labor', name: '플랫폼·특수고용 노동자',
+    desc: '배달·대리기사 등 일부 산재·고용보험 적용, 근로자성 불인정.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'worker', label: '근로자 추정제 도입', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '플랫폼 노동자를 원칙적으로 근로자로.', e: { welfare: 3, gini: -0.003, infl: 0.1, innovation: -1 }, f: { labor: 10, youth: 4, biz: -8 } },
+    ] },
+
+  /* ================= 복지·인구 ================= */
+  { id: 'pension', cat: 'welfare', name: '국민연금',
+    desc: '2025년 개혁: 보험료 9%→13%(매년 0.5%p), 소득대체율 43%. 기금 고갈 2064년 추정.',
+    options: [
+      { id: 'cur', label: '보험료 13% / 대체율 43%', cur: true, desc: '현행.' },
+      { id: 'auto', label: '보험료 15% + 자동조정장치', lt: 'law', lean: 'R', pc: 40, lag: 8,
+        desc: '기금 지속가능성 확보, 수령액 감소.', e: { fiscal: 0.3, welfare: -2, gdp: -0.05 }, f: { youth: 4, elder: -10, labor: -8, biz: -6 },
+        r: [['protest', '"용돈 연금" 반발', '노년층 단체가 연금 삭감 반대 집회를 열었습니다.', 0.5, 2]] },
+      { id: 'new', label: '신연금 분리(완전적립식)', lt: 'law', lean: 'R', pc: 50, lag: 10,
+        desc: '청년 세대부터 적립식, 구연금은 재정으로.', e: { fiscal: -0.6, welfare: 1, gdp: 0.05 }, f: { youth: 12, elder: -6, lib: -4 },
+        r: [['fiscal', '구연금 재정 투입 폭증', '구연금 적자를 메우기 위한 국고 투입이 예상보다 커졌습니다.', 0.5, 2]] },
+      { id: 'generous', label: '소득대체율 50%로 상향', lt: 'law', lean: 'L', pc: 35, lag: 6,
+        desc: '노후소득 보장 강화, 미래세대 부담.', e: { fiscal: -0.4, welfare: 5, gini: -0.004 }, f: { elder: 12, labor: 8, youth: -14 },
+        r: [['social', '청년층 "연금 보이콧"', '청년 단체가 국민연금 납부 거부 운동을 시작했습니다.', 0.5, 2]] },
+    ] },
+  { id: 'basic_pension', cat: 'welfare', name: '기초연금',
+    desc: '65세 이상 소득 하위 70%, 월 약 34만 원.',
+    options: [
+      { id: 'cur', label: '하위 70% 월 34만원', cur: true, desc: '현행.' },
+      { id: 'universal', label: '전체 노인 월 40만원', lt: 'law', lean: 'L', pc: 30, lag: 2,
+        desc: '보편 지급.', e: { fiscal: -0.6, welfare: 4, gini: -0.004, happiness: 2 }, f: { elder: 15, youth: -8, con: -3 } },
+      { id: 'target', label: '하위 50%에 월 50만원 집중', lt: 'law', lean: 'R', pc: 30, lag: 2,
+        desc: '노인빈곤율 해소에 집중.', e: { fiscal: 0.05, welfare: 3, gini: -0.005 }, f: { elder: -6, youth: 3, con: 2 } },
+    ] },
+  { id: 'ubi', cat: 'welfare', name: '기본소득',
+    desc: '전국 단위 기본소득 없음. (일부 지자체 청년·농촌 기본소득 시범)',
+    options: [
+      { id: 'none', label: '미도입', cur: true, desc: '현행.' },
+      { id: 'youth', label: '청년 기본소득(19~24세 연 100만원)', lt: 'law', lean: 'L', pc: 25, lag: 2,
+        desc: '청년 자립 지원.', e: { fiscal: -0.15, welfare: 2, happiness: 1 }, f: { youth: 12, elder: -4 } },
+      { id: 'full', label: '전 국민 월 30만원', lt: 'law', lean: 'L', pc: 60, lag: 4,
+        desc: '연 186조 원 소요. 증세 불가피.', e: { fiscal: -6.5, welfare: 12, gini: -0.03, happiness: 6, infl: 0.6, gdp: 0.1 }, f: { lib: 12, youth: 10, con: -15, biz: -10 },
+        r: [['fiscal', '재정 붕괴 경고', '국제 신용평가사가 한국 신용등급 하향을 경고했습니다.', 0.8, 3]] },
+      { id: 'nit', label: '안심소득(음의 소득세)', lt: 'law', lean: 'R', pc: 40, lag: 4,
+        desc: '중위소득 85% 이하에 부족분 절반 지원.', e: { fiscal: -1.0, welfare: 6, gini: -0.012, happiness: 2 }, f: { con: 4, lib: 2, youth: 4 } },
+    ] },
+  { id: 'birth', cat: 'welfare', name: '저출산 대책',
+    desc: '부모급여(0세 월 100만원), 육아휴직 급여 상한 250만원, 첫만남이용권.',
+    options: [
+      { id: 'cur', label: '현행 지원', cur: true, desc: '현행.' },
+      { id: 'cash1', label: '출생아 1인당 1억 원 지급', lt: 'law', lean: 'N', pc: 40, lag: 6,
+        desc: '18세까지 분할 지급. 연 약 25조 원.', e: { fiscal: -1.0, tfr: 0.12, welfare: 3 }, f: { youth: 10, elder: -4, con: -2 },
+        r: [['fiscal', '재원 논란', '"출산율 0.1 올리는 데 25조"라는 회의론이 커집니다.', 0.4, 2]] },
+      { id: 'house', label: '신혼·출산가구 공공주택 무상 제공', lt: 'law', lean: 'L', pc: 40, lag: 8,
+        desc: '자녀 2명 이상 시 임대료 면제.', e: { fiscal: -0.6, tfr: 0.1, housing: 5 }, f: { youth: 14, con: -2 } },
+      { id: 'care', label: '0~12세 국가 완전돌봄 + 육아휴직 의무화', lt: 'law', lean: 'L', pc: 45, lag: 8,
+        desc: '아빠 육아휴직 3개월 의무, 초등 늘봄 확대.', e: { fiscal: -0.7, tfr: 0.09, happiness: 4, gdp: -0.05 }, f: { youth: 12, biz: -10, teach: -4 } },
+    ] },
+  { id: 'immig', cat: 'welfare', name: '이민 정책',
+    desc: '고용허가제 중심 외국인력. 체류 외국인 약 270만 명(5%).',
+    options: [
+      { id: 'cur', label: '제한적 외국인력', cur: true, desc: '현행.' },
+      { id: 'agency', label: '이민청 신설 + 적극적 이민 확대', lt: 'law', lean: 'N', pc: 40, lag: 8,
+        desc: '연 30만 명 이민 수용, 영주권 확대.', e: { gdp: 0.3, unemp: 0.1, tfr: 0.03, safety: -3, innovation: 2 }, f: { biz: 10, farm: 8, con: -10, elder: -8, labor: -6 },
+        r: [['social', '반이민 정서 확산', '외국인 밀집지역 갈등이 보도되며 반이민 여론이 커졌습니다.', 0.5, 2]] },
+      { id: 'restrict', label: '외국인력 축소', lt: 'law', lean: 'R', pc: 20, lag: 4,
+        desc: '내국인 일자리 우선.', e: { gdp: -0.2, unemp: -0.05, infl: 0.2 }, f: { farm: -14, biz: -10, con: 6, labor: 2 },
+        r: [['market', '농어촌·조선소 인력 대란', '외국인력 없이 공장이 멈춰 섰습니다.', 0.6, 2]] },
+    ] },
+  { id: 'health_ins', cat: 'welfare', name: '건강보험',
+    desc: '건보료율 7.19%(2026), 보장률 약 65%.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'expand', label: '보장률 80%로 확대', lt: 'decree', lean: 'L', pc: 30, lag: 6,
+        desc: '비급여 급여화, 건보료 인상.', e: { welfare: 6, health: 6, fiscal: -0.3, gini: -0.004 }, f: { elder: 8, lib: 6, medic: -8, biz: -4 } },
+      { id: 'private', label: '영리병원 허용·민간보험 확대', lt: 'law', lean: 'R', pc: 40, lag: 6,
+        desc: '의료산업화, 의료 양극화 우려.', e: { gdp: 0.1, innovation: 2, health: -4, gini: 0.004 }, f: { biz: 10, medic: 8, lib: -12, elder: -6 },
+        r: [['protest', '의료민영화 반대 시위', '시민단체가 "의료 민영화 저지" 촛불을 들었습니다.', 0.5, 2]] },
+    ] },
+
+  /* ================= 부동산 ================= */
+  { id: 'loan', cat: 'house', name: '주택담보대출 규제',
+    desc: '스트레스 DSR 3단계, 수도권 주담대 6억 한도(2025년 6·27 대책), 토지거래허가구역 확대.',
+    options: [
+      { id: 'cur', label: '현행 고강도 대출 규제', cur: true, desc: '현행.' },
+      { id: 'loosen', label: 'DSR·LTV 완화', lt: 'decree', lean: 'R', pc: 20, lag: 2,
+        desc: '실수요자 대출 숨통.', e: { housing: -6, gdp: 0.1, gini: 0.002 }, f: { con: 6, youth: 3, elder: 3, lib: -4 },
+        r: [['housing', '집값 재상승', '서울 아파트값이 다시 급등세를 보입니다.', 0.6, 2]] },
+      { id: 'tighten', label: '다주택자 대출 전면 금지', lt: 'decree', lean: 'L', pc: 20, lag: 2,
+        desc: '투기 수요 차단.', e: { housing: 4, gdp: -0.05 }, f: { con: -6, lib: 4 } },
+    ] },
+  { id: 'supply', cat: 'house', name: '주택 공급',
+    desc: '3기 신도시, 수도권 135만 호 공급 계획(2025).',
+    options: [
+      { id: 'cur', label: '현행 공급 계획', cur: true, desc: '현행.' },
+      { id: 'public', label: '공공임대 50만호 + 반값 아파트', lt: 'law', lean: 'L', pc: 35, lag: 10,
+        desc: '토지임대부 분양, LH 직접 시행.', e: { housing: 10, fiscal: -0.4, gini: -0.004, tfr: 0.02 }, f: { youth: 12, con: -4, lib: 6 },
+        r: [['fiscal', 'LH 부채 급증', '공공기관 부채가 급증하며 부실 시공 우려도 제기됩니다.', 0.4, 2]] },
+      { id: 'dereg', label: '재건축·재개발 규제 전면 해제', lt: 'law', lean: 'R', pc: 30, lag: 8,
+        desc: '용적률 상향, 초과이익환수 폐지.', e: { housing: 4, gdp: 0.15, gini: 0.005, env: -2 }, f: { con: 10, elder: 6, biz: 6, youth: 2, lib: -6 },
+        r: [['housing', '재건축 투기 과열', '강남 재건축 단지 호가가 급등했습니다.', 0.5, 2]] },
+      { id: 'greenbelt', label: '그린벨트 대규모 해제', lt: 'decree', lean: 'N', pc: 25, lag: 8,
+        desc: '수도권 개발제한구역 해제로 공급.', e: { housing: 6, env: -6, gdp: 0.05 }, f: { youth: 6, lib: -4, farm: 4 } },
+    ] },
+  { id: 'land', cat: 'house', name: '토지공개념',
+    desc: '헌법 제122조 근거, 토지거래허가제 운영.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'strong', label: '토지공개념 헌법 명문화 + 1가구 2주택 금지', lt: 'const', lean: 'L', pc: 60, lag: 8,
+        desc: '주택 소유 상한제.', e: { housing: 12, gini: -0.01, gdp: -0.2, freedom: -4 }, f: { con: -20, elder: -12, youth: 10, lib: 10, biz: -10 },
+        r: [['legal', '재산권 침해 위헌 논란', '법조계가 재산권 본질 침해라며 반발합니다.', 0.6, 3]] },
+    ] },
+  { id: 'rent', cat: 'house', name: '임대차 제도',
+    desc: '전세 제도 + 계약갱신청구권(2+2년), 전월세상한 5%.',
+    options: [
+      { id: 'cur', label: '현행 임대차 3법', cur: true, desc: '현행.' },
+      { id: 'repeal', label: '임대차 3법 폐지', lt: 'law', lean: 'R', pc: 20, lag: 2,
+        desc: '시장 자율.', e: { housing: -4, gdp: 0.03 }, f: { youth: -8, con: 6, elder: 4 } },
+      { id: 'abolish_jeonse', label: '전세 폐지 → 월세 전환 유도', lt: 'law', lean: 'N', pc: 30, lag: 8,
+        desc: '전세사기 근절, 보증금 리스크 해소.', e: { housing: -2, safety: 1, gini: 0.002 }, f: { youth: -10, elder: 4 },
+        r: [['housing', '월세 폭등', '전세 매물이 사라지며 월세가 급등했습니다.', 0.6, 2]] },
+      { id: 'longterm', label: '10년 장기 임대차 보장', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '세입자 주거 안정, 임대 공급 축소 우려.', e: { housing: 4 }, f: { youth: 8, elder: -6, con: -6 } },
+    ] },
+
+  /* ================= 교육 ================= */
+  { id: 'college', cat: 'edu', name: '대학 입시',
+    desc: '수능(정시) + 학생부종합(수시) 병행. 2028학년도 통합형 수능, 내신 5등급제.',
+    options: [
+      { id: 'cur', label: '수시·정시 병행', cur: true, desc: '현행.' },
+      { id: 'csat100', label: '정시(수능) 100%', lt: 'decree', lean: 'R', pc: 25, lag: 4,
+        desc: '공정성 강화, 사교육 집중 심화.', e: { education: -3, justice: 2, gini: 0.002 }, f: { youth: 6, teach: -10, con: 4 } },
+      { id: 'abitur', label: '수능 폐지 → 절대평가 자격고사(바칼로레아)', lt: 'law', lean: 'L', pc: 40, lag: 10,
+        desc: '논술형 국가시험. 줄세우기 탈피.', e: { education: 8, innovation: 2, happiness: 2 }, f: { teach: 10, youth: -6, elder: -4, con: -6 },
+        r: [['social', '학부모 혼란', '입시 대혼란에 학부모 단체가 반대 서명운동에 나섰습니다.', 0.6, 2]] },
+      { id: 'network', label: '서울대 10개 만들기(국립대 네트워크)', lt: 'law', lean: 'L', pc: 45, lag: 12,
+        desc: '거점 국립대에 서울대급 투자 + 공동학위.', e: { education: 6, fiscal: -0.3, housing: 2, gini: -0.003 }, f: { local: 12, teach: 6, con: -4, youth: 2 },
+        r: [['protest', '서울대 반발', '서울대 교수·동문들이 하향평준화라며 반대 성명을 냈습니다.', 0.4, 1]] },
+    ] },
+  { id: 'school_sys', cat: 'edu', name: '학제',
+    desc: '6-3-3-4 학제, 만 6세 입학. 의무교육: 중학교까지(고교 무상교육).',
+    options: [
+      { id: 'cur', label: '6-3-3-4', cur: true, desc: '현행.' },
+      { id: 'early', label: '만 5세 조기입학', lt: 'law', lean: 'R', pc: 25, lag: 6,
+        desc: '사회 진출 1년 앞당김.', e: { gdp: 0.05, education: -3, tfr: 0.01 }, f: { teach: -12, youth: -4, elder: 2 },
+        r: [['protest', '학부모 반대', '"아이들을 실험대상 삼지 말라"는 반발이 거셉니다.', 0.6, 2]] },
+      { id: '5344', label: '5-3-4-4(초등 단축·고교 4년)', lt: 'law', lean: 'N', pc: 35, lag: 10,
+        desc: '진로탐색 고교 4년제.', e: { education: 3, fiscal: -0.1 }, f: { teach: 2, youth: -2 } },
+    ] },
+  { id: 'private_edu', cat: 'edu', name: '사교육',
+    desc: '사교육비 연 29조 원(2024). 학원 교습시간 지자체 조례(서울 22시).',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'curfew', label: '학원 21시 이후 영업 전국 금지', lt: 'law', lean: 'L', pc: 20, lag: 2,
+        desc: '아이들의 저녁을 돌려준다.', e: { education: 2, happiness: 2, gini: -0.001 }, f: { teach: 6, youth: 2, biz: -4 } },
+      { id: 'ban', label: '입시 사교육 전면 금지(1980 과외금지 부활)', lt: 'law', lean: 'N', pc: 50, lag: 2,
+        desc: '2000년 위헌 결정을 정면 돌파.', e: { education: 1, gini: -0.003, freedom: -6, gdp: -0.05 }, f: { teach: 8, con: -6, lib: -4, youth: -6 },
+        r: [['legal', '헌법재판소 위헌 결정 가능성', '학원총연합회가 헌법소원을 제기했습니다.', 0.8, 3]] },
+    ] },
+  { id: 'free_edu', cat: 'edu', name: '무상교육 범위',
+    desc: '고교 무상교육(2021~), 국가장학금, 대학 등록금 동결 기조.',
+    options: [
+      { id: 'cur', label: '고교까지 무상', cur: true, desc: '현행.' },
+      { id: 'univ', label: '국공립대 등록금 전면 무상', lt: 'law', lean: 'L', pc: 30, lag: 4,
+        desc: '연 약 3조 원.', e: { fiscal: -0.12, education: 3, gini: -0.002, tfr: 0.01 }, f: { youth: 12, teach: 4, con: -2 } },
+      { id: 'all_univ', label: '모든 대학 등록금 무상', lt: 'law', lean: 'L', pc: 45, lag: 4,
+        desc: '연 약 14조 원.', e: { fiscal: -0.55, education: 4, gini: -0.004, tfr: 0.02 }, f: { youth: 18, con: -6, elder: -4 },
+        r: [['fiscal', '부실대학 연명 논란', '"좀비 대학에 혈세"라는 비판이 나옵니다.', 0.4, 1]] },
+    ] },
+  { id: 'ai_edu', cat: 'edu', name: 'AI·디지털 교육',
+    desc: 'AI 디지털교과서는 2025년 교육자료로 지위 조정, 학교 자율 선택.',
+    options: [
+      { id: 'cur', label: '학교 자율', cur: true, desc: '현행.' },
+      { id: 'full', label: 'AI 튜터 전면 도입 + 코딩 필수', lt: 'decree', lean: 'N', pc: 25, lag: 6,
+        desc: '1인 1 AI 튜터.', e: { education: 4, innovation: 3, fiscal: -0.1 }, f: { teach: -6, biz: 6, youth: 3 } },
+      { id: 'ban_phone', label: '학교 내 스마트폰 전면 금지', lt: 'law', lean: 'N', pc: 10, lag: 2,
+        desc: '수업 집중도 향상.', e: { education: 2 }, f: { teach: 8, elder: 4, youth: -4 } },
+    ] },
+
+  /* ================= 국방 ================= */
+  { id: 'conscript', cat: 'defense', name: '병역 제도',
+    desc: '남성 징병제, 육군 18개월. 병장 월급 약 150만원(2026, 자산형성 포함 205만원). 상비군 약 45만 명.',
+    options: [
+      { id: 'cur', label: '남성 징병제 18개월', cur: true, desc: '현행.' },
+      { id: 'volunteer', label: '모병제 전환(상비군 30만)', lt: 'law', lean: 'N', pc: 50, lag: 12,
+        desc: '전문 직업군 체제. 인건비 급증.', e: { security: -6, fiscal: -0.4, gdp: 0.2, unemp: -0.1, happiness: 3 }, f: { youth: 16, mil: -16, con: -10, elder: -8 },
+        r: [['security', '병력 공백 우려', '모병 지원율이 목표치의 60%에 그쳤습니다.', 0.6, 3]] },
+      { id: 'both', label: '남녀 징병제', lt: 'law', lean: 'R', pc: 45, lag: 8,
+        desc: '여성도 18개월 복무.', e: { security: 5, gdp: -0.15, fiscal: -0.2, tfr: -0.02 }, f: { youth: -6, mil: 10, con: 4, lib: -4 },
+        r: [['social', '젠더 갈등 폭발', '여성 단체와 남성 단체가 동시에 반발하고 있습니다.', 0.7, 2]] },
+      { id: 'm24', label: '복무기간 24개월로 연장', lt: 'law', lean: 'R', pc: 40, lag: 4,
+        desc: '병력 감소 대응.', e: { security: 4, gdp: -0.1, happiness: -3 }, f: { youth: -20, mil: 10, con: 4 },
+        r: [['protest', '청년층 분노', '20대 남성 지지율이 폭락하고 있습니다.', 0.7, 2]] },
+    ] },
+  { id: 'def_budget', cat: 'defense', name: '국방비',
+    desc: '2026년 국방예산 약 66조 원 (GDP 약 2.5%).',
+    options: [
+      { id: 'cur', label: 'GDP 2.5%', cur: true, desc: '현행.' },
+      { id: 'up35', label: 'GDP 3.5%로 증액', lt: 'law', lean: 'R', pc: 30, lag: 6,
+        desc: '방산 육성, 미국의 증액 요구 대응.', e: { security: 8, fiscal: -1.0, innovation: 2, gdp: 0.05 }, rel: { us: 6, nk: -3, cn: -2 }, f: { mil: 15, con: 8, lib: -6 } },
+      { id: 'up5', label: 'GDP 5% (NATO 신목표 수준)', lt: 'law', lean: 'R', pc: 45, lag: 8,
+        desc: '전면적 군 현대화.', e: { security: 14, fiscal: -2.5, innovation: 3, gdp: 0.05, welfare: -3 }, rel: { us: 10, nk: -6, cn: -5 }, f: { mil: 20, con: 10, lib: -14, elder: -4 },
+        r: [['fiscal', '복지 예산 삭감 압박', '국방비 급증으로 복지 예산 삭감 논의가 시작됐습니다.', 0.6, 2]] },
+      { id: 'down2', label: 'GDP 2.0%로 감축', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '평화 배당금.', e: { security: -5, fiscal: 0.5 }, rel: { us: -6, nk: 2 }, f: { mil: -14, con: -8, lib: 4 } },
+    ] },
+  { id: 'nuke', cat: 'defense', name: '핵 정책',
+    desc: 'NPT 회원국, 한반도 비핵화 공동선언. 한미 핵협의그룹(NCG) 확장억제. 핵추진잠수함 건조 승인(2025).',
+    options: [
+      { id: 'cur', label: '비핵화 + 확장억제', cur: true, desc: '현행.' },
+      { id: 'latent', label: '핵잠재력 확보(재처리·농축 권한)', lt: 'law', lean: 'R', pc: 40, lag: 8,
+        desc: '한미원자력협정 개정 추진.', e: { security: 4, innovation: 1 }, rel: { us: -4, cn: -6, jp: -4, nk: -4 }, f: { con: 8, mil: 10, lib: -4 },
+        r: [['diplomacy', '미국의 우려 표명', '미 국무부가 "비확산 원칙"을 상기시켰습니다.', 0.5, 2, 'us']] },
+      { id: 'armed', label: '독자 핵무장(NPT 탈퇴)', lt: 'law', lean: 'R', pc: 80, lag: 12,
+        desc: '자체 핵억제력. 국제 제재 위험.', e: { security: 12, gdp: -0.8, innovation: -3, freedom: -2 }, rel: { us: -25, cn: -20, jp: -20, eu: -20, nk: -10, ru: -5 }, f: { con: 12, mil: 15, lib: -15, biz: -15 },
+        r: [['diplomacy', '국제 제재 위기', '미국·EU가 대한(對韓) 제재를 검토하고 있습니다.', 0.9, 3, 'us'], ['market', '외국인 자본 대탈출', '코스피가 하루 8% 폭락했습니다.', 0.7, 3]] },
+    ] },
+  { id: 'opcon', cat: 'defense', name: '전시작전통제권',
+    desc: '평시 작전권 환수(1994), 전시작전권은 한미연합사(미군 사령관) 보유. 조건에 기초한 전환 추진.',
+    options: [
+      { id: 'cur', label: '연합사 보유(조건부 전환 추진)', cur: true, desc: '현행.' },
+      { id: 'transfer', label: '임기 내 전작권 전환', lt: 'decree', lean: 'L', pc: 30, lag: 8,
+        desc: '미래연합사(한국군 사령관) 체제.', e: { security: -2, freedom: 1 }, rel: { us: -3, nk: 1 }, f: { lib: 8, mil: -6, con: -8 },
+        r: [['security', '연합방위태세 공백 우려', '예비역 장성들이 전작권 전환 반대 성명을 냈습니다.', 0.4, 1]] },
+    ] },
+  { id: 'alt_service', cat: 'defense', name: '대체복무',
+    desc: '양심적 병역거부자 교정시설 36개월 합숙.',
+    options: [
+      { id: 'cur', label: '36개월 교정시설', cur: true, desc: '현행.' },
+      { id: 'social', label: '27개월 사회복지시설 복무', lt: 'law', lean: 'L', pc: 15, lag: 2,
+        desc: '유엔 권고 수용.', e: { freedom: 3, security: -1 }, f: { lib: 4, mil: -6, youth: -2, con: -4 } },
+    ] },
+
+  /* ================= 외교·통일 ================= */
+  { id: 'us_alliance', cat: 'diplo', name: '한미동맹 기조',
+    desc: '포괄적 전략동맹. 주한미군 약 2만 8,500명, 방위비분담금 1조 5,192억 원(2026).',
+    options: [
+      { id: 'cur', label: '포괄적 전략동맹', cur: true, desc: '현행.' },
+      { id: 'deep', label: '동맹 최우선(대중 견제 동참)', lt: 'decree', lean: 'R', pc: 25, lag: 4,
+        desc: '쿼드 가입, 인도태평양 전략 적극 동참.', e: { security: 5, gdp: -0.05 }, rel: { us: 12, jp: 6, cn: -15, nk: -6, ru: -4 }, f: { con: 10, mil: 8, lib: -8, biz: -4 },
+        r: [['diplomacy', '중국의 경제 보복', '중국이 한국 기업에 대한 비공식 제재를 시작했습니다.', 0.6, 2, 'cn']] },
+      { id: 'balance', label: '미·중 균형외교', lt: 'decree', lean: 'L', pc: 20, lag: 4,
+        desc: '전략적 모호성 유지.', e: { security: -1, gdp: 0.05 }, rel: { us: -6, cn: 8 }, f: { lib: 4, con: -6, biz: 4 } },
+      { id: 'reduce', label: '주한미군 감축 수용·자주국방', lt: 'decree', lean: 'N', pc: 40, lag: 8,
+        desc: '방위비 분담 갈등 종결.', e: { security: -8, fiscal: -0.3 }, rel: { us: -10, cn: 6, nk: 4 }, f: { mil: -12, con: -14, lib: 6, elder: -8 },
+        r: [['security', '안보 불안 확산', '주한미군 감축 소식에 신용부도스와프(CDS) 프리미엄이 상승했습니다.', 0.6, 3]] },
+    ] },
+  { id: 'china', cat: 'diplo', name: '대중국 정책',
+    desc: '전략적 협력동반자. 최대 교역국(수출 약 20%).',
+    options: [
+      { id: 'cur', label: '전략적 관리', cur: true, desc: '현행.' },
+      { id: 'close', label: '경제 협력 강화(한중 FTA 2단계)', lt: 'decree', lean: 'L', pc: 20, lag: 4,
+        desc: '서비스·투자 개방.', e: { gdp: 0.1 }, rel: { cn: 12, us: -6 }, f: { biz: 6, con: -6, farm: -4 } },
+      { id: 'decouple', label: '공급망 탈중국', lt: 'decree', lean: 'R', pc: 25, lag: 8,
+        desc: '핵심광물·부품 다변화.', e: { gdp: -0.15, security: 2, innovation: 1 }, rel: { cn: -14, us: 6 }, f: { biz: -8, con: 6 },
+        r: [['diplomacy', '요소수 사태 재현', '중국이 핵심 원자재 수출을 통제했습니다.', 0.5, 2, 'cn']] },
+    ] },
+  { id: 'japan', cat: 'diplo', name: '대일본 정책',
+    desc: '셔틀외교 복원. 강제징용 제3자 변제안(2023).',
+    options: [
+      { id: 'cur', label: '실용적 협력', cur: true, desc: '현행.' },
+      { id: 'history', label: '과거사 우선 강경 대응', lt: 'decree', lean: 'L', pc: 15, lag: 2,
+        desc: '제3자 변제안 철회, 공식 사과 요구.', e: { justice: 1 }, rel: { jp: -14, us: -3 }, f: { lib: 8, elder: 2, con: -6, biz: -6 },
+        r: [['diplomacy', '일본의 수출 규제 재발', '일본이 반도체 소재 수출 심사를 강화했습니다.', 0.4, 2, 'jp']] },
+      { id: 'alliance', label: '한일 안보협력(군사정보·준동맹)', lt: 'decree', lean: 'R', pc: 25, lag: 4,
+        desc: '한미일 3각 안보협력 제도화.', e: { security: 3 }, rel: { jp: 12, us: 5, cn: -6, nk: -4 }, f: { con: 6, lib: -10, elder: -4 } },
+    ] },
+  { id: 'nk_policy', cat: 'diplo', name: '대북 정책',
+    desc: '"평화적 두 국가" 논쟁 속 대화 재개 모색 + 억제력 유지. 남북 연락채널 단절 상태.',
+    options: [
+      { id: 'cur', label: '억제 + 대화 모색', cur: true, desc: '현행.' },
+      { id: 'hard', label: '강경 압박(대북전단·확성기 재개)', lt: 'decree', lean: 'R', pc: 15, lag: 2,
+        desc: '힘에 의한 평화.', e: { security: -2, freedom: 1 }, rel: { nk: -12, us: 3, cn: -3 }, f: { con: 8, mil: 6, lib: -8 },
+        r: [['security', '북한의 국지 도발', '북한이 접경지역에 오물풍선과 포격 도발을 감행했습니다.', 0.6, 2]] },
+      { id: 'engage', label: '대규모 경협(개성공단·금강산 재개)', lt: 'law', lean: 'L', pc: 35, lag: 6,
+        desc: '제재 예외 협의 필요.', e: { security: 2, gdp: 0.05 }, rel: { nk: 15, us: -6, cn: 4 }, f: { lib: 10, con: -10, biz: 2 },
+        r: [['diplomacy', '대북제재 위반 논란', '미 재무부가 제재 위반 가능성을 경고했습니다.', 0.5, 2, 'us']] },
+      { id: 'twostate', label: '평화적 두 국가론 공식화', lt: 'decree', lean: 'L', pc: 40, lag: 6,
+        desc: '통일 지향 대신 공존 체제. 헌법 영토조항 논란.', e: { security: 1 }, rel: { nk: 8, cn: 3 }, f: { lib: 4, con: -14, elder: -8, mil: -4 },
+        r: [['legal', '헌법 제3·4조 위반 논란', '영토조항·평화통일 조항 위반이라는 헌법소원이 제기됐습니다.', 0.6, 2]] },
+    ] },
+  { id: 'oda', cat: 'diplo', name: '공적개발원조(ODA)',
+    desc: 'ODA 약 6.5조 원(GNI 0.2%).',
+    options: [
+      { id: 'cur', label: 'GNI 0.2%', cur: true, desc: '현행.' },
+      { id: 'up', label: 'GNI 0.4%로 확대', lt: 'decree', lean: 'N', pc: 15, lag: 4,
+        desc: '글로벌 중추국가 위상.', e: { fiscal: -0.1 }, rel: { eu: 6, us: 3 }, f: { lib: 2, elder: -2 } },
+      { id: 'ukr', label: '우크라이나 재건·무기지원 적극 참여', lt: 'decree', lean: 'R', pc: 25, lag: 2,
+        desc: '방산 수출 확대.', e: { innovation: 1, gdp: 0.05 }, rel: { eu: 8, us: 6, ru: -18 }, f: { mil: 6, con: 4, lib: -4 },
+        r: [['diplomacy', '러시아의 보복', '러시아가 북러 군사협력 강화로 대응했습니다.', 0.5, 2, 'ru']] },
+    ] },
+
+  /* ================= 사법·검경 ================= */
+  { id: 'prosecution', cat: 'justice', name: '검찰 제도',
+    desc: '2025년 정부조직법 개정: 검찰청 폐지 → 공소청(법무부, 기소) + 중대범죄수사청(행안부, 수사) 분리, 2026년 시행.',
+    options: [
+      { id: 'cur', label: '공소청 + 중대범죄수사청 분리', cur: true, desc: '현행.' },
+      { id: 'restore', label: '검찰청 부활(수사·기소 통합)', lt: 'law', lean: 'R', pc: 35, lag: 4,
+        desc: '수사 효율성 회복, 권력 집중 우려.', e: { safety: 2, justice: -3 }, f: { legal: 10, con: 8, lib: -12 },
+        r: [['social', '"검찰 공화국 회귀" 논란', '시민단체가 검찰 권력 복원에 반대하고 있습니다.', 0.5, 2]] },
+      { id: 'jury', label: '기소배심제 + 검사장 직선제', lt: 'law', lean: 'L', pc: 40, lag: 6,
+        desc: '미국식 민주적 통제.', e: { justice: 5, safety: -1 }, f: { lib: 8, legal: -10, con: -4 },
+        r: [['legal', '수사 지연·사건 적체', '제도 전환기 혼란으로 미제 사건이 쌓이고 있습니다.', 0.5, 2]] },
+    ] },
+  { id: 'cio', cat: 'justice', name: '고위공직자범죄수사처(공수처)',
+    desc: '2021년 출범. 검사 정원 25명.',
+    options: [
+      { id: 'cur', label: '공수처 존치', cur: true, desc: '현행.' },
+      { id: 'abolish', label: '공수처 폐지', lt: 'law', lean: 'R', pc: 25, lag: 2,
+        desc: '중복 수사기관 정리.', e: { justice: -2, fiscal: 0.01 }, f: { con: 8, lib: -8, legal: 4 } },
+      { id: 'expand', label: '공수처 인력 3배·기소권 확대', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '고위공직자 비리 전담.', e: { justice: 4 }, f: { lib: 6, con: -6, legal: -4 } },
+    ] },
+  { id: 'police', cat: 'justice', name: '경찰 제도',
+    desc: '국가경찰 + 자치경찰 일원화 모델. 국가수사본부 운영.',
+    options: [
+      { id: 'cur', label: '일원화 자치경찰', cur: true, desc: '현행.' },
+      { id: 'split', label: '자치경찰 이원화(시도 소속)', lt: 'law', lean: 'L', pc: 30, lag: 8,
+        desc: '지역 맞춤 치안.', e: { safety: 2, fiscal: -0.1, justice: 1 }, f: { local: 8, legal: -2 } },
+      { id: 'oversight', label: '독립 경찰위원회 + 수사권 통제 강화', lt: 'law', lean: 'N', pc: 25, lag: 4,
+        desc: '거대 경찰권력 견제.', e: { justice: 3, safety: -1 }, f: { lib: 4, legal: 4 } },
+    ] },
+  { id: 'death', cat: 'justice', name: '사형제',
+    desc: '법적으로 존치, 1997년 이후 집행 없음(실질적 사형폐지국). 2024년 헌재 심리 중.',
+    options: [
+      { id: 'cur', label: '존치·집행 유예', cur: true, desc: '현행.' },
+      { id: 'abolish', label: '폐지 + 절대적 종신형 도입', lt: 'law', lean: 'L', pc: 25, lag: 2,
+        desc: '국제 인권기준 부합.', e: { freedom: 4, safety: -1 }, rel: { eu: 6 }, f: { lib: 8, con: -10, elder: -6 } },
+      { id: 'execute', label: '사형 집행 재개', lt: 'decree', lean: 'R', pc: 30, lag: 1,
+        desc: '흉악범 엄벌.', e: { freedom: -5, safety: 2 }, rel: { eu: -15 }, f: { con: 10, elder: 6, lib: -14 },
+        r: [['diplomacy', 'EU 인권 비판', 'EU가 한-EU FTA 지속가능발전 조항 위반을 거론했습니다.', 0.5, 1, 'eu']] },
+    ] },
+  { id: 'jury_trial', cat: 'justice', name: '국민참여재판',
+    desc: '2008년 도입, 배심원 평결은 권고적 효력.',
+    options: [
+      { id: 'cur', label: '권고적 효력', cur: true, desc: '현행.' },
+      { id: 'binding', label: '배심 평결 기속력 부여', lt: 'law', lean: 'L', pc: 25, lag: 4,
+        desc: '사법 민주화.', e: { justice: 5 }, f: { lib: 6, legal: -10 } },
+    ] },
+  { id: 'court', cat: 'justice', name: '대법원 구성',
+    desc: '대법원장 + 대법관 13명(총 14명). 증원 법안 논의 중.',
+    options: [
+      { id: 'cur', label: '대법관 14명', cur: true, desc: '현행.' },
+      { id: 'expand', label: '대법관 30명으로 증원', lt: 'law', lean: 'L', pc: 35, lag: 4,
+        desc: '상고심 적체 해소, 사법부 장악 논란.', e: { justice: 1 }, f: { lib: 4, legal: -14, con: -10 },
+        r: [['legal', '사법부 독립 침해 논란', '전국법관회의가 우려 성명을 발표했습니다.', 0.6, 2]] },
+      { id: 'elect', label: '대법관 국민 선출제', lt: 'const', lean: 'N', pc: 50, lag: 8,
+        desc: '민주적 정당성 vs 사법의 정치화.', e: { justice: -2, freedom: 1 }, f: { legal: -18, youth: 4 } },
+    ] },
+  { id: 'crime', cat: 'justice', name: '형사 정책',
+    desc: '촉법소년 연령 만 14세 미만. 디지털 성범죄 처벌 강화.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'juvenile', label: '촉법소년 연령 만 12세로 하향', lt: 'law', lean: 'R', pc: 15, lag: 2,
+        desc: '청소년 강력범죄 대응.', e: { safety: 2, freedom: -1 }, f: { con: 6, elder: 6, lib: -4, teach: -4 } },
+      { id: 'cannabis', label: '의료·기호용 대마 합법화', lt: 'law', lean: 'L', pc: 40, lag: 4,
+        desc: '세수·산업화 vs 마약 확산 우려.', e: { freedom: 3, safety: -5, fiscal: 0.05 }, f: { youth: 2, elder: -14, con: -12, lib: -2 },
+        r: [['social', '마약 확산 공포', '청소년 마약 적발 건수가 급증했다는 보도가 나왔습니다.', 0.6, 2]] },
+    ] },
+
+  /* ================= 민법·사회 ================= */
+  { id: 'adult_age', cat: 'civil', name: '민법상 성년',
+    desc: '만 19세(2013년 20세→19세). 2023년 만 나이 통일.',
+    options: [
+      { id: 'cur', label: '만 19세', cur: true, desc: '현행.' },
+      { id: 'a18', label: '만 18세로 하향', lt: 'law', lean: 'L', pc: 10, lag: 2,
+        desc: '선거연령과 일치, 계약·혼인 자유.', e: { freedom: 2 }, f: { youth: 4, teach: -4, elder: -2 } },
+    ] },
+  { id: 'marriage', cat: 'civil', name: '혼인·가족 제도',
+    desc: '이성 간 법률혼만 인정. 동성혼·생활동반자 제도 없음.',
+    options: [
+      { id: 'cur', label: '이성 법률혼만 인정', cur: true, desc: '현행.' },
+      { id: 'partner', label: '생활동반자법 제정', lt: 'law', lean: 'L', pc: 30, lag: 4,
+        desc: '혼인 외 동거 가족 법적 보호(성별 무관).', e: { freedom: 5, tfr: 0.03, happiness: 2 }, rel: { eu: 3 }, f: { lib: 10, youth: 8, con: -12, elder: -10 },
+        r: [['protest', '종교계 대규모 반대 집회', '광화문에서 수십만 명 규모의 반대 집회가 열렸습니다.', 0.6, 2]] },
+      { id: 'samesex', label: '동성혼 법제화', lt: 'law', lean: 'L', pc: 50, lag: 4,
+        desc: '아시아 두 번째(대만 이후).', e: { freedom: 8, happiness: 1 }, rel: { eu: 6, us: 2 }, f: { lib: 12, youth: 6, con: -20, elder: -16 },
+        r: [['protest', '종교계 총궐기', '보수 종교계가 대통령 퇴진 운동까지 거론했습니다.', 0.8, 3], ['legal', '헌법 제36조 해석 논쟁', '"양성의 평등"을 근거로 한 위헌소송이 제기됐습니다.', 0.6, 2]] },
+    ] },
+  { id: 'discrim', cat: 'civil', name: '차별금지법',
+    desc: '포괄적 차별금지법 미제정(2007년 이후 14회 발의).',
+    options: [
+      { id: 'cur', label: '미제정(개별법만)', cur: true, desc: '현행.' },
+      { id: 'enact', label: '포괄적 차별금지법 제정', lt: 'law', lean: 'L', pc: 35, lag: 4,
+        desc: '성별·장애·성적지향 등 23개 사유.', e: { freedom: 6, justice: 2 }, rel: { eu: 4 }, f: { lib: 10, con: -14, elder: -8, biz: -4 },
+        r: [['protest', '종교계 반대 집회', '"역차별법"이라며 반대 서명이 100만 명을 넘었습니다.', 0.6, 2]] },
+    ] },
+  { id: 'abortion', cat: 'civil', name: '낙태(임신중지)',
+    desc: '2019년 헌법불합치 결정 후 대체입법 없이 처벌 조항 효력 상실(입법 공백).',
+    options: [
+      { id: 'cur', label: '입법 공백 상태', cur: true, desc: '현행.' },
+      { id: 'w14', label: '임신 14주까지 허용 입법', lt: 'law', lean: 'N', pc: 25, lag: 2,
+        desc: '의료 체계 정비, 약물 낙태 허용.', e: { freedom: 2, health: 2, justice: 1 }, f: { lib: 4, con: -4, medic: 2 } },
+      { id: 'full', label: '전면 비범죄화 + 건강보험 적용', lt: 'law', lean: 'L', pc: 30, lag: 2,
+        desc: '여성 자기결정권 최우선.', e: { freedom: 4, health: 2 }, f: { lib: 8, con: -12, elder: -8 } },
+      { id: 'ban', label: '처벌 조항 재입법(6주 이후 금지)', lt: 'law', lean: 'R', pc: 30, lag: 2,
+        desc: '태아 생명권 강조.', e: { freedom: -6, tfr: 0.01, health: -2 }, f: { con: 10, lib: -14, youth: -10 },
+        r: [['protest', '여성계 대규모 시위', '"내 몸은 나의 것" 시위가 전국으로 번졌습니다.', 0.7, 2]] },
+    ] },
+  { id: 'euthanasia', cat: 'civil', name: '조력존엄사',
+    desc: '연명의료결정법(2018)에 따른 연명치료 중단만 허용.',
+    options: [
+      { id: 'cur', label: '연명치료 중단만', cur: true, desc: '현행.' },
+      { id: 'allow', label: '의사조력사 허용', lt: 'law', lean: 'N', pc: 30, lag: 4,
+        desc: '말기 환자 자기결정권.', e: { freedom: 3, happiness: 1, welfare: -1 }, f: { elder: -2, medic: -6, con: -4, lib: 2 },
+        r: [['social', '생명경시 논란', '종교계와 장애인 단체가 "죽음을 권하는 사회"라고 비판했습니다.', 0.4, 1]] },
+    ] },
+  { id: 'surname', cat: 'civil', name: '자녀의 성(姓)',
+    desc: '부성 우선 원칙(혼인신고 시 협의하면 모의 성 가능).',
+    options: [
+      { id: 'cur', label: '부성 우선 원칙', cur: true, desc: '현행.' },
+      { id: 'free', label: '출생신고 시 부모 협의 자유 선택', lt: 'law', lean: 'L', pc: 10, lag: 2,
+        desc: '양성 평등.', e: { freedom: 2 }, f: { lib: 4, elder: -4, con: -3 } },
+    ] },
+  { id: 'press', cat: 'civil', name: '언론·표현',
+    desc: '언론중재법, 정보통신망법상 명예훼손(사실적시 명예훼손 처벌).',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'decrim', label: '사실적시 명예훼손 폐지', lt: 'law', lean: 'N', pc: 20, lag: 2,
+        desc: '표현의 자유 확대.', e: { freedom: 5, justice: 1 }, f: { lib: 4, legal: -4, youth: 3 } },
+      { id: 'punitive', label: '가짜뉴스 징벌적 손해배상(5배)', lt: 'law', lean: 'N', pc: 30, lag: 2,
+        desc: '허위정보 대응, 언론 위축 우려.', e: { freedom: -5, justice: 1 }, f: { elder: 4, lib: -2, con: -4 },
+        r: [['legal', '언론 자유 침해 논란', '국내외 언론단체가 공동 반대 성명을 냈습니다.', 0.6, 2]] },
+    ] },
+
+  /* ================= 에너지·환경 ================= */
+  { id: 'nuclear', cat: 'env', name: '원자력 발전',
+    desc: '원전 26기 운영(발전량 약 32%). 신규 2기 + SMR 1기 건설 계획.',
+    options: [
+      { id: 'cur', label: '원전 유지·신규 2기', cur: true, desc: '현행.' },
+      { id: 'phaseout', label: '탈원전(신규 중단·수명연장 금지)', lt: 'decree', lean: 'L', pc: 30, lag: 10,
+        desc: '재생에너지로 전환.', e: { env: 2, infl: 0.3, gdp: -0.15, innovation: -3, security: -1 }, f: { lib: 6, biz: -10, con: -10, local: -4 },
+        r: [['inflation', '전기요금 급등', '한전 적자로 전기요금 대폭 인상이 불가피해졌습니다.', 0.5, 2]] },
+      { id: 'expand', label: '원전 대폭 확대(SMR 20기)', lt: 'decree', lean: 'R', pc: 30, lag: 12,
+        desc: 'AI 데이터센터 전력 수요 대응.', e: { env: 3, gdp: 0.15, innovation: 3, infl: -0.1 }, f: { biz: 10, con: 8, lib: -6, local: -2 },
+        r: [['protest', '원전 부지 주민 반발', '신규 부지 후보지 주민들이 강하게 반발합니다.', 0.5, 1]] },
+    ] },
+  { id: 'carbon', cat: 'env', name: '탄소중립 목표',
+    desc: '2050 탄소중립, 2035 NDC 2018년 대비 53~61% 감축(2025 확정).',
+    options: [
+      { id: 'cur', label: '2035 NDC 53~61%', cur: true, desc: '현행.' },
+      { id: 'strong', label: '2040 탄소중립 + 석탄 2030 퇴출', lt: 'law', lean: 'L', pc: 35, lag: 8,
+        desc: '그린 전환 가속.', e: { env: 12, gdp: -0.2, infl: 0.3, innovation: 2 }, rel: { eu: 8 }, f: { lib: 8, youth: 6, biz: -12, local: -4 },
+        r: [['market', '철강·석화 산업 경쟁력 위기', '중후장대 산업계가 "탈산업화"를 경고합니다.', 0.5, 2]] },
+      { id: 'weak', label: '감축 목표 하향', lt: 'decree', lean: 'R', pc: 20, lag: 4,
+        desc: '산업 부담 완화.', e: { env: -8, gdp: 0.1 }, rel: { eu: -8 }, f: { biz: 10, lib: -10, youth: -6 },
+        r: [['diplomacy', 'EU 탄소국경세 부담', 'EU CBAM 적용으로 수출 기업 비용이 늘었습니다.', 0.5, 1, 'eu']] },
+    ] },
+  { id: 'renew', cat: 'env', name: '재생에너지',
+    desc: '재생에너지 발전 비중 약 10%. RPS 제도.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'offshore', label: '해상풍력·태양광 100GW 국가 주도', lt: 'law', lean: 'L', pc: 30, lag: 10,
+        desc: '해상풍력특별법 + 에너지고속도로.', e: { env: 8, innovation: 3, fiscal: -0.3, gdp: 0.05 }, rel: { eu: 4 }, f: { lib: 6, local: 4, farm: -4 } },
+    ] },
+  { id: 'plastic', cat: 'env', name: '일회용품·순환경제',
+    desc: '매장 내 일회용컵 규제 완화(2023), 다회용기 자율.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'ban', label: '일회용 플라스틱 전면 금지', lt: 'law', lean: 'L', pc: 15, lag: 4,
+        desc: '2030 플라스틱 제로.', e: { env: 5, infl: 0.1 }, f: { lib: 4, youth: 2, local: -4, biz: -4 } },
+    ] },
+
+  /* ================= 의료 ================= */
+  { id: 'med_school', cat: 'health', name: '의대 정원',
+    desc: '2026학년도 3,058명(2024 증원 사태 후 원점 회귀). 2027학년도부터 수급추계위원회 결정.',
+    options: [
+      { id: 'cur', label: '3,058명 + 추계위 결정', cur: true, desc: '현행.' },
+      { id: 'up', label: '5,000명으로 증원', lt: 'decree', lean: 'N', pc: 40, lag: 16,
+        desc: '필수의료·지역의료 붕괴 대응.', e: { health: 8, welfare: 2 }, f: { medic: -25, elder: 8, local: 6, youth: 2 },
+        r: [['brain', '전공의 집단 사직', '전공의들이 다시 병원을 떠났습니다. 응급실 뺑뺑이가 속출합니다.', 0.8, 3]] },
+      { id: 'public', label: '공공의대·지역의사제 신설', lt: 'law', lean: 'L', pc: 30, lag: 16,
+        desc: '10년 지역 의무복무.', e: { health: 5, fiscal: -0.05 }, f: { medic: -14, local: 12, lib: 4 },
+        r: [['brain', '의료계 반발', '의사협회가 휴진을 예고했습니다.', 0.5, 2]] },
+    ] },
+  { id: 'telemed', cat: 'health', name: '비대면 진료',
+    desc: '시범사업 형태로 제한적 허용(재진 중심).',
+    options: [
+      { id: 'cur', label: '시범사업', cur: true, desc: '현행.' },
+      { id: 'full', label: '비대면 진료 전면 허용', lt: 'law', lean: 'R', pc: 20, lag: 4,
+        desc: '초진 포함, 약 배송 허용.', e: { health: 4, innovation: 2 }, f: { medic: -10, biz: 6, youth: 6, local: 4 } },
+    ] },
+  { id: 'essential', cat: 'health', name: '필수의료 수가',
+    desc: '필수의료(소아·응급·외과) 저수가, 의료사고 형사 리스크.',
+    options: [
+      { id: 'cur', label: '현행', cur: true, desc: '현행.' },
+      { id: 'boost', label: '필수의료 수가 2배 + 의료사고 형사면책', lt: 'law', lean: 'N', pc: 30, lag: 6,
+        desc: '필수과 기피 해소.', e: { health: 7, fiscal: -0.2, justice: -1 }, f: { medic: 15, elder: 4, lib: -2 } },
+    ] },
+];
+
+/* ---------- 부작용 해결 템플릿 ---------- */
+// AI가 이 중 최선의 해법을 판단. e/f는 심각도(sev)에 비례해 스케일됨.
+// shock: 위기 발생 즉시 적용되는 충격(심각도 비례)
+const RISK_TEMPLATES = {
+  fiscal: {
+    name: '재정 위기', icon: '💸',
+    shock: { fiscal: -0.3, approval: -1 },
+    sol: [
+      { label: '국채 추가 발행', desc: '당장은 버티지만 채무비율이 오릅니다.', e: { debt: 1.5, fiscal: 0.2 }, f: { con: -3 }, pc: 5, ok: 0.9 },
+      { label: '지출 구조조정', desc: '다른 사업 예산을 깎아 메웁니다.', e: { fiscal: 0.4, welfare: -2, gdp: -0.05 }, f: { lib: -3, local: -3 }, pc: 15, ok: 0.75 },
+      { label: '부유세·한시 증세', desc: '고소득층·대기업 한시 증세로 재원 마련.', e: { fiscal: 0.5, gdp: -0.08, gini: -0.002 }, f: { biz: -6, con: -5, lib: 3 }, pc: 20, ok: 0.65 },
+      { label: '정책 규모 축소', desc: '문제가 된 정책의 규모를 절반으로 줄입니다.', e: { fiscal: 0.3 }, f: { lib: -2, con: 2 }, pc: 10, ok: 0.85, rollback: 0.4 },
+    ] },
+  protest: {
+    name: '집단 반발', icon: '📢',
+    shock: { happiness: -1, gdp: -0.05, approval: -2 },
+    sol: [
+      { label: '대화와 보상', desc: '대표단과 협상해 보상안을 제시합니다.', e: { fiscal: -0.1, happiness: 1 }, f: { _target: 6 }, pc: 15, ok: 0.7 },
+      { label: '원칙 고수·법적 대응', desc: '불법 행위에 엄정 대응합니다.', e: { safety: 1, freedom: -2 }, f: { _target: -8, con: 3 }, pc: 10, ok: 0.55 },
+      { label: '시행 유예', desc: '시행 시점을 미루고 공론화합니다.', e: {}, f: { _target: 4 }, pc: 5, ok: 0.85, rollback: 0.3 },
+      { label: '대국민 담화', desc: '대통령이 직접 국민을 설득합니다.', e: {}, f: { _all: 2 }, pc: 20, ok: 0.5 },
+    ] },
+  market: {
+    name: '시장 충격', icon: '📉',
+    shock: { gdp: -0.15, innovation: -1, approval: -1 },
+    sol: [
+      { label: '증시안정펀드·유동성 공급', desc: '정책금융으로 시장을 안정시킵니다.', e: { fiscal: -0.15, gdp: 0.08, infl: 0.1 }, f: { biz: 4 }, pc: 10, ok: 0.75 },
+      { label: '기업 인센티브 패키지', desc: '세액공제·규제 특례로 투자를 붙잡습니다.', e: { fiscal: -0.15, innovation: 1.5, gini: 0.002 }, f: { biz: 6, lib: -3 }, pc: 15, ok: 0.7 },
+      { label: '시장 자율 조정 대기', desc: '개입하지 않고 시장이 스스로 회복하길 기다립니다.', e: { gdp: -0.05 }, f: { biz: -3 }, pc: 0, ok: 0.45 },
+      { label: '정책 수정', desc: '시장 우려를 반영해 정책 일부를 조정합니다.', e: {}, f: { biz: 3, lib: -2 }, pc: 10, ok: 0.85, rollback: 0.35 },
+    ] },
+  diplomacy: {
+    name: '외교 마찰', icon: '🌐',
+    shock: { gdp: -0.08, security: -1, approval: -1 },
+    sol: [
+      { label: '특사 파견·정상 통화', desc: '고위급 소통으로 오해를 풉니다.', e: {}, rel: { _target: 6 }, f: {}, pc: 15, ok: 0.65 },
+      { label: '경제적 양보', desc: '구매·투자 약속으로 달랩니다.', e: { fiscal: -0.1, gdp: -0.03 }, rel: { _target: 10 }, f: { con: -2, lib: -2 }, pc: 10, ok: 0.75 },
+      { label: '원칙적 맞대응', desc: '주권 문제로 규정하고 물러서지 않습니다.', e: { security: 1, gdp: -0.08 }, rel: { _target: -6 }, f: { con: 3, lib: 3, elder: 2 }, pc: 5, ok: 0.5 },
+      { label: '다자외교로 우회', desc: '동맹·국제기구와 공조해 압력을 분산합니다.', e: {}, rel: { _target: 3, eu: 3 }, f: {}, pc: 15, ok: 0.6 },
+    ] },
+  legal: {
+    name: '법적 분쟁', icon: '⚖️',
+    shock: { justice: -1, approval: -1 },
+    sol: [
+      { label: '헌법재판소 적극 변론', desc: '정부 대리인단을 꾸려 합헌성을 입증합니다.', e: { justice: 1 }, f: { legal: 2 }, pc: 10, ok: 0.55 },
+      { label: '보완 입법', desc: '위헌 소지를 없애도록 법을 손봅니다.', e: { justice: 2 }, f: { legal: 4 }, pc: 15, ok: 0.8, rollback: 0.2 },
+      { label: '사회적 대타협 기구', desc: '이해관계자가 참여하는 공론화 위원회를 구성합니다.', e: { justice: 1, happiness: 1 }, f: { _all: 1 }, pc: 20, ok: 0.65 },
+    ] },
+  security: {
+    name: '안보 위기', icon: '🚨',
+    shock: { security: -3, gdp: -0.05, approval: -1 },
+    sol: [
+      { label: '한미 연합 대비태세 격상', desc: '전략자산 전개를 요청합니다.', e: { security: 3 }, rel: { us: 3, nk: -4, cn: -2 }, f: { mil: 5, con: 4 }, pc: 10, ok: 0.8 },
+      { label: '자체 전력 긴급 보강', desc: '추경으로 감시·타격 자산을 보강합니다.', e: { security: 4, fiscal: -0.2 }, f: { mil: 6 }, pc: 15, ok: 0.75 },
+      { label: '대화 채널 가동', desc: '긴장 완화를 위해 소통을 제안합니다.', e: { security: 1 }, rel: { nk: 4 }, f: { lib: 4, con: -4 }, pc: 15, ok: 0.5 },
+    ] },
+  social: {
+    name: '사회 갈등', icon: '🔥',
+    shock: { happiness: -2, approval: -2 },
+    sol: [
+      { label: '보완책 발표', desc: '피해 집단을 위한 맞춤 보완책을 내놓습니다.', e: { fiscal: -0.1, happiness: 1 }, f: { _target: 5 }, pc: 15, ok: 0.7 },
+      { label: '공론화 위원회', desc: '시민 숙의로 결론을 내도록 합니다.', e: { justice: 1 }, f: { _all: 1 }, pc: 15, ok: 0.65 },
+      { label: '정면 돌파', desc: '흔들리지 않고 정책 취지를 홍보합니다.', e: {}, f: { _target: -4, lib: 1, con: 1 }, pc: 5, ok: 0.5 },
+      { label: '단계적 시행으로 속도 조절', desc: '시행 범위를 줄여 갈등을 진정시킵니다.', e: {}, f: { _target: 3 }, pc: 10, ok: 0.85, rollback: 0.3 },
+    ] },
+  brain: {
+    name: '인력 이탈', icon: '🧳',
+    shock: { innovation: -1.5, health: -1, approval: -1 },
+    sol: [
+      { label: '처우 개선 패키지', desc: '보상과 지원으로 복귀를 유도합니다.', e: { fiscal: -0.15, innovation: 1, health: 1 }, f: { _target: 6, medic: 4 }, pc: 10, ok: 0.7 },
+      { label: '업무개시명령·법적 대응', desc: '법에 따라 복귀를 명령합니다.', e: { freedom: -2, health: 1 }, f: { _target: -10, medic: -6, con: 2 }, pc: 15, ok: 0.5 },
+      { label: '해외 인재·대체인력 투입', desc: '외국 면허자·군의관 등으로 공백을 메웁니다.', e: { fiscal: -0.1, health: 1 }, f: { _target: -4, medic: -4 }, pc: 15, ok: 0.6 },
+      { label: '정책 재검토 선언', desc: '원점에서 재논의를 약속합니다.', e: {}, f: { _target: 8, medic: 6 }, pc: 5, ok: 0.85, rollback: 0.4 },
+    ] },
+  inflation: {
+    name: '물가 불안', icon: '🛒',
+    shock: { infl: 0.4, happiness: -1, approval: -1 },
+    sol: [
+      { label: '유류세·공공요금 인하', desc: '세금을 깎아 물가를 누릅니다.', e: { infl: -0.3, fiscal: -0.15 }, f: { _all: 1 }, pc: 10, ok: 0.75 },
+      { label: '서민 에너지 바우처', desc: '취약계층에 직접 지원합니다.', e: { fiscal: -0.1, welfare: 1, gini: -0.001 }, f: { elder: 3, lib: 2 }, pc: 10, ok: 0.75 },
+      { label: '한은에 금리 인상 시그널', desc: '긴축으로 물가를 잡되 성장 둔화.', e: { infl: -0.4, gdp: -0.15, housing: 1 }, f: { biz: -4, youth: -2 }, pc: 15, ok: 0.65 },
+    ] },
+  housing: {
+    name: '부동산 불안', icon: '🏚️',
+    shock: { housing: -3, approval: -2 },
+    sol: [
+      { label: '긴급 공급 대책', desc: '공공택지·도심 공급을 앞당깁니다.', e: { housing: 3, fiscal: -0.1 }, f: { youth: 3 }, pc: 15, ok: 0.65 },
+      { label: '토지거래허가구역 확대', desc: '투기 지역 거래를 묶습니다.', e: { housing: 2, freedom: -1, gdp: -0.03 }, f: { con: -4, youth: 2 }, pc: 10, ok: 0.7 },
+      { label: '대출 조이기', desc: '돈줄을 죄어 과열을 식힙니다.', e: { housing: 2, gdp: -0.05 }, f: { youth: -3, elder: -2 }, pc: 10, ok: 0.75 },
+      { label: '정책 되돌리기', desc: '원인 정책을 일부 철회합니다.', e: {}, f: { lib: 2 }, pc: 10, ok: 0.85, rollback: 0.4 },
+    ] },
+};
+
+/* ---------- 외부 돌발 이벤트 ---------- */
+// cond: 발생 조건(state => boolean), w: 가중치
+const WORLD_EVENTS = [
+  { id: 'nk_missile', tpl: 'security', title: '북한 ICBM 발사', desc: '북한이 동해상으로 ICBM을 발사했습니다. 7차 핵실험 징후도 포착됐습니다.', sev: 2, w: 3, cond: s => s.rel.nk < 40 },
+  { id: 'nk_border', tpl: 'security', title: 'NLL 무력 충돌', desc: '서해 NLL 인근에서 남북 해군 간 교전이 발생했습니다.', sev: 3, w: 1, cond: s => s.rel.nk < 20 },
+  { id: 'nk_talks', tpl: 'diplomacy', target: 'nk', good: true, title: '북한의 대화 제의', desc: '북한이 이례적으로 남북 고위급 회담을 제안했습니다. 미국은 신중론입니다.', sev: 1, w: 1, cond: s => s.rel.nk > 35 },
+  { id: 'us_tariff', tpl: 'diplomacy', target: 'us', title: '미국 추가 관세 압박', desc: '미국이 반도체·자동차 품목관세 상향과 대미 투자 이행 가속을 요구했습니다.', sev: 2, w: 3, cond: s => true },
+  { id: 'us_troops', tpl: 'diplomacy', target: 'us', title: '방위비 분담금 대폭 증액 요구', desc: '미국이 방위비 분담금을 현재의 5배로 올리라고 요구했습니다.', sev: 2, w: 2, cond: s => s.rel.us < 80 },
+  { id: 'cn_sanction', tpl: 'diplomacy', target: 'cn', title: '중국의 한한령 강화', desc: '중국이 한국 콘텐츠·관광·화장품에 대한 비공식 제재를 강화했습니다.', sev: 2, w: 2, cond: s => s.rel.cn < 45 },
+  { id: 'jp_dokdo', tpl: 'diplomacy', target: 'jp', title: '일본 교과서 독도 왜곡', desc: '일본 정부가 독도 영유권 주장을 강화한 교과서를 검정 통과시켰습니다.', sev: 1, w: 2, cond: s => true },
+  { id: 'chip_boom', tpl: 'market', good: true, title: 'AI 반도체 슈퍼사이클', desc: 'HBM 수요 폭증으로 반도체 수출이 사상 최대를 기록했습니다. 이 호황을 어떻게 활용할까요?', sev: 1, w: 2, cond: s => s.stats.innovation > 65 },
+  { id: 'recession', tpl: 'market', title: '글로벌 경기침체', desc: '미국발 금융불안으로 세계 경제가 침체 국면에 들어섰습니다.', sev: 3, w: 1, cond: s => true },
+  { id: 'exchange', tpl: 'market', title: '환율 1,500원 돌파', desc: '원/달러 환율이 급등하며 외환시장이 흔들립니다.', sev: 2, w: 2, cond: s => s.stats.debt > 55 || s.stats.fiscal < -4 },
+  { id: 'pf_crisis', tpl: 'market', title: '부동산 PF 부실 확산', desc: '건설사 연쇄 부도로 2금융권 부실 우려가 커졌습니다.', sev: 2, w: 2, cond: s => s.stats.housing < 45 },
+  { id: 'housing_spike', tpl: 'housing', title: '서울 아파트값 폭등', desc: '서울 아파트 평균 매매가가 15억을 돌파했습니다. 영끌 매수가 재연됩니다.', sev: 2, w: 2, cond: s => s.stats.housing < 40 },
+  { id: 'jeonse_fraud', tpl: 'housing', title: '대규모 전세사기', desc: '수도권에서 피해자 수천 명 규모의 전세사기가 터졌습니다.', sev: 2, w: 1, cond: s => true },
+  { id: 'typhoon', tpl: 'fiscal', title: '초대형 태풍 피해', desc: '초강력 태풍이 남부 지방을 강타해 막대한 피해가 발생했습니다.', sev: 2, w: 2, cond: s => true },
+  { id: 'pandemic', tpl: 'fiscal', title: '신종 감염병 유행', desc: '신종 호흡기 감염병이 확산되며 방역 비상이 걸렸습니다.', sev: 3, w: 1, cond: s => true },
+  { id: 'wildfire', tpl: 'fiscal', title: '대형 산불', desc: '영남 지역에 역대 최악의 산불이 발생했습니다.', sev: 2, w: 1, cond: s => s.stats.env < 60 },
+  { id: 'strike_rail', tpl: 'protest', target: 'labor', title: '화물연대 총파업', desc: '안전운임제를 요구하며 화물연대가 파업에 들어갔습니다. 물류가 멈췄습니다.', sev: 2, w: 2, cond: s => s.factions.labor < 45 },
+  { id: 'farm_protest', tpl: 'protest', target: 'farm', title: '쌀값 폭락 농민 시위', desc: '쌀값이 폭락하며 농민들이 정부 매입을 요구합니다.', sev: 1, w: 1, cond: s => s.factions.farm < 50 },
+  { id: 'gender', tpl: 'social', target: 'youth', title: '젠더 갈등 폭발', desc: '온라인에서 시작된 젠더 갈등이 정치권으로 번졌습니다.', sev: 1, w: 2, cond: s => true },
+  { id: 'scandal', tpl: 'legal', title: '대통령실 측근 비리 의혹', desc: '대통령 측근의 금품수수 의혹이 보도됐습니다. 특검 요구가 거셉니다.', sev: 2, w: 2, cond: s => s.stats.justice < 50 },
+  { id: 'medic_crisis', tpl: 'brain', target: 'medic', title: '지방 응급실 연쇄 셧다운', desc: '전문의 부족으로 지방 응급실들이 야간 운영을 중단했습니다.', sev: 2, w: 2, cond: s => s.stats.health < 60 },
+  { id: 'brain_drain', tpl: 'brain', target: 'biz', title: 'AI 인재 해외 유출', desc: '국내 최상위 AI 연구자들이 빅테크로 대거 이직했습니다.', sev: 1, w: 1, cond: s => s.stats.innovation < 75 },
+  { id: 'heat', tpl: 'inflation', title: '이상기후 장바구니 물가 폭등', desc: '폭염과 가뭄으로 배추·사과값이 2배 이상 뛰었습니다.', sev: 1, w: 2, cond: s => true },
+  { id: 'oil', tpl: 'inflation', title: '국제 유가 급등', desc: '중동 분쟁으로 국제 유가가 배럴당 130달러를 넘었습니다.', sev: 2, w: 1, cond: s => true },
+  { id: 'crime_wave', tpl: 'social', target: 'elder', title: '묻지마 흉기 난동', desc: '도심에서 연쇄 흉기 난동이 발생해 치안 불안이 커졌습니다.', sev: 1, w: 1, cond: s => s.stats.safety < 78 },
+  { id: 'lowbirth', tpl: 'social', target: 'youth', title: '출생아 역대 최저 쇼크', desc: '분기 출생아 수가 또다시 역대 최저를 기록했습니다. 인구 위기론이 커집니다.', sev: 1, w: 1, cond: s => s.stats.tfr < 0.85 },
+  { id: 'kpop', tpl: 'market', good: true, title: 'K-컬처 글로벌 대흥행', desc: '한국 콘텐츠가 세계 시장을 휩쓸며 관광객이 폭증했습니다.', sev: 1, w: 1, cond: s => s.rel.cn > 30 },
+];
+
+// 긍정 이벤트(good: true)일 때 사용할 해법 — 기회를 어떻게 쓸지
+const OPPORTUNITY_SOL = {
+  market: [
+    { label: '국부펀드 적립', desc: '초과 세수를 미래 대비 기금으로 쌓습니다.', e: { fiscal: 0.4, debt: -1 }, f: { con: 3 }, pc: 5, ok: 0.9 },
+    { label: '민생 지원금 지급', desc: '호황의 과실을 국민과 나눕니다.', e: { happiness: 2, gdp: 0.05, gini: -0.002 }, f: { _all: 3 }, pc: 5, ok: 0.9 },
+    { label: '신산업 재투자', desc: 'AI·바이오 등 차세대 산업에 투자합니다.', e: { innovation: 3, gdp: 0.1 }, f: { biz: 5, youth: 2 }, pc: 10, ok: 0.85 },
+  ],
+  diplomacy: [
+    { label: '적극 수용', desc: '즉시 회담에 응하고 의제를 준비합니다.', e: { security: 2 }, rel: { _target: 10, us: -2 }, f: { lib: 6, con: -4 }, pc: 15, ok: 0.6 },
+    { label: '한미 사전 조율 후 수용', desc: '동맹과 조율하고 단계적으로 응합니다.', e: { security: 1 }, rel: { _target: 5, us: 2 }, f: { lib: 2, con: 1 }, pc: 10, ok: 0.75 },
+    { label: '진정성 확인 전 보류', desc: '비핵화 조치를 선행 조건으로 요구합니다.', e: {}, rel: { _target: -3 }, f: { con: 4, lib: -4 }, pc: 0, ok: 0.9 },
+  ],
+};
+
+/* ---------- 엔딩 평가 ---------- */
+const ENDINGS = [
+  { min: 85, grade: 'S', title: '대한민국 중흥의 대통령', desc: '역사는 당신의 임기를 "제2의 한강의 기적"으로 기록할 것입니다.' },
+  { min: 70, grade: 'A', title: '성공한 대통령', desc: '국민 다수가 당신의 국정 운영을 높이 평가합니다.' },
+  { min: 55, grade: 'B', title: '무난한 대통령', desc: '공과가 엇갈리지만 나라를 한 걸음 앞으로 옮겼습니다.' },
+  { min: 40, grade: 'C', title: '아쉬운 대통령', desc: '개혁의 의지는 있었으나 결과가 따라주지 않았습니다.' },
+  { min: 0,  grade: 'D', title: '실패한 대통령', desc: '임기 말 지지율과 국가 지표 모두 처참합니다.' },
+];
+
+</script>
+<script>
+/* js/engine.js */
+/* =========================================================
+ *  새로운 대한민국 — 시뮬레이션 엔진 + 규칙 기반 AI 판단
+ * ========================================================= */
+
+const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
+const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선
+const LOCAL_ELECTION_TURN = 14;   // 2030년 2분기 지방선거
+
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+function turnLabel(t) {
+  const idx = START_Q - 1 + t;
+  return { year: START_YEAR + Math.floor(idx / 4), q: (idx % 4) + 1, termYear: Math.floor(t / 4) + 1 };
+}
+
+function fmtStat(k, v, signed = false) {
+  const s = STATS[k];
+  const n = Number(v).toFixed(s ? s.dec : 1);
+  return (signed && v > 0 ? '+' : '') + n + (s ? s.unit : '');
+}
+
+function policyById(id, state) {
+  return POLICIES.find(p => p.id === id) || (state && state.customPolicies.find(p => p.id === id));
+}
+function optionOf(p, oid) { return p.options.find(o => o.id === oid); }
+function currentOption(p, state) { return optionOf(p, state.policies[p.id]) || p.options.find(o => o.cur); }
+
+/* ---------------- 상태 생성 ---------------- */
+function newGame(partyKey, presidentName) {
+  const party = PARTIES[partyKey];
+  const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
+  for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }
+  for (const k in RELATIONS) { rel[k] = RELATIONS[k].base; relMods[k] = 0; }
+  for (const k in FACTIONS) factions[k] = FACTIONS[k].base;
+  if (partyKey === 'lib') { factions.lib = 66; factions.con = 30; }
+  if (partyKey === 'con') { factions.con = 66; factions.lib = 32; factions.mil = 58; factions.labor = 38; }
+  if (partyKey === 'ind') { factions.con = 46; factions.lib = 50; factions.youth = 50; }
+  const policies = {};
+  for (const p of POLICIES) policies[p.id] = p.options.find(o => o.cur).id;
+
+  let seats;
+  if (partyKey === 'lib') seats = { L: 170, R: 108, N: 22, P: 0 };
+  else if (partyKey === 'con') seats = { L: 170, R: 108, N: 22, P: 0 };
+  else seats = { L: 166, R: 104, N: 18, P: 12 };
+
+  const s = {
+    v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
+    turn: 0, stats, mods, rel, relMods, factions, policies, seats,
+    approval: 58, pcap: 100, pending: [], latent: [], crises: [], resolved: [],
+    log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
+    autoAI: true, over: false, ending: null,
+  };
+  s.history.push(snapshot(s));
+  addLog(s, 'info', `${presidentName || '대통령'}님, 제21대 대한민국 대통령 취임을 축하드립니다. 5년 단임 임기(20분기)가 시작됩니다.`);
+  return s;
+}
+
+function snapshot(s) {
+  return { turn: s.turn, stats: { ...s.stats }, rel: { ...s.rel }, approval: s.approval, factions: { ...s.factions } };
+}
+
+function addLog(s, type, text, turn) {
+  s.log.unshift({ type, text, turn: turn ?? s.turn });
+  if (s.log.length > 400) s.log.length = 400;
+}
+
+/* ---------------- 효과 계산 ---------------- */
+function diffEffects(newOpt, oldOpt) {
+  const e = {}, rel = {}, f = {};
+  const add = (dst, src, k) => { for (const key in (src || {})) dst[key] = (dst[key] || 0) + src[key] * k; };
+  add(e, newOpt.e, 1); add(e, oldOpt && oldOpt.e, -1);
+  add(rel, newOpt.rel, 1); add(rel, oldOpt && oldOpt.rel, -1);
+  // 세력 반응: 새 정책 반응 + 기존 정책 철회 반응(절반)
+  add(f, newOpt.f, 1); add(f, oldOpt && oldOpt.f, -0.5);
+  return { e, rel, f };
+}
+
+// 지표 변화가 가지는 가치(AI 판단 점수). 현재 상태가 나쁠수록 해당 지표의 가중치가 커짐.
+function urgency(s, k) {
+  const v = s.stats[k], b = STATS[k].base;
+  switch (k) {
+    case 'debt': return v > 70 ? 2.2 : v > 60 ? 1.6 : 1;
+    case 'fiscal': return v < -6 ? 2 : v < -4.5 ? 1.4 : 1;
+    case 'gdp': return v < 0.5 ? 2 : v < 1.2 ? 1.4 : 1;
+    case 'unemp': return v > 5 ? 2 : v > 3.8 ? 1.4 : 1;
+    case 'infl': return v > 4 ? 2 : v > 3 ? 1.4 : 1;
+    case 'tfr': return 1.2;
+    default:
+      if (STATS[k].good > 0 && v < b - 10) return 1.6;
+      if (STATS[k].good > 0 && v < 35) return 1.8;
+      return 1;
+  }
+}
+
+function valueOfEffects(s, e, rel, fDelta) {
+  let total = 0; const parts = [];
+  for (const k in (e || {})) {
+    if (!STATS[k]) continue;
+    let val = e[k] * STATS[k].w * STATS[k].good * urgency(s, k);
+    if (k === 'infl') { // 물가는 2% 근처가 최적
+      const cur = s.stats.infl; val = (Math.abs(cur - 2) - Math.abs(cur + e[k] - 2)) * STATS[k].w * urgency(s, k);
+    }
+    total += val; parts.push({ k, name: STATS[k].name, delta: e[k], val });
+  }
+  for (const k in (rel || {})) {
+    if (!RELATIONS[k]) continue;
+    const imp = k === 'us' ? 0.5 : k === 'cn' ? 0.35 : k === 'nk' ? 0.25 : 0.2;
+    const val = rel[k] * imp; total += val;
+    parts.push({ k, name: RELATIONS[k].name + ' 관계', delta: rel[k], val, rel: true });
+  }
+  if (fDelta) {
+    const appr = approvalDeltaFromFactions(fDelta);
+    const lowAppr = s.approval < 35 ? 2 : s.approval < 45 ? 1.4 : 1;
+    const val = appr * 1.6 * lowAppr; total += val;
+    parts.push({ k: 'approval', name: '지지율', delta: appr, val });
+  }
+  return { total, parts };
+}
+
+function approvalDeltaFromFactions(f) {
+  let d = 0;
+  for (const k in f) if (FACTIONS[k]) d += f[k] * FACTIONS[k].pop;
+  return d;
+}
+
+/* ---------------- 국회 표결 ---------------- */
+function voteModel(s, opt, lobby = 0) {
+  if (!opt.lt || opt.lt === 'decree') return { type: 'decree', prob: 1, need: 0, exp: 0 };
+  const lean = opt.lean || 'N';
+  const apprAdj = (s.approval - 50) * 0.004;
+  const p = (bloc) => {
+    if (bloc === s.ruling) return clamp((lean !== 'N' && bloc !== 'P' && lean !== bloc ? 0.72 : 0.96) + apprAdj, 0.4, 0.99);
+    if (bloc === 'P') return 0.95;
+    if (bloc === 'N') return clamp(0.55 + apprAdj, 0.2, 0.9);
+    if (lean === bloc) return clamp(0.88 + apprAdj, 0.5, 0.97);
+    if (lean === 'N') return clamp(0.35 + apprAdj * 2, 0.05, 0.8);
+    return clamp(0.05 + apprAdj, 0.0, 0.3);
+  };
+  let exp = 0, varr = 0;
+  for (const b in s.seats) { const pr = p(b); exp += s.seats[b] * pr; varr += s.seats[b] * pr * (1 - pr); }
+  exp = Math.min(298, exp + lobby * 16); // 야당 협상(협치)으로 확보한 찬성표
+  varr += 36; // 이탈표 불확실성
+  const need = opt.lt === 'const' ? 200 : 151;
+  const sd = Math.sqrt(varr);
+  const z = (exp - need + 0.5) / sd;
+  let prob = normCdf(z);
+  let refProb = 1;
+  if (opt.lt === 'const') {
+    const refSupport = refendumSupport(s, opt);
+    refProb = normCdf((refSupport - 50) / 6);
+    prob *= refProb;
+  }
+  return { type: opt.lt, prob, need, exp: Math.round(exp), sd, refProb };
+}
+function refendumSupport(s, opt) {
+  return s.approval * 0.55 + 22 + (opt.lean === 'N' ? 4 : 0);
+}
+function normCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+
+/* ---------------- 정책 미리보기 (AI 사전 분석) ---------------- */
+function previewPolicy(s, p, opt, lobby = 0) {
+  const old = currentOption(p, s);
+  const d = diffEffects(opt, old);
+  const val = valueOfEffects(s, d.e, d.rel, d.f);
+  const vote = voteModel(s, opt, lobby);
+  const gains = [], losses = [];
+  for (const part of val.parts) {
+    if (Math.abs(part.val) < 0.05) continue;
+    (part.val > 0 ? gains : losses).push(part);
+  }
+  gains.sort((a, b) => b.val - a.val); losses.sort((a, b) => a.val - b.val);
+  const risks = (opt.r || []).map(r => ({ tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4] }));
+  const riskCost = risks.reduce((a, r) => a + r.prob * r.sev * 4, 0);
+  const net = val.total - riskCost;
+  let verdict;
+  if (net > 8) verdict = { cls: 'good', text: '강력 추천: 기대 이익이 손해와 리스크를 크게 상회합니다.' };
+  else if (net > 2) verdict = { cls: 'good', text: '추천: 전반적으로 이득이 예상됩니다.' };
+  else if (net > -2) verdict = { cls: 'mid', text: '판단 유보: 이득과 손해가 팽팽합니다. 국정 우선순위에 따라 결정하세요.' };
+  else if (net > -8) verdict = { cls: 'bad', text: '신중 검토: 손해와 부작용이 이득보다 클 가능성이 높습니다.' };
+  else verdict = { cls: 'bad', text: '비추천: 심각한 손실이 예상됩니다.' };
+  if (vote.prob < 0.35) verdict.text += ' 또한 국회 통과 가능성이 낮습니다.';
+  return { diff: d, gains, losses, risks, vote, net, verdict, cost: (opt.pc || 0) + lobby * LOBBY_COST, lag: opt.lag || 4 };
+}
+
+/* ---------------- 정책 시행 ---------------- */
+const LOBBY_COST = 15; // 야당 협상 1단계당 정치자본
+function enactPolicy(s, pid, oid, lobby = 0) {
+  const p = policyById(pid, s); const opt = optionOf(p, oid); const old = currentOption(p, s);
+  if (!p || !opt) return { ok: false, msg: '정책을 찾을 수 없습니다.' };
+  if (old.id === opt.id) return { ok: false, msg: '이미 시행 중인 정책입니다.' };
+  if (s.enactedThisTurn.includes(pid)) return { ok: false, msg: '같은 분야는 한 분기에 한 번만 바꿀 수 있습니다.' };
+  if (!opt.lt || opt.lt === 'decree') lobby = 0;
+  const cost = (opt.pc || 0) + lobby * LOBBY_COST;
+  if (s.pcap < cost) return { ok: false, msg: `정치자본이 부족합니다. (필요 ${cost}, 보유 ${Math.floor(s.pcap)})` };
+
+  const vote = voteModel(s, opt, lobby);
+  let passed = true, detail = '';
+  if (vote.type !== 'decree') {
+    if (lobby) detail = `야당 협상 ${lobby}단계(⚡${lobby * LOBBY_COST}) · `;
+    const yes = Math.round(clamp(vote.exp + gauss() * vote.sd, 0, 300));
+    passed = yes >= vote.need;
+    detail += `국회 표결: 찬성 ${yes} / 재적 300 (가결 기준 ${vote.need})`;
+    if (passed && vote.type === 'const') {
+      const sup = clamp(refendumSupport(s, opt) + gauss() * 6, 5, 95);
+      detail += ` → 국민투표 찬성 ${sup.toFixed(1)}%`;
+      passed = sup > 50;
+    }
+  } else detail = '대통령령·행정조치로 즉시 시행';
+
+  s.enactedThisTurn.push(pid);
+  if (!passed) {
+    s.pcap -= Math.ceil(cost / 2);
+    s.approval = clamp(s.approval - 1.5, 0, 100);
+    addLog(s, 'bad', `❌ [${p.name}] '${opt.label}' 부결. ${detail}`);
+    return { ok: true, passed: false, detail, p, opt };
+  }
+
+  s.pcap -= cost;
+  const d = diffEffects(opt, old);
+  s.policies[pid] = oid;
+  // 세력 즉시 반응
+  for (const k in d.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + d.f[k], 0, 100);
+  // 효과는 lag 분기에 걸쳐 서서히
+  const lag = Math.max(1, opt.lag || 4);
+  s.pending = s.pending.filter(x => x.pid !== pid); // 같은 분야 진행 중이던 효과는 새 정책으로 대체
+  s.pending.push({ pid, oid, src: p.custom ? p.name : `${p.name}: ${opt.label}`, e: d.e, rel: d.rel, left: lag, lag });
+  // 부작용 리스크 잠복
+  for (const r of (opt.r || [])) {
+    s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
+  }
+  addLog(s, 'good', `✅ [${p.name}] '${old.label}' → '${opt.label}' 시행 확정. ${detail}`);
+  return { ok: true, passed: true, detail, p, opt };
+}
+
+/* ---------------- 위기(부작용·돌발사건) 생성 ---------------- */
+function makeCrisis(s, src) {
+  const tpl = RISK_TEMPLATES[src.tpl];
+  let facTarget = src.facTarget;
+  if (!facTarget && src.pid) { // 정책으로 가장 손해 본 세력
+    const p = policyById(src.pid, s); const o = p && optionOf(p, src.oid);
+    if (o && o.f) facTarget = Object.entries(o.f).sort((a, b) => a[1] - b[1])[0]?.[0];
+  }
+  const relTarget = src.relTarget || src.target && RELATIONS[src.target] && src.target;
+  if (!facTarget && src.target && FACTIONS[src.target]) facTarget = src.target;
+  const options = (src.good && OPPORTUNITY_SOL[src.tpl] ? OPPORTUNITY_SOL[src.tpl] : tpl.sol)
+    .filter(o => !o.rollback || src.pid) // 정책 철회형 해법은 정책 부작용일 때만
+    .map(o => JSON.parse(JSON.stringify(o)));
+  return {
+    id: uid(), tpl: src.tpl, icon: tpl.icon, kind: tpl.name, title: src.title, desc: src.desc, sev: src.sev || 1,
+    good: !!src.good, pid: src.pid, oid: src.oid, prevOid: src.prevOid, facTarget, relTarget: relTarget || null,
+    options, turn: s.turn, world: !src.pid,
+  };
+}
+
+function applyShock(s, c) {
+  if (c.good) return;
+  const shock = RISK_TEMPLATES[c.tpl].shock;
+  for (const k in shock) {
+    if (k === 'approval') s.approval = clamp(s.approval + shock[k] * c.sev, 0, 100);
+    else if (STATS[k]) s.stats[k] = clamp(s.stats[k] + shock[k] * c.sev, STATS[k].min, STATS[k].max);
+  }
+  if (c.relTarget) s.rel[c.relTarget] = clamp(s.rel[c.relTarget] - 3 * c.sev, 0, 100);
+  if (c.facTarget && s.factions[c.facTarget] != null) s.factions[c.facTarget] = clamp(s.factions[c.facTarget] - 2 * c.sev, 0, 100);
+}
+
+// 해법의 실제 효과(심각도 반영, 타겟 치환)
+function expandSolution(s, c, sol, success = true) {
+  const k = success ? 1 : 0.4;
+  const sevK = 0.6 + 0.4 * c.sev;
+  const e = {}, rel = {}, f = {};
+  for (const x in (sol.e || {})) e[x] = sol.e[x] * sevK * k;
+  for (const x in (sol.rel || {})) {
+    const key = x === '_target' ? c.relTarget : x;
+    if (key && RELATIONS[key]) rel[key] = (rel[key] || 0) + sol.rel[x] * k;
+  }
+  for (const x in (sol.f || {})) {
+    const v = sol.f[x] * (success ? 1 : -0.6);
+    if (x === '_target') { if (c.facTarget) f[c.facTarget] = (f[c.facTarget] || 0) + v; }
+    else if (x === '_all') { for (const fk in FACTIONS) f[fk] = (f[fk] || 0) + v; }
+    else f[x] = (f[x] || 0) + v;
+  }
+  return { e, rel, f };
+}
+
+function rollbackValue(s, c, sol) {
+  if (!sol.rollback || !c.pid) return { total: 0 };
+  const p = policyById(c.pid, s); const o = p && optionOf(p, c.oid); const prev = p && optionOf(p, c.prevOid);
+  if (!o) return { total: 0 };
+  const d = diffEffects(o, prev);
+  const v = valueOfEffects(s, d.e, d.rel, null);
+  return { total: -v.total * sol.rollback, d };
+}
+
+/* ---------------- 규칙 기반 AI 판단 ---------------- */
+function aiEvaluate(s, c) {
+  const evals = c.options.map((sol, i) => {
+    const okAdj = clamp(sol.ok + (s.approval - 45) * 0.004 - (s.pcap < (sol.pc || 0) ? 0.25 : 0), 0.05, 0.97);
+    const succ = expandSolution(s, c, sol, true), fail = expandSolution(s, c, sol, false);
+    const vs = valueOfEffects(s, succ.e, succ.rel, succ.f);
+    const vf = valueOfEffects(s, fail.e, fail.rel, fail.f);
+    const rb = rollbackValue(s, c, sol);
+    const failExtra = c.good ? 0 : -3 * c.sev; // 실패 시 위기 재발
+    const pcPenalty = (sol.pc || 0) * (s.pcap < 40 ? 0.35 : 0.12);
+    const score = okAdj * (vs.total + rb.total) + (1 - okAdj) * (vf.total + failExtra) - pcPenalty;
+    return { i, sol, ok: okAdj, score, vs, rb, pcPenalty };
+  });
+  evals.sort((a, b) => b.score - a.score);
+  return evals;
+}
+
+function explainChoice(s, c, evals) {
+  const best = evals[0], second = evals[1];
+  const pros = best.vs.parts.filter(p => p.val > 0.1).sort((a, b) => b.val - a.val).slice(0, 3);
+  const cons = best.vs.parts.filter(p => p.val < -0.1).sort((a, b) => a.val - b.val).slice(0, 2);
+  const fmt = p => p.rel ? `${p.name} ${p.delta > 0 ? '+' : ''}${p.delta.toFixed(0)}` : p.k === 'approval' ? `지지율 ${p.delta > 0 ? '+' : ''}${p.delta.toFixed(1)}%p` : `${p.name} ${fmtStat(p.k, p.delta, true)}`;
+  let txt = `'${best.sol.label}' 선택 (성공 확률 ${(best.ok * 100).toFixed(0)}%). `;
+  // 판단 근거: 현재 국가 상태
+  const ctx = [];
+  if (s.stats.fiscal < -5 || s.stats.debt > 60) ctx.push('재정 건전성이 악화된 상황');
+  if (s.approval < 40) ctx.push('지지율이 낮아 여론 회복이 시급한 상황');
+  if (s.pcap < 40) ctx.push('정치자본이 부족한 상황');
+  if (s.stats.gdp < 1) ctx.push('경기 둔화 국면');
+  if (ctx.length) txt += `현재 ${ctx.join(', ')}을(를) 고려했습니다. `;
+  if (pros.length) txt += `기대 이득: ${pros.map(fmt).join(', ')}. `;
+  if (cons.length) txt += `감수할 손해: ${cons.map(fmt).join(', ')}. `;
+  if (best.rb.total < 0) txt += '원인 정책을 일부 후퇴시키는 비용이 있지만 위기 진화가 우선이라 판단했습니다. ';
+  if (second) txt += `차선책 '${second.sol.label}'은(는) ${second.ok < best.ok - 0.1 ? '성공 가능성이 낮고' : second.pcPenalty > best.pcPenalty ? '정치자본 소모가 크고' : '기대 효과가 작고'} 종합 점수(${second.score.toFixed(1)} vs ${best.score.toFixed(1)})에서 밀렸습니다.`;
+  return txt;
+}
+
+// 해법 실행 (by: 'ai' | 'player' | 'claude')
+function resolveCrisis(s, crisisId, solIndex, by = 'player', reasoning = '') {
+  const c = s.crises.find(x => x.id === crisisId);
+  if (!c) return null;
+  const sol = c.options[solIndex];
+  const okAdj = clamp(sol.ok + (s.approval - 45) * 0.004 - (s.pcap < (sol.pc || 0) ? 0.25 : 0), 0.05, 0.97);
+  const success = Math.random() < okAdj;
+  s.pcap = Math.max(0, s.pcap - (sol.pc || 0));
+  const fx = expandSolution(s, c, sol, success);
+  // 효과의 60%는 즉시, 40%는 구조적(지속) 변화
+  for (const k in fx.e) {
+    if (!STATS[k]) continue;
+    if (k === 'debt') { s.stats.debt = clamp(s.stats.debt + fx.e[k], 0, 250); continue; }
+    s.stats[k] = clamp(s.stats[k] + fx.e[k] * 0.6, STATS[k].min, STATS[k].max);
+    s.mods[k] += fx.e[k] * 0.4;
+  }
+  for (const k in fx.rel) { s.rel[k] = clamp(s.rel[k] + fx.rel[k] * 0.6, 0, 100); s.relMods[k] += fx.rel[k] * 0.4; }
+  for (const k in fx.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + fx.f[k], 0, 100);
+  let rbText = '';
+  if (success && sol.rollback && c.pid) {
+    const rb = rollbackValue(s, c, sol);
+    if (rb.d) {
+      for (const k in rb.d.e) if (STATS[k]) s.mods[k] -= rb.d.e[k] * sol.rollback;
+      for (const k in rb.d.rel) if (RELATIONS[k]) s.relMods[k] -= rb.d.rel[k] * sol.rollback;
+      rbText = ` 원인 정책의 효과가 ${(sol.rollback * 100).toFixed(0)}% 축소되었습니다.`;
+    }
+  }
+  if (!success && !c.good) applyShock(s, { ...c, sev: Math.max(1, c.sev - 1) });
+  const outcome = success
+    ? (c.good ? `기회를 잘 살렸습니다.` : `위기가 진정되었습니다.`) + rbText
+    : (c.good ? `기대만큼의 성과를 내지 못했습니다.` : `대응이 실패해 상황이 악화되었습니다. 여론의 비판이 거셉니다.`);
+  const who = by === 'player' ? '대통령 결정' : by === 'claude' ? 'Claude AI 판단' : 'AI 참모 판단';
+  const rec = { id: c.id, turn: c.turn, title: c.title, icon: c.icon, kind: c.kind, sol: sol.label, success, outcome, by: who, reasoning, fx, good: c.good };
+  s.resolved.unshift(rec);
+  s.crises = s.crises.filter(x => x.id !== crisisId);
+  addLog(s, success ? 'good' : 'bad', `${c.icon} [${c.title}] ${who}: '${sol.label}' → ${success ? '성공' : '실패'}. ${outcome}`);
+  return rec;
+}
+
+/* ---------------- 턴 진행 ---------------- */
+function factionTargets(s) {
+  const st = s.stats;
+  const base = {};
+  for (const k in FACTIONS) base[k] = FACTIONS[k].base;
+  if (s.party === 'lib') { base.lib = 62; base.con = 32; }
+  if (s.party === 'con') { base.con = 62; base.lib = 34; }
+  base.biz += (st.gdp - 1.8) * 4 + (st.innovation - 72) * 0.3;
+  base.labor += -(st.gini - 0.324) * 300 - (st.unemp - 2.8) * 3;
+  base.youth += (st.housing - 37) * 0.3 - (st.unemp - 2.8) * 3 + (st.happiness - 42) * 0.2;
+  base.elder += (st.welfare - 52) * 0.4 + (st.safety - 76) * 0.2 - (st.infl - 2) * 2;
+  base.con += (st.security - 68) * 0.25 + (st.gdp - 1.8) * 2 - (st.debt - 51.6) * 0.15;
+  base.lib += (st.freedom - 71) * 0.3 + (st.env - 48) * 0.15 - (st.gini - 0.324) * 200;
+  base.mil += (st.security - 68) * 0.5;
+  base.legal += (st.justice - 41) * 0.2;
+  base.teach += (st.education - 46) * 0.4;
+  base.medic += (st.health - 62) * 0.1;
+  base.local += (st.housing - 37) * 0.1 + (st.gdp - 1.8) * 2;
+  base.farm += -(st.infl - 2) * 1;
+  return base;
+}
+
+function endTurn(s) {
+  const prev = snapshot(s);
+  const report = { turn: s.turn, label: turnLabel(s.turn), applied: [], crises: [], events: [], elections: [] };
+
+  // 1) 시행 중인 정책 효과 반영(구조적 균형점 이동)
+  for (const pe of s.pending) {
+    for (const k in pe.e) if (STATS[k]) s.mods[k] += pe.e[k] / pe.lag;
+    for (const k in pe.rel) if (RELATIONS[k]) s.relMods[k] += pe.rel[k] / pe.lag;
+    pe.left--;
+    report.applied.push({ src: pe.src, e: pe.e, progress: 1 - pe.left / pe.lag });
+  }
+  s.pending = s.pending.filter(pe => pe.left > 0);
+
+  // 2) 거시경제 동학
+  const st = s.stats;
+  const potential = 1.8 - s.turn * 0.02 + (st.innovation - 72) * 0.02 + (st.tfr - 0.8) * 0.5;
+  for (const k in STATS) {
+    if (k === 'debt' || k === 'happiness') continue;
+    let eq = STATS[k].base + s.mods[k];
+    if (k === 'gdp') eq = potential + s.mods.gdp - Math.max(0, st.debt - 90) * 0.03;
+    if (k === 'unemp') eq = STATS.unemp.base + s.mods.unemp - (st.gdp - potential) * 0.4;
+    if (k === 'fiscal') eq = STATS.fiscal.base + s.mods.fiscal - Math.max(0, st.debt - 51.6) * 0.03 + (st.gdp - 1.8) * 0.2;
+    if (k === 'tfr') eq = STATS.tfr.base + s.mods.tfr + (st.housing - 37) * 0.002 + (st.happiness - 42) * 0.001;
+    const rate = k === 'tfr' ? 0.2 : 0.35;
+    const noise = { gdp: 0.25, unemp: 0.1, infl: 0.2, fiscal: 0.15, tfr: 0.01, gini: 0.001 }[k] ?? 0.6;
+    st[k] = clamp(st[k] + (eq - st[k]) * rate + gauss() * noise, STATS[k].min, STATS[k].max);
+  }
+  // 국가채무: 재정적자 누적 - 명목성장 효과
+  const nominal = st.gdp + st.infl;
+  st.debt = clamp(st.debt + (-st.fiscal - nominal * st.debt / 100) / 4 + s.mods.debt / 8, 0, 250);
+  s.mods.debt *= 0.875;
+  // 국민 행복도: 종합 지표
+  const hEq = STATS.happiness.base + s.mods.happiness + (st.housing - 37) * 0.15 + (st.welfare - 52) * 0.15 - (st.unemp - 2.8) * 2
+    - Math.max(0, st.infl - 2.5) * 2 + (st.safety - 76) * 0.1 + (st.gdp - 1.8) * 1.5 + (st.health - 62) * 0.1 + (st.env - 48) * 0.05;
+  st.happiness = clamp(st.happiness + (hEq - st.happiness) * 0.35 + gauss() * 0.5, 0, 100);
+  // 외교관계
+  for (const k in RELATIONS) {
+    const eq = RELATIONS[k].base + s.relMods[k];
+    s.rel[k] = clamp(s.rel[k] + (eq - s.rel[k]) * 0.25 + gauss() * 1, 0, 100);
+  }
+  // 안보는 북한 관계와 미국 관계 영향
+  st.security = clamp(st.security + (s.rel.us - 76) * 0.01 + (s.rel.nk - 12) * 0.01, 0, 100);
+
+  // 3) 세력 지지 변화
+  const ft = factionTargets(s);
+  for (const k in s.factions) s.factions[k] = clamp(s.factions[k] + (ft[k] - s.factions[k]) * 0.1 + gauss() * 0.8, 0, 100);
+
+  // 4) 잠복 리스크 발현
+  const newCrises = [];
+  for (const r of s.latent) {
+    if (r.due > s.turn) continue;
+    if (Math.random() < r.prob) { newCrises.push(makeCrisis(s, r)); r.tries = 0; }
+    else { r.tries--; r.due = s.turn + 1; r.prob *= 0.6; }
+  }
+  s.latent = s.latent.filter(r => r.tries > 0 && s.policies[r.pid] === r.oid);
+
+  // 5) 외부 돌발 사건
+  const pool = WORLD_EVENTS.filter(ev => { try { return ev.cond(s); } catch { return false; } });
+  const nEvents = Math.random() < 0.55 ? (Math.random() < 0.2 ? 2 : 1) : 0;
+  for (let i = 0; i < nEvents && pool.length; i++) {
+    const tot = pool.reduce((a, e) => a + e.w, 0); let r = Math.random() * tot; let pick = pool[0];
+    for (const e of pool) { r -= e.w; if (r <= 0) { pick = e; break; } }
+    pool.splice(pool.indexOf(pick), 1);
+    newCrises.push(makeCrisis(s, { ...pick, facTarget: FACTIONS[pick.target] ? pick.target : undefined, relTarget: RELATIONS[pick.target] ? pick.target : undefined }));
+  }
+  for (const c of newCrises) { applyShock(s, c); s.crises.push(c); }
+  report.crises = newCrises.map(c => c.id);
+
+  // 6) 지지율·정치자본
+  let target = 0; for (const k in FACTIONS) target += s.factions[k] * FACTIONS[k].pop;
+  target += (st.gdp - 1.8) * 2.5 - (st.unemp - 2.8) * 3 - Math.max(0, st.infl - 2.5) * 2.5 + (st.happiness - 42) * 0.4;
+  target -= Math.max(0, s.turn - 12) * 0.6; // 임기 말 레임덕
+  s.approval = clamp(s.approval + (target - s.approval) * 0.45 + gauss() * 1.2, 2, 95);
+  s.pcap = clamp(s.pcap + 10 + (s.approval - 45) * 0.3, 0, 200);
+
+  // 7) 선거
+  if (s.turn === GENERAL_ELECTION_TURN) report.elections.push(generalElection(s));
+  if (s.turn === LOCAL_ELECTION_TURN) report.elections.push(localElection(s));
+
+  // 8) 기록·다음 분기
+  report.diff = {};
+  for (const k in STATS) report.diff[k] = st[k] - prev.stats[k];
+  report.relDiff = {}; for (const k in RELATIONS) report.relDiff[k] = s.rel[k] - prev.rel[k];
+  report.approvalDiff = s.approval - prev.approval;
+  report.enacted = s.enactedThisTurn.map(pid => { const p = policyById(pid, s); return p ? `${p.name}: ${currentOption(p, s).label}` : pid; });
+  s.enactedThisTurn = [];
+  s.turn++;
+  s.history.push(snapshot(s));
+  checkGameOver(s, report);
+  s.reports.unshift(report);
+  if (s.reports.length > 30) s.reports.length = 30;
+  return report;
+}
+
+function generalElection(s) {
+  const r = s.ruling;
+  const share = clamp(0.2 + s.approval / 100 * 0.75 + gauss() * 0.03, 0.1, 0.8);
+  const before = { ...s.seats };
+  if (r === 'P') {
+    s.seats.P = Math.round(clamp((s.approval - 25) * 3, 5, 200));
+    const rest = 300 - s.seats.P - 15; s.seats.L = Math.round(rest * 0.6); s.seats.R = rest - s.seats.L; s.seats.N = 15;
+  } else {
+    const opp = r === 'L' ? 'R' : 'L';
+    s.seats[r] = Math.round(300 * share); s.seats.N = Math.round(clamp(rnd(10, 30), 0, 50)); s.seats[opp] = 300 - s.seats[r] - s.seats.N;
+  }
+  const txt = `🗳️ 제23대 국회의원 총선거: 여당 ${before[r]}석 → ${s.seats[r]}석`;
+  addLog(s, s.seats[r] >= before[r] ? 'good' : 'bad', txt);
+  s.pcap += s.seats[r] >= 151 ? 30 : 0;
+  return txt + (s.seats[r] >= 151 ? ' (여대야소)' : ' (여소야대)');
+}
+function localElection(s) {
+  const win = Math.round(clamp(17 * (s.approval / 100) * 1.4 + gauss(), 1, 17));
+  const txt = `🗳️ 제9회 전국동시지방선거: 광역단체장 17곳 중 여당 ${win}곳 승리`;
+  s.pcap += win >= 9 ? 25 : -10;
+  addLog(s, win >= 9 ? 'good' : 'bad', txt);
+  return txt;
+}
+
+function checkGameOver(s, report) {
+  const opp = 300 - (s.ruling === 'P' ? s.seats.P : s.seats[s.ruling]);
+  if (s.approval < 15 && opp >= 200 && Math.random() < 0.45) {
+    s.over = true; s.ending = { type: 'impeach', title: '탄핵', desc: `지지율 ${s.approval.toFixed(1)}%. 국회가 탄핵소추안을 가결했고 헌법재판소가 파면을 선고했습니다.` };
+  } else if (s.stats.debt > 130 || s.stats.fiscal < -14) {
+    s.over = true; s.ending = { type: 'default', title: '국가 부도', desc: '국가채무가 감당할 수 없는 수준에 이르러 IMF 구제금융을 신청했습니다.' };
+  } else if (s.stats.security < 12) {
+    s.over = true; s.ending = { type: 'war', title: '안보 붕괴', desc: '억지력이 무너지며 한반도에 전면적 군사 위기가 발생했습니다.' };
+  } else if (s.turn >= TERM_TURNS) {
+    s.over = true; s.ending = { type: 'term', title: '임기 만료' };
+  }
+  if (s.over) s.ending.score = finalScore(s);
+  if (s.over) report.gameOver = s.ending;
+}
+
+function finalScore(s) {
+  let idx = 0;
+  for (const k in STATS) {
+    const d = (s.stats[k] - STATS[k].base) * STATS[k].good;
+    const w = STATS[k].w * (k === 'infl' ? 0 : 1);
+    idx += d * w;
+  }
+  idx -= Math.abs(s.stats.infl - 2) * 4;
+  let relScore = 0; for (const k in RELATIONS) relScore += (s.rel[k] - RELATIONS[k].base) * 0.15;
+  const indexScore = clamp(50 + idx * 0.8 + relScore, 0, 100);
+  const total = clamp(s.approval * 0.4 + indexScore * 0.6, 0, 100);
+  const ending = ENDINGS.find(e => total >= e.min);
+  return { total, indexScore, approval: s.approval, grade: ending.grade, title: ending.title, desc: ending.desc };
+}
+
+/* ---------------- 자유 입력 정책: 규칙 기반 분석 ---------------- */
+const KEYWORD_RULES = [
+  { kw: ['감세', '세율 인하', '세금 인하', '인하'], cat: 'tax', e: { fiscal: -0.4, gdp: 0.1, gini: 0.002 }, f: { biz: 6, con: 4, lib: -4 }, lean: 'R' },
+  { kw: ['증세', '세율 인상', '세금 인상', '부유세', '횡재세'], cat: 'tax', e: { fiscal: 0.4, gdp: -0.08, gini: -0.003 }, f: { biz: -8, lib: 4, con: -4 }, lean: 'L' },
+  { kw: ['무상', '지원금', '수당', '지급', '바우처'], cat: 'welfare', e: { fiscal: -0.4, welfare: 4, happiness: 2, gini: -0.003 }, f: { youth: 4, elder: 4, con: -3 }, lean: 'L' },
+  { kw: ['출산', '육아', '보육', '아이'], cat: 'welfare', e: { tfr: 0.04, fiscal: -0.3, happiness: 1 }, f: { youth: 6 }, lean: 'N' },
+  { kw: ['규제 완화', '규제완화', '철폐', '자율화', '민영화'], cat: 'econ', e: { gdp: 0.12, innovation: 2, gini: 0.003 }, f: { biz: 8, labor: -6, lib: -4 }, lean: 'R' },
+  { kw: ['규제 강화', '금지', '처벌'], cat: 'civil', e: { freedom: -2, safety: 1 }, f: { con: 2 }, lean: 'N' },
+  { kw: ['국방', '군', '병역', '징병', '무기', '안보'], cat: 'defense', e: { security: 3, fiscal: -0.2 }, f: { mil: 6, con: 3, youth: -2 }, lean: 'R' },
+  { kw: ['북한', '통일', '남북'], cat: 'diplo', e: { security: 1 }, rel: { nk: 6 }, f: { lib: 4, con: -4 }, lean: 'L' },
+  { kw: ['미국', '동맹'], cat: 'diplo', e: { security: 2 }, rel: { us: 6, cn: -3 }, f: { con: 4 }, lean: 'R' },
+  { kw: ['중국'], cat: 'diplo', e: { gdp: 0.05 }, rel: { cn: 6, us: -2 }, f: { biz: 3 }, lean: 'N' },
+  { kw: ['일본'], cat: 'diplo', e: {}, rel: { jp: 6 }, f: { con: 2, lib: -2 }, lean: 'N' },
+  { kw: ['교육', '학교', '대학', '입시', '수능', '학원'], cat: 'edu', e: { education: 3, fiscal: -0.1 }, f: { teach: 4 }, lean: 'N' },
+  { kw: ['주택', '아파트', '부동산', '임대', '전세', '월세'], cat: 'house', e: { housing: 4, fiscal: -0.1 }, f: { youth: 5 }, lean: 'N' },
+  { kw: ['원전', '원자력', '에너지', '전기', '탄소', '환경', '기후'], cat: 'env', e: { env: 3, infl: 0.1 }, f: { lib: 3, biz: -2 }, lean: 'N' },
+  { kw: ['병원', '의료', '의사', '건강', '간호'], cat: 'health', e: { health: 4, fiscal: -0.1 }, f: { elder: 3, medic: -4 }, lean: 'N' },
+  { kw: ['노동', '근로', '임금', '노조', '일자리', '주4일', '최저'], cat: 'labor', e: { happiness: 2, gdp: -0.05, gini: -0.003 }, f: { labor: 8, biz: -6 }, lean: 'L' },
+  { kw: ['검찰', '경찰', '법원', '재판', '사법', '수사'], cat: 'justice', e: { justice: 3 }, f: { legal: -3 }, lean: 'N' },
+  { kw: ['헌법', '개헌', '대통령', '국회', '선거'], cat: 'const', e: { justice: 1 }, f: {}, lean: 'N', lt: 'const' },
+  { kw: ['혼인', '결혼', '동성', '차별', '성평등', '가족'], cat: 'civil', e: { freedom: 3 }, f: { lib: 6, con: -8, elder: -4 }, lean: 'L' },
+  { kw: ['반도체', 'AI', '인공지능', '스타트업', '연구', 'R&D'], cat: 'econ', e: { innovation: 4, gdp: 0.1, fiscal: -0.2 }, f: { biz: 6, youth: 3 }, lean: 'N' },
+  { kw: ['폐지'], cat: null, e: {}, f: { con: 1, lib: -1 }, lean: 'N' },
+  { kw: ['이민', '외국인'], cat: 'welfare', e: { gdp: 0.1, safety: -1 }, f: { biz: 4, con: -4 }, lean: 'N' },
+  { kw: ['마약', '대마'], cat: 'justice', e: { safety: -2, freedom: 2 }, f: { elder: -6 }, lean: 'L' },
+  { kw: ['농', '어민', '쌀'], cat: 'econ', e: { fiscal: -0.1 }, f: { farm: 8 }, lean: 'N' },
+];
+
+function analyzeCustomRule(text) {
+  const e = {}, rel = {}, f = {}; let cat = null, leanScore = 0, lt = 'law', hits = 0;
+  for (const rule of KEYWORD_RULES) {
+    if (!rule.kw.some(k => text.includes(k))) continue;
+    hits++;
+    if (!cat && rule.cat) cat = rule.cat;
+    for (const k in rule.e) e[k] = (e[k] || 0) + rule.e[k];
+    for (const k in (rule.rel || {})) rel[k] = (rel[k] || 0) + rule.rel[k];
+    for (const k in rule.f) f[k] = (f[k] || 0) + rule.f[k];
+    leanScore += rule.lean === 'L' ? 1 : rule.lean === 'R' ? -1 : 0;
+    if (rule.lt) lt = rule.lt;
+  }
+  if (!hits) { e.happiness = 1; f.youth = 1; }
+  const scale = /대폭|전면|전국민|모든|완전|파격/.test(text) ? 1.8 : /시범|일부|단계적|소폭/.test(text) ? 0.5 : 1;
+  for (const k in e) e[k] *= scale; for (const k in f) f[k] = Math.round(f[k] * scale);
+  const risks = [];
+  if ((e.fiscal || 0) < -0.5) risks.push(['fiscal', '재원 마련 논란', '막대한 소요 재원에 대한 비판이 나옵니다.', 0.5, Math.min(3, Math.ceil(-e.fiscal))]);
+  const worst = Object.entries(f).sort((a, b) => a[1] - b[1])[0];
+  if (worst && worst[1] <= -6) risks.push(['protest', `${FACTIONS[worst[0]].name} 반발`, `${FACTIONS[worst[0]].name}이(가) 정책에 강하게 반발하고 있습니다.`, 0.5, worst[1] <= -10 ? 2 : 1]);
+  if ((e.freedom || 0) < -1.5) risks.push(['legal', '위헌 소송', '기본권 침해를 이유로 헌법소원이 제기됐습니다.', 0.5, 2]);
+  return {
+    name: text.slice(0, 40), cat: cat || 'civil', summary: hits ? `키워드 분석으로 추정한 효과입니다. (${hits}개 영역 관련)` : '관련 영역을 특정하기 어려워 효과를 보수적으로 추정했습니다.',
+    lt, lean: leanScore > 0 ? 'L' : leanScore < 0 ? 'R' : 'N', pc: Math.round(20 + 10 * scale), lag: 4, e, rel, f, r: risks,
+  };
+}
+
+function registerCustomPolicy(s, text, a) {
+  const id = 'custom_' + uid();
+  const p = {
+    id, cat: a.cat, name: a.name, custom: true, desc: `직접 입안한 정책: "${text}"`,
+    options: [
+      { id: 'cur', label: '현행 유지', cur: true, desc: '현행.' },
+      { id: 'new', label: a.name, desc: a.summary, lt: a.lt, lean: a.lean, pc: a.pc, lag: a.lag, e: a.e, rel: a.rel, f: a.f, r: a.r },
+    ],
+  };
+  s.customPolicies.push(p);
+  s.policies[id] = 'cur';
+  return p;
+}
+
+/* ---------------- 저장 ---------------- */
+const SAVE_KEY = 'newkorea_save_v1';
+function saveGame(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); return true; } catch { return false; } }
+function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }
+
+</script>
+<script>
+/* js/claude.js */
+/* =========================================================
+ *  Claude AI 연동 (선택 사항)
+ *  - API 키를 넣으면 Claude가 직접 정책 효과 분석, 위기 해결 판단, 분기 논평을 수행
+ *  - 키가 없거나 오류가 나면 규칙 기반 AI 참모(engine.js)로 자동 대체
+ *  - API 키는 이 브라우저의 localStorage에만 저장되며 Anthropic API로만 전송됨
+ *  - claude.ai 아티팩트로 열면 API 키 없이 보는 사람의 Claude 계정(sample 기능)으로 동작
+ * ========================================================= */
+
+const ClaudeAI = (() => {
+  // 로컬 번들(js/vendor) 우선, 실패 시 CDN
+  const SDK_LOCAL = new URL('vendor/anthropic-sdk.mjs', (document.currentScript && document.currentScript.src) || location.href).href;
+  const SDK_CDN = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.135.0/+esm';
+  const CFG_KEY = 'newkorea_claude_cfg';
+  let client = null, clientKey = null, sdkPromise = null;
+
+  const MODELS = [
+    { id: 'claude-opus-5-5', name: 'Claude Opus 5.5 (기본·고품질)' },
+    { id: 'claude-sonnet-5-5', name: 'Claude Sonnet 5.5 (빠름)' },
+    { id: 'claude-haiku-5-5', name: 'Claude Haiku 5.5 (가장 빠르고 저렴)' },
+  ];
+
+  function cfg() {
+    try { return { model: 'claude-opus-5-5', effort: 'low', ...JSON.parse(localStorage.getItem(CFG_KEY) || '{}') }; }
+    catch { return { model: 'claude-opus-5-5', effort: 'low' }; }
+  }
+  function setCfg(c) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch {} client = null; }
+  // claude.ai 아티팩트 환경: 보는 사람의 Claude 계정으로 호출 (API 키 불필요)
+  let sampleFn = null, sampleDenied = false;
+  const onReady = [];
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('sample').then(fn => { sampleFn = fn || null; onReady.forEach(f => { try { f(); } catch {} }); }).catch(() => {});
+  }
+  function hostMode() { return !!sampleFn && !sampleDenied; }
+  function whenReady(f) { onReady.push(f); }
+  function enabled() { const c = cfg(); return hostMode() ? c.useHost !== false : !!c.apiKey; }
+
+  async function callHost({ system, user, schema }) {
+    let prompt = system + '\n\n' + user;
+    if (schema) prompt += '\n\n아래 JSON Schema를 정확히 따르는 JSON 값 하나만 답하세요. 다른 텍스트는 쓰지 마세요.\n' + JSON.stringify(schema);
+    else prompt += '\n\n답변 본문만 쓰세요.';
+    try {
+      return schema ? await sampleFn.json(prompt, { cache: false }) : (await sampleFn(prompt, { cache: false })).text;
+    } catch (e) {
+      const code = e && e.code;
+      if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) sampleDenied = true;
+      const msg = { not_granted: 'Claude 사용이 허용되지 않았습니다', rate_limited: '요청이 많아 잠시 후 다시 시도하세요', refused: 'Claude가 요청을 거절했습니다', invalid_json: '응답 형식 오류', session_expired: '다시 로그인이 필요합니다' }[code];
+      throw new Error(msg || (e && e.message) || 'Claude 호출 실패');
+    }
+  }
+
+  async function getClient() {
+    const c = cfg();
+    if (!c.apiKey) throw new Error('API 키가 없습니다.');
+    if (client && clientKey === c.apiKey) return client;
+    if (!sdkPromise) sdkPromise = import(SDK_LOCAL).catch(() => import(SDK_CDN));
+    sdkPromise.catch(() => { sdkPromise = null; });
+    const mod = await sdkPromise;
+    const Anthropic = mod.default || mod.Anthropic;
+    // 브라우저에서 직접 호출: 개인용 게임이므로 사용자의 키를 사용자 브라우저에서만 사용
+    client = new Anthropic({ apiKey: c.apiKey, dangerouslyAllowBrowser: true, maxRetries: 2 });
+    clientKey = c.apiKey;
+    return client;
+  }
+
+  const SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
+- 모든 답변은 한국어로 작성합니다.
+- 실제 한국의 사례와 연구, 해외 사례를 근거로 들되 간결하게 씁니다.
+- 수치 효과는 게임 밸런스를 위해 현실적인 범위로 추정합니다(과장 금지).
+- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.`;
+
+  function stateSummary(s) {
+    const t = turnLabel(s.turn);
+    const st = Object.entries(s.stats).map(([k, v]) => `${STATS[k].name}=${Number(v).toFixed(STATS[k].dec)}${STATS[k].unit}`).join(', ');
+    const rel = Object.entries(s.rel).map(([k, v]) => `${RELATIONS[k].name}=${v.toFixed(0)}`).join(', ');
+    const fac = Object.entries(s.factions).map(([k, v]) => `${FACTIONS[k].name}=${v.toFixed(0)}`).join(', ');
+    const changed = [...POLICIES, ...s.customPolicies].filter(p => !optionOf(p, s.policies[p.id])?.cur).map(p => `${p.name}→${currentOption(p, s).label}`);
+    const rulingSeats = s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
+    return `[${t.year}년 ${t.q}분기, 임기 ${t.termYear}년차] 지지율 ${s.approval.toFixed(1)}%, 정치자본 ${Math.floor(s.pcap)}, 여당 의석 ${rulingSeats}/300
+지표: ${st}
+외교관계(0~100): ${rel}
+세력별 지지(0~100): ${fac}
+현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}`;
+  }
+
+  const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });
+
+  async function call({ system, user, schema, maxTokens = 4000 }) {
+    if (hostMode() && cfg().useHost !== false) return await callHost({ system, user, schema });
+    const c = cfg();
+    const cl = await getClient();
+    const params = {
+      model: c.model,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: user }],
+      output_config: { effort: c.effort || 'low', ...(schema ? { format: { type: 'json_schema', schema } } : {}) },
+    };
+    let resp;
+    if (c.model === 'claude-haiku-5-5') {
+      resp = await cl.messages.create(params);
+    } else {
+      // 안전 분류기에 의한 거절 시 서버 측 대체 모델로 자동 재시도
+      resp = await cl.beta.messages.create({ ...params, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' });
+    }
+    if (resp.stop_reason === 'refusal') throw new Error('Claude가 요청을 거절했습니다.');
+    if (resp.stop_reason === 'max_tokens') throw new Error('응답이 너무 길어 잘렸습니다.');
+    const text = resp.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    return schema ? JSON.parse(text) : text;
+  }
+
+  const clampObj = (o, lim) => { const r = {}; for (const k in o) { const v = Number(o[k]); if (!isFinite(v) || Math.abs(v) < 1e-9) continue; r[k] = clamp(v, -lim(k), lim(k)); } return r; };
+  const STAT_LIM = { gdp: 1, unemp: 1, infl: 1.5, debt: 10, fiscal: 7, tfr: 0.2, gini: 0.03 };
+  const statLim = k => STAT_LIM[k] ?? 15;
+
+  /* ---- 1) 자유 입력 정책 분석 ---- */
+  async function analyzePolicy(text, s) {
+    const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
+    const schema = {
+      type: 'object', additionalProperties: false,
+      required: ['name', 'cat', 'summary', 'lt', 'lean', 'pc', 'lag', 'e', 'rel', 'f', 'risks'],
+      properties: {
+        name: { type: 'string', description: '정책 이름(25자 이내)' },
+        cat: { type: 'string', enum: CATEGORIES.map(c => c.id) },
+        summary: { type: 'string', description: '정책 내용과 예상 이득·손해 요약(3~5문장)' },
+        lt: { type: 'string', enum: ['decree', 'law', 'const'] },
+        lean: { type: 'string', enum: ['L', 'R', 'N'] },
+        pc: { type: 'integer' }, lag: { type: 'integer' },
+        e: numObj(statKeys), rel: numObj(Object.keys(RELATIONS)), f: numObj(Object.keys(FACTIONS)),
+        risks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['tpl', 'title', 'desc', 'prob', 'sev'],
+          properties: { tpl: { type: 'string', enum: Object.keys(RISK_TEMPLATES) }, title: { type: 'string' }, desc: { type: 'string' }, prob: { type: 'number' }, sev: { type: 'integer' } } } },
+      },
+    };
+    const examples = POLICIES.slice(0, 40).filter((p, i) => i % 6 === 1).map(p => { const o = p.options.find(x => !x.cur); return `- ${p.name}/${o.label}: lt=${o.lt}, pc=${o.pc}, lag=${o.lag}, e=${JSON.stringify(o.e)}, f=${JSON.stringify(o.f)}`; }).join('\n');
+    const user = `대통령이 다음 정책을 새로 입안했습니다: "${text}"
+
+현재 국가 상황:
+${stateSummary(s)}
+
+이 정책을 게임 데이터로 변환하세요.
+- e: 각 지표의 장기 균형값 변화(현행 대비). 단위: gdp/unemp/infl/fiscal/debt는 %p, tfr은 명, gini는 0~1 지니계수 변화, 나머지는 0~100 지수 포인트. 관련 없는 지표는 0.
+- rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25).
+- lt: 대통령령으로 가능하면 decree, 법률 개정이면 law, 헌법 개정 필요하면 const. lean: 진보 L/보수 R/중립 N.
+- pc: 정치자본 비용(10~80), lag: 효과가 완전히 나타나기까지 분기 수(1~16).
+- risks: 현실적으로 예상되는 부작용 0~3개(prob 0~1, sev 1~3).
+참고용 기존 정책 데이터 예시:
+${examples}`;
+    const a = await call({ system: SYSTEM, user, schema });
+    a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
+    a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
+    a.r = (a.risks || []).slice(0, 3).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
+    delete a.risks;
+    return a;
+  }
+
+  /* ---- 2) 위기 해결 판단 ---- */
+  async function resolveCrisis(c, s, ruleEvals) {
+    const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
+    const schema = {
+      type: 'object', additionalProperties: false, required: ['choice', 'reasoning', 'custom'],
+      properties: {
+        choice: { type: 'integer', description: '선택한 해법 번호(0부터). 독자적인 새 해법을 제안하면 -1' },
+        reasoning: { type: 'string', description: '판단 근거(3~5문장): 왜 이 해법인지, 무엇을 얻고 무엇을 잃는지' },
+        custom: { type: 'object', additionalProperties: false, required: ['label', 'desc', 'e', 'f', 'ok', 'pc'],
+          properties: { label: { type: 'string' }, desc: { type: 'string' }, e: numObj(statKeys), f: numObj(Object.keys(FACTIONS)), ok: { type: 'number' }, pc: { type: 'integer' } } },
+      },
+    };
+    const p = c.pid && policyById(c.pid, s);
+    const opts = c.options.map((o, i) => {
+      const ev = ruleEvals.find(x => x.i === i);
+      return `${i}. ${o.label} — ${o.desc} | 효과(심각도 반영 전) e=${JSON.stringify(o.e || {})}, 외교=${JSON.stringify(o.rel || {})}, 세력=${JSON.stringify(o.f || {})}, 정치자본 ${o.pc || 0}, 기본 성공률 ${(o.ok * 100).toFixed(0)}%${o.rollback ? `, 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''} | 규칙 AI 점수 ${ev ? ev.score.toFixed(1) : '-'}`;
+    }).join('\n');
+    const user = `${c.good ? '기회' : '위기'} 발생: [${c.kind}] ${c.title}
+상황: ${c.desc}
+심각도: ${c.sev}/3${p ? `\n원인 정책: ${p.name} — ${currentOption(p, s).label}` : '\n원인: 외부 돌발 사건'}${c.facTarget ? `\n주요 이해관계자: ${FACTIONS[c.facTarget].name}` : ''}${c.relTarget ? `\n관련 국가: ${RELATIONS[c.relTarget].name}` : ''}
+
+현재 국가 상황:
+${stateSummary(s)}
+
+선택 가능한 해법(_target은 주요 이해관계자/관련 국가, _all은 전 세력):
+${opts}
+
+대통령을 대신해 가장 바람직한 해법을 판단하세요. 기존 해법이 모두 부적절하면 choice=-1로 하고 custom에 현실적인 새 해법을 설계하세요(e는 기존 해법과 비슷한 규모, ok는 0.3~0.9, pc는 5~30). choice가 0 이상이면 custom은 형식만 채우세요(0 값).`;
+    const r = await call({ system: SYSTEM, user, schema, maxTokens: 3000 });
+    let choice = Number.isInteger(r.choice) ? r.choice : 0;
+    if (choice === -1 && r.custom && r.custom.label) {
+      c.options.push({ label: '🤖 ' + r.custom.label, desc: r.custom.desc, e: clampObj(r.custom.e, k => statLim(k) / 3), f: clampObj(r.custom.f, () => 10), ok: clamp(r.custom.ok, 0.3, 0.9), pc: clamp(Math.round(r.custom.pc), 5, 30), claude: true });
+      choice = c.options.length - 1;
+    }
+    if (choice < 0 || choice >= c.options.length) choice = ruleEvals[0].i;
+    return { choice, reasoning: r.reasoning };
+  }
+
+  /* ---- 3) 분기 논평 ---- */
+  async function briefing(s, report) {
+    const diffs = Object.entries(report.diff).filter(([k, v]) => Math.abs(v) > (STATS[k].dec >= 2 ? 0.005 : 0.15)).map(([k, v]) => `${STATS[k].name} ${fmtStat(k, v, true)}`).join(', ');
+    const crises = s.resolved.filter(r => r.turn === report.turn).map(r => `${r.title}: ${r.sol} → ${r.success ? '성공' : '실패'}`).join('; ');
+    const user = `지난 분기 국정 결과를 대통령에게 보고하세요.
+이번 분기 시행 정책: ${report.enacted.length ? report.enacted.join('; ') : '없음'}
+진행 중 정책 효과: ${report.applied.map(a => a.src).join('; ') || '없음'}
+지표 변화: ${diffs || '큰 변화 없음'}
+지지율 변화: ${report.approvalDiff > 0 ? '+' : ''}${report.approvalDiff.toFixed(1)}%p
+위기 대응: ${crises || '없음'}
+${report.elections.join(' ')}
+
+현재 상황:
+${stateSummary(s)}
+
+형식: ① 총평(2문장) ② 이득과 손해(각 2~3개 불릿) ③ 다음 분기 권고(2~3개 구체적 정책 제안). 300자~500자. 마크다운 없이 줄바꿈과 •만 사용.`;
+    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+  }
+
+  /* ---- 4) 정책 자문 ---- */
+  async function advise(s, p, o, pv) {
+    const cur = currentOption(p, s);
+    const user = `대통령이 다음 제도 변경을 검토 중입니다.
+분야: ${p.name} (현재 제도: ${p.desc})
+변경: "${cur.label}" → "${o.label}" (${o.desc || ''})
+게임 내 추정 효과: ${JSON.stringify(pv.diff.e)} / 외교 ${JSON.stringify(pv.diff.rel)} / 세력 반응 ${JSON.stringify(pv.diff.f)}
+예상 부작용: ${pv.risks.map(r => r.title + '(' + Math.round(r.prob * 100) + '%)').join(', ') || '없음'}
+국회 통과 가능성: ${Math.round(pv.vote.prob * 100)}%
+
+현재 국가 상황:
+${stateSummary(s)}
+
+실제 한국과 해외 사례를 근거로 ① 핵심 이득 ② 핵심 손해·위험 ③ 성공 조건/보완책 ④ 추진 여부 권고(추진/보완 후 추진/보류)를 400자 내외로 제시하세요. 마크다운 없이 줄바꿈과 •만 사용.`;
+    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+  }
+
+  async function test() {
+    const r = await call({ system: '한 단어로 답하세요.', user: '연결 확인: "정상"이라고 답하세요.', maxTokens: 500 });
+    return r;
+  }
+
+  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, resolveCrisis, briefing, advise, test };
+})();
+
+</script>
+<script>
+/* js/ui.js */
+/* =========================================================
+ *  새로운 대한민국 — UI
+ * ========================================================= */
+let S = null;
+let activeCat = 'const';
+let selectedParty = 'lib';
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ---------------- 공통 ---------------- */
+function toast(msg, ms = 2600) {
+  const t = $('toast'); t.innerHTML = msg; t.classList.remove('hidden');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.add('hidden'), ms);
+}
+function openModal(html, { closable = true } = {}) {
+  $('modal-body').innerHTML = html; $('modal').classList.remove('hidden');
+  $('modal-x').classList.toggle('hidden', !closable);
+  $('modal').dataset.closable = closable ? '1' : '';
+  $('modal').scrollTop = 0;
+}
+function closeModal() { $('modal').classList.add('hidden'); }
+$('modal-x').onclick = closeModal;
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal' && $('modal').dataset.closable) closeModal(); });
+
+function deltaClass(k, d) { const g = STATS[k] ? STATS[k].good : 1; if (k === 'infl') return Math.abs(S.stats.infl - 2) < Math.abs(S.stats.infl - d - 2) ? 'good' : 'bad'; return d * g > 0 ? 'good' : 'bad'; }
+function fxList(e = {}, rel = {}, f = {}) {
+  const out = [];
+  for (const k in e) { if (!STATS[k] || Math.abs(e[k]) < Math.pow(10, -STATS[k].dec) / 2) continue; const cls = (k === 'infl' ? -e[k] : e[k] * STATS[k].good) > 0 ? 'good' : 'bad'; out.push(`<span class="delta ${cls}">${STATS[k].name} ${fmtStat(k, e[k], true)}</span>`); }
+  for (const k in rel) { if (!RELATIONS[k] || Math.abs(rel[k]) < 0.5) continue; out.push(`<span class="delta ${rel[k] > 0 ? 'good' : 'bad'}">${RELATIONS[k].flag}${rel[k] > 0 ? '+' : ''}${rel[k].toFixed(0)}</span>`); }
+  for (const k in f) { if (!FACTIONS[k] || Math.abs(f[k]) < 0.5) continue; out.push(`<span class="delta ${f[k] > 0 ? 'good' : 'bad'}">${FACTIONS[k].icon}${FACTIONS[k].name} ${f[k] > 0 ? '+' : ''}${f[k].toFixed(0)}</span>`); }
+  return out.join(' ');
+}
+const LT_NAME = { decree: '행정', law: '법률', const: '개헌' };
+function ltTag(o) { const lt = o.lt || 'decree'; return `<span class="tag ${lt}">${LT_NAME[lt]}</span>`; }
+
+/* ---------------- 시작 화면 ---------------- */
+function renderStart() {
+  $('party-pick').innerHTML = Object.entries(PARTIES).map(([k, p]) =>
+    `<div class="party-opt ${k === selectedParty ? 'sel' : ''}" data-p="${k}"><b>${p.name}</b><span>${p.desc}</span></div>`).join('');
+  $('party-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedParty = el.dataset.p; renderStart(); });
+  const sv = loadGame();
+  $('btn-continue').classList.toggle('hidden', !sv || sv.over);
+  if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
+}
+$('btn-start').onclick = () => {
+  const name = $('pres-name').value.trim() || '대통령';
+  S = newGame(selectedParty, name);
+  saveGame(S); enterGame();
+  openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
+    <p class="lead">${esc(PARTIES[selectedParty].name)} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
+    <div class="box"><h4>게임 방법</h4><ul>
+      <li><b>📜 정책 결정</b>: 헌법·세제·국방·외교·교육·검경·민법 등 13개 분야 ${POLICIES.length}개 제도가 <b>현재 대한민국 그대로</b> 설정되어 있습니다. 원하는 제도를 바꾸세요.</li>
+      <li>바꾸기 전에 <b>AI 참모가 이득·손해·부작용·국회 통과 가능성</b>을 분석해 줍니다.</li>
+      <li>법률은 국회 과반, <b>개헌은 국회 2/3 + 국민투표</b>가 필요합니다. 행정조치는 즉시 시행됩니다.</li>
+      <li>정책을 바꾸면 효과가 몇 분기에 걸쳐 나타나고, <b>부작용(위기)</b>이 터질 수 있습니다. 위기가 오면 <b>AI가 해결책을 판단해 결과를 도출</b>합니다. (직접 결정 모드도 가능)</li>
+      <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
+      <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
+      <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
+    </ul></div>
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">국정 시작</button></div>`);
+};
+$('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
+
+function enterGame() {
+  $('start').classList.add('hidden'); $('game').classList.remove('hidden');
+  $('auto-ai').checked = S.autoAI;
+  renderAll();
+}
+
+/* ---------------- 탭 ---------------- */
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(name) {
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  if (name === 'trend') renderTrend();
+}
+
+/* ---------------- 렌더링 ---------------- */
+function renderAll() {
+  renderHeader(); renderSide(); renderPolicies(); renderCrises(); renderReport(); renderLog();
+  if ($('tab-trend').classList.contains('active')) renderTrend();
+}
+function renderHeader() {
+  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  $('hdr-date').textContent = `${t.year}년 ${t.q}분기 · 임기 ${t.termYear}년차 (${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS})`;
+  const a = $('hdr-appr'); a.textContent = S.approval.toFixed(1) + '%'; a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
+  $('hdr-pcap').textContent = Math.floor(S.pcap);
+  const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling];
+  const se = $('hdr-seats'); se.textContent = `${rs}/300`; se.style.color = rs >= 151 ? 'var(--good)' : 'var(--mid)';
+  $('btn-end').disabled = S.over;
+}
+function renderSide() {
+  const prev = S.history.length > 1 ? S.history[S.history.length - 2] : S.history[0];
+  $('stat-list').innerHTML = Object.entries(STATS).map(([k, m]) => {
+    const v = S.stats[k], d = v - prev.stats[k];
+    const show = Math.abs(d) >= Math.pow(10, -m.dec) / 2;
+    return `<div class="stat-row"><span>${m.name}</span><span><span class="v">${fmtStat(k, v)}</span>${show ? `<span class="delta ${deltaClass(k, d)}">${d > 0 ? '▲' : '▼'}${Math.abs(d).toFixed(m.dec)}</span>` : ''}</span></div>`;
+  }).join('');
+  $('rel-list').innerHTML = Object.entries(RELATIONS).map(([k, m]) => bar(`${m.flag} ${m.name}`, S.rel[k])).join('');
+  $('fac-list').innerHTML = Object.entries(FACTIONS).map(([k, m]) => bar(`${m.icon} ${m.name}`, S.factions[k])).join('');
+}
+function bar(label, v) {
+  const c = v >= 60 ? 'var(--good)' : v >= 40 ? 'var(--accent)' : v >= 25 ? 'var(--mid)' : 'var(--bad)';
+  return `<div class="bar-row"><span>${label}</span><div class="bar"><i style="width:${clamp(v, 0, 100)}%;background:${c}"></i></div><span class="n">${v.toFixed(0)}</span></div>`;
+}
+
+function allPolicies() { return [...POLICIES, ...S.customPolicies]; }
+function renderPolicies() {
+  $('cat-chips').innerHTML = CATEGORIES.map(c => {
+    const changed = allPolicies().filter(p => p.cat === c.id && !currentOption(p, S).cur).length;
+    return `<button class="chip ${c.id === activeCat ? 'active' : ''}" data-c="${c.id}">${c.icon} ${c.name}${changed ? `<span class="cnt">●${changed}</span>` : ''}</button>`;
+  }).join('');
+  $('cat-chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { activeCat = b.dataset.c; renderPolicies(); });
+  const list = allPolicies().filter(p => p.cat === activeCat);
+  $('policy-list').innerHTML = list.map(p => {
+    const cur = currentOption(p, S);
+    const locked = S.enactedThisTurn.includes(p.id);
+    const pend = S.pending.find(x => x.pid === p.id);
+    return `<div class="pcard ${!cur.cur ? 'changed' : ''}">
+      <h4>${esc(p.name)} ${p.custom ? '<span class="tag new">직접 입안</span>' : ''} ${!cur.cur ? '<span class="tag new">변경됨</span>' : ''}</h4>
+      <p class="pdesc">${esc(p.desc)}</p>
+      ${pend ? `<p class="pdesc">⏳ 효과 반영 중: ${Math.round((1 - pend.left / pend.lag) * 100)}%</p>` : ''}
+      <div class="opts">${p.options.map(o => {
+        const isCur = o.id === cur.id;
+        return `<button class="opt ${isCur ? 'current' : ''} ${locked && !isCur ? 'disabled' : ''}" data-p="${p.id}" data-o="${o.id}" ${isCur ? 'disabled' : ''}>
+          <span>${isCur ? '✔ ' : ''}${esc(o.label)}</span>
+          <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">⚡${o.pc || 0}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">⚡20</span>` : ''}</span>
+        </button>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('') || '<div class="empty">이 분야에 정책이 없습니다.</div>';
+  $('policy-list').querySelectorAll('.opt:not(.current)').forEach(b => b.onclick = () => openPreview(b.dataset.p, b.dataset.o));
+}
+
+// 현행 복귀 옵션은 비용·표결 정보가 없으므로 기본값 부여
+function normalizeOpt(p, o) {
+  if (o.cur && !o.lt) return { ...o, lt: currentOption(p, S).lt || 'law', lean: 'N', pc: 20, lag: 4, e: {}, f: {} };
+  return o;
+}
+
+function openPreview(pid, oid, lobby = 0) {
+  if (S.over) return;
+  const p = policyById(pid, S); const o0 = optionOf(p, oid); const o = normalizeOpt(p, o0);
+  const cur = currentOption(p, S);
+  if (S.enactedThisTurn.includes(pid)) return toast('이 분야는 이번 분기에 이미 손댔습니다. 다음 분기에 다시 시도하세요.');
+  const pv = previewPolicy(S, p, o, lobby);
+  const fmtPart = x => x.rel ? `${x.name} ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(0)}` : x.k === 'approval' ? `지지율 ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(1)}%p (세력 반응)` : `${x.name} ${fmtStat(x.k, x.delta, true)}`;
+  const voteTxt = pv.vote.type === 'decree' ? '대통령령·행정조치 — 국회 표결 없이 즉시 시행'
+    : `${pv.vote.type === 'const' ? '개헌: 국회 2/3(200석) + 국민투표 과반' : '법률: 국회 과반(151석)'} · 예상 찬성 ${pv.vote.exp}석${pv.vote.type === 'const' ? ` · 국민투표 통과 ${(pv.vote.refProb * 100).toFixed(0)}%` : ''}`;
+  const probPct = Math.round(pv.vote.prob * 100);
+  const probColor = probPct >= 70 ? 'var(--good)' : probPct >= 40 ? 'var(--mid)' : 'var(--bad)';
+  openModal(`<h2>${esc(p.name)}</h2>
+    <p class="lead">${esc(cur.label)} → <b>${esc(o.label)}</b><br>${esc(o.desc || '')}</p>
+    <div class="vote"><span>${voteTxt}</span><span>정치자본 <b>⚡${pv.cost}</b> (보유 ${Math.floor(S.pcap)})</span><span>효과 완성까지 <b>${pv.lag}분기</b></span></div>
+    <div>통과 가능성 <b style="color:${probColor}">${probPct}%</b><div class="prob"><i style="width:${probPct}%;background:${probColor}"></i></div></div>
+    ${pv.vote.type !== 'decree' ? `<div class="vote" style="margin-top:10px"><span>🤝 야당 협상(협치):</span>${[0, 1, 2, 3].map(l => `<button class="btn sm ${l === lobby ? 'primary' : ''}" data-lobby="${l}">${l ? `${l}단계 ⚡+${l * LOBBY_COST}` : '없음'}</button>`).join('')}<span>1단계당 찬성 약 +16석</span></div>` : ''}
+    <h3 class="sec">🤖 AI 참모 사전 분석</h3>
+    <div class="two">
+      <div class="box gain"><h4>예상 이득</h4>${pv.gains.length ? `<ul>${pv.gains.map(x => `<li>${fmtPart(x)}</li>`).join('')}</ul>` : '<span class="muted">뚜렷한 이득 없음</span>'}</div>
+      <div class="box loss"><h4>예상 손해</h4>${pv.losses.length ? `<ul>${pv.losses.map(x => `<li>${fmtPart(x)}</li>`).join('')}</ul>` : '<span class="muted">뚜렷한 손해 없음</span>'}</div>
+    </div>
+    <div class="box" style="margin-top:10px"><h4>세력 반응</h4>${fxList({}, {}, pv.diff.f) || '<span class="muted">반응 미미</span>'}</div>
+    ${pv.risks.length ? `<div class="box" style="margin-top:10px"><h4>⚠️ 예상 부작용</h4>${pv.risks.map(r => `<div class="risk">${RISK_TEMPLATES[r.tpl].icon} <b>${esc(r.title)}</b> — 발생 확률 ${(r.prob * 100).toFixed(0)}%, 심각도 ${'●'.repeat(r.sev)}${'○'.repeat(3 - r.sev)}<br><span class="muted">${esc(r.desc)}</span></div>`).join('')}</div>` : ''}
+    <div class="verdict ${pv.verdict.cls}"><b>AI 종합 판단</b> (점수 ${pv.net.toFixed(1)}): ${pv.verdict.text}</div>
+    <div id="claude-advice"></div>
+    <div class="modal-actions">
+      ${ClaudeAI.enabled() ? `<button class="btn" id="btn-ask-claude">🤖 Claude 의견 듣기</button>` : ''}
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary" id="btn-enact" ${S.pcap < pv.cost ? 'disabled' : ''}>${pv.vote.type === 'decree' ? '즉시 시행' : pv.vote.type === 'const' ? '개헌안 발의' : '법안 제출'}</button>
+    </div>`);
+  document.querySelectorAll('[data-lobby]').forEach(b => b.onclick = () => openPreview(pid, oid, +b.dataset.lobby));
+  $('btn-enact').onclick = () => {
+    const tmp = o0.cur && !o0.lt ? Object.assign(o0, { lt: o.lt, lean: o.lean, pc: o.pc, lag: o.lag }) : o0;
+    const r = enactPolicy(S, pid, tmp.id, lobby);
+    if (o0.cur) { delete o0.lt; delete o0.lean; delete o0.pc; delete o0.lag; }
+    if (!r.ok) return toast(r.msg);
+    closeModal(); saveGame(S); renderAll();
+    openModal(`<h2>${r.passed ? '✅ 시행 확정' : '❌ 부결'}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p>
+      ${r.passed ? `<p class="muted">효과는 ${pv.lag}분기에 걸쳐 나타납니다. 세력 반응은 즉시 반영되었습니다.${pv.risks.length ? ' 부작용이 잠복 중이니 주의하세요.' : ''}</p>` : '<p class="muted">정치자본의 절반이 소모되었고 지지율이 소폭 하락했습니다. 다음 분기에 다시 시도할 수 있습니다.</p>'}
+      <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
+  };
+  const ask = $('btn-ask-claude');
+  if (ask) ask.onclick = async () => {
+    ask.disabled = true; $('claude-advice').innerHTML = `<div class="ai-box"><span class="spinner"></span>Claude가 분석 중입니다…</div>`;
+    try {
+      const txt = await ClaudeAI.advise(S, p, o, pv);
+      $('claude-advice').innerHTML = `<div class="ai-box"><span class="who">🤖 Claude 국정자문</span>${esc(txt)}</div>`;
+    } catch (e) { $('claude-advice').innerHTML = `<div class="ai-box">Claude 호출 실패: ${esc(e.message)}</div>`; }
+  };
+}
+
+/* ---------------- 자유 입안 ---------------- */
+$('btn-custom').onclick = async () => {
+  const text = $('custom-text').value.trim();
+  if (!text) return toast('정책 내용을 입력하세요.');
+  if (S.over || busy) return;
+  busy = true; $('btn-custom').disabled = true;
+  openModal(`<h2>✍️ 정책 분석 중</h2><p><span class="spinner"></span>${ClaudeAI.enabled() ? 'Claude가' : 'AI 참모가'} "${esc(text)}"의 효과를 분석하고 있습니다…</p>`, { closable: false });
+  let a, by = 'rule';
+  try {
+    if (ClaudeAI.enabled()) { a = await ClaudeAI.analyzePolicy(text, S); by = 'claude'; }
+  } catch (e) { toast('Claude 분석 실패 → 규칙 기반 분석으로 대체: ' + esc(e.message), 4000); }
+  if (!a) a = analyzeCustomRule(text);
+  const p = registerCustomPolicy(S, text, a);
+  busy = false; $('btn-custom').disabled = false; $('custom-text').value = '';
+  activeCat = p.cat; saveGame(S); renderPolicies(); closeModal();
+  toast(`${by === 'claude' ? '🤖 Claude' : 'AI 참모'} 분석 완료: '${esc(p.name)}'이(가) ${CATEGORIES.find(c => c.id === p.cat).name} 분야에 추가되었습니다.`);
+  openPreview(p.id, 'new');
+};
+$('custom-text').addEventListener('keydown', e => { if (e.key === 'Enter') $('btn-custom').click(); });
+
+/* ---------------- 위기 대응 ---------------- */
+$('auto-ai').onchange = e => { S.autoAI = e.target.checked; saveGame(S); renderCrises(); };
+function renderCrises() {
+  $('crisis-badge').textContent = S.crises.length; $('crisis-badge').classList.toggle('hidden', !S.crises.length);
+  $('ai-mode-label').textContent = S.autoAI
+    ? `위기가 발생하면 ${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'}가 즉시 판단해 해결합니다.`
+    : '직접 결정 모드: 위기마다 해법을 고르거나 AI에게 맡기세요. 미처리 위기는 분기 종료 시 AI가 처리합니다.';
+  $('crisis-list').innerHTML = S.crises.length ? S.crises.map(c => {
+    const evals = aiEvaluate(S, c); const best = evals[0].i;
+    const p = c.pid && policyById(c.pid, S);
+    return `<div class="ccard ${c.good ? 'good' : ''}">
+      <h4>${c.icon} ${esc(c.title)} <span class="tag">${esc(c.kind)}</span> <span class="tag">심각도 ${'●'.repeat(c.sev)}</span></h4>
+      <p>${esc(c.desc)}${p ? `<br>원인 정책: <b>${esc(p.name)} — ${esc(optionOf(p, c.oid).label)}</b>` : ''}</p>
+      ${c.options.map((o, i) => { const ev = evals.find(x => x.i === i); const fx = expandSolution(S, c, o, true); return `<div class="sol ${i === best ? 'best' : ''}">
+        <div><b>${esc(o.label)}</b> ${i === best ? '<span class="tag new">AI 추천</span>' : ''} <span class="tag">성공 ${(ev.ok * 100).toFixed(0)}%</span> <span class="tag">⚡${o.pc || 0}</span>${o.rollback ? `<span class="tag">정책 ${(o.rollback * 100).toFixed(0)}% 후퇴</span>` : ''}
+          <div class="sd">${esc(o.desc)}</div><div class="fx">${fxList(fx.e, fx.rel, fx.f)}</div></div>
+        <button class="btn sm" data-c="${c.id}" data-i="${i}">선택</button></div>`; }).join('')}
+      <div class="modal-actions"><button class="btn primary sm" data-ai="${c.id}">🤖 AI에게 맡기기</button></div>
+    </div>`;
+  }).join('') : '<div class="empty">현재 대응이 필요한 위기가 없습니다. 평화로운 분기입니다.</div>';
+  $('crisis-list').querySelectorAll('button[data-i]').forEach(b => b.onclick = () => {
+    const rec = resolveCrisis(S, b.dataset.c, +b.dataset.i, 'player');
+    afterResolve([rec]);
+  });
+  $('crisis-list').querySelectorAll('button[data-ai]').forEach(b => b.onclick = async () => {
+    b.disabled = true; b.innerHTML = '<span class="spinner"></span>판단 중…';
+    const rec = await aiResolve(S.crises.find(c => c.id === b.dataset.ai));
+    afterResolve([rec]);
+  });
+  $('resolved-list').innerHTML = S.resolved.slice(0, 12).map(resolvedCard).join('') || '<div class="empty">아직 처리한 위기가 없습니다.</div>';
+}
+function resolvedCard(r) {
+  const t = turnLabel(r.turn);
+  return `<div class="rcard"><div>${r.icon} <b>${esc(r.title)}</b> <span class="muted">· ${t.year}년 ${t.q}분기 · ${esc(r.by)}</span></div>
+    <div>해법: <b>${esc(r.sol)}</b> → <span class="res ${r.success ? 'ok' : 'fail'}">${r.success ? '성공' : '실패'}</span> — ${esc(r.outcome)}</div>
+    <div class="fx">${fxList(r.fx.e, r.fx.rel, r.fx.f)}</div>
+    ${r.reasoning ? `<div class="why">🧠 ${esc(r.reasoning)}</div>` : ''}</div>`;
+}
+function afterResolve(recs) {
+  saveGame(S); renderAll();
+  const r = recs.filter(Boolean);
+  if (r.length) openModal(`<h2>위기 대응 결과</h2>${r.map(resolvedCard).join('')}<div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
+}
+
+// AI가 위기를 판단·해결 (Claude 사용 가능 시 Claude, 실패 시 규칙 기반)
+async function aiResolve(c) {
+  if (!c) return null;
+  const evals = aiEvaluate(S, c);
+  if (ClaudeAI.enabled()) {
+    try {
+      const r = await ClaudeAI.resolveCrisis(c, S, evals);
+      return resolveCrisis(S, c.id, r.choice, 'claude', r.reasoning);
+    } catch (e) { toast('Claude 판단 실패 → AI 참모가 대신 판단합니다: ' + esc(e.message), 4000); }
+  }
+  return resolveCrisis(S, c.id, evals[0].i, 'ai', explainChoice(S, c, evals));
+}
+
+/* ---------------- 분기 종료 ---------------- */
+$('btn-end').onclick = async () => {
+  if (busy || S.over) return;
+  busy = true; $('btn-end').disabled = true;
+  openModal(`<h2>⏳ 분기 진행 중</h2><p><span class="spinner"></span>정책 효과를 반영하고 국내외 정세를 시뮬레이션하고 있습니다…</p>`, { closable: false });
+  const recs = [];
+  // 직접 결정 모드에서 미처리 위기는 AI가 처리
+  for (const c of [...S.crises]) recs.push(await aiResolve(c));
+  const report = endTurn(S);
+  const newCrises = S.crises.filter(c => report.crises.includes(c.id));
+  if (S.autoAI) {
+    for (const c of newCrises) {
+      $('modal-body').innerHTML = `<h2>🚨 위기 대응 중</h2><p><span class="spinner"></span>${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'}가 '${esc(c.title)}'에 대한 해법을 판단하고 있습니다…</p>`;
+      recs.push(await aiResolve(c));
+    }
+  }
+  report.resolvedIds = recs.filter(Boolean).map(r => r.id);
+  report.pendingCrises = S.autoAI ? 0 : newCrises.length;
+  saveGame(S);
+  busy = false; renderAll();
+  showReportModal(report, recs.filter(Boolean));
+  if (ClaudeAI.enabled() && !report.gameOver) {
+    try {
+      const txt = await ClaudeAI.briefing(S, report);
+      report.brief = txt; saveGame(S);
+      const el = $('brief-slot'); if (el) el.innerHTML = `<div class="ai-box"><span class="who">🤖 Claude 분기 논평</span>${esc(txt)}</div>`;
+      renderReport();
+    } catch (e) { const el = $('brief-slot'); if (el) el.innerHTML = `<div class="ai-box">Claude 논평 실패: ${esc(e.message)}</div>`; }
+  }
+};
+
+function reportHTML(report, recs) {
+  const t = report.label;
+  const gains = [], losses = [];
+  for (const k in report.diff) {
+    const d = report.diff[k]; const th = STATS[k].dec >= 3 ? 0.0015 : STATS[k].dec === 2 ? 0.005 : STATS[k].dec === 1 ? 0.1 : 0.6;
+    if (Math.abs(d) < th) continue;
+    const good = k === 'infl' ? Math.abs(S.stats.infl - 2) < Math.abs(S.stats.infl - d - 2) : d * STATS[k].good > 0;
+    (good ? gains : losses).push(`${STATS[k].name} ${fmtStat(k, d, true)} <span class="muted">(${fmtStat(k, S.history[report.turn + 1]?.stats[k] ?? S.stats[k])})</span>`);
+  }
+  for (const k in report.relDiff) { const d = report.relDiff[k]; if (Math.abs(d) < 2) continue; (d > 0 ? gains : losses).push(`${RELATIONS[k].flag} ${RELATIONS[k].name} 관계 ${d > 0 ? '+' : ''}${d.toFixed(0)}`); }
+  const ap = report.approvalDiff;
+  return `<p class="lead">${t.year}년 ${t.q}분기 결과 · 지지율 <b style="color:${ap >= 0 ? 'var(--good)' : 'var(--bad)'}">${ap >= 0 ? '+' : ''}${ap.toFixed(1)}%p</b></p>
+    ${report.elections.length ? `<div class="verdict">${report.elections.map(esc).join('<br>')}</div>` : ''}
+    ${report.enacted.length ? `<div class="box"><h4>이번 분기 시행 정책</h4><ul>${report.enacted.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+    ${report.applied.length ? `<div class="box" style="margin-top:8px"><h4>효과 반영 중인 정책</h4><ul>${report.applied.map(a => `<li>${esc(a.src)} <span class="muted">(${Math.round(a.progress * 100)}%)</span></li>`).join('')}</ul></div>` : ''}
+    <div class="two" style="margin-top:8px">
+      <div class="box gain"><h4>📈 이득</h4>${gains.length ? `<ul>${gains.map(x => `<li>${x}</li>`).join('')}</ul>` : '<span class="muted">없음</span>'}</div>
+      <div class="box loss"><h4>📉 손해</h4>${losses.length ? `<ul>${losses.map(x => `<li>${x}</li>`).join('')}</ul>` : '<span class="muted">없음</span>'}</div>
+    </div>
+    <h3 class="sec">🚨 발생한 위기와 AI 해결 결과</h3>
+    ${recs && recs.length ? recs.map(resolvedCard).join('') : report.pendingCrises ? `<div class="verdict bad">새 위기 ${report.pendingCrises}건이 대통령의 결정을 기다립니다. [위기 대응] 탭을 확인하세요.</div>` : '<div class="empty">이번 분기에는 특별한 위기가 없었습니다.</div>'}
+    <div id="brief-slot">${report.brief ? `<div class="ai-box"><span class="who">🤖 Claude 분기 논평</span>${esc(report.brief)}</div>` : ''}</div>`;
+}
+function showReportModal(report, recs) {
+  if (report.gameOver) return showEnding();
+  openModal(`<h2>📊 분기 국정 보고서</h2>${reportHTML(report, recs)}
+    <div class="modal-actions">${report.pendingCrises ? `<button class="btn" onclick="closeModal();showTab('crisis')">위기 대응하러 가기</button>` : ''}<button class="btn primary" onclick="closeModal()">다음 분기 국정 운영</button></div>`);
+  if (ClaudeAI.enabled() && !report.brief) $('brief-slot').innerHTML = `<div class="ai-box"><span class="spinner"></span>Claude가 분기 논평을 작성하고 있습니다…</div>`;
+}
+function renderReport() {
+  const r = S.reports[0];
+  if (!r) { $('report-body').innerHTML = '<div class="empty">첫 분기를 마치면 보고서가 작성됩니다.</div>'; return; }
+  const recs = S.resolved.filter(x => (r.resolvedIds || []).includes(x.id));
+  $('report-body').innerHTML = `<h2>📊 최근 분기 국정 보고서</h2>${reportHTML(r, recs)}
+    <h3 class="sec">지난 보고서</h3>${S.reports.slice(1, 8).map(x => `<div class="log-item"><span class="t">${x.label.year}년 ${x.label.q}분기</span>지지율 ${x.approvalDiff >= 0 ? '+' : ''}${x.approvalDiff.toFixed(1)}%p · 시행 ${x.enacted.length}건 · 위기 ${x.crises.length}건</div>`).join('') || '<span class="muted">없음</span>'}`;
+}
+
+/* ---------------- 추이 ---------------- */
+function spark(values, color) {
+  if (values.length < 2) values = [values[0], values[0]];
+  const min = Math.min(...values), max = Math.max(...values), r = max - min || 1;
+  const pts = values.map((v, i) => `${(i / (values.length - 1) * 100).toFixed(2)},${(55 - (v - min) / r * 50).toFixed(2)}`).join(' ');
+  return `<svg viewBox="0 0 100 60" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function renderTrend() {
+  const H = S.history;
+  const items = [{ name: '지지율', unit: '%', vals: H.map(h => h.approval), good: 1, dec: 1 },
+    ...Object.entries(STATS).map(([k, m]) => ({ name: m.name, unit: m.unit, vals: H.map(h => h.stats[k]), good: m.good, dec: m.dec, k }))];
+  $('trend-body').innerHTML = items.map(it => {
+    const first = it.vals[0], last = it.vals[it.vals.length - 1], d = last - first;
+    const good = it.k === 'infl' ? Math.abs(last - 2) <= Math.abs(first - 2) : d * it.good >= 0;
+    return `<div class="tcard"><div class="tt"><span>${it.name}</span><b>${last.toFixed(it.dec)}${it.unit} <span class="delta ${good ? 'good' : 'bad'}">${d >= 0 ? '+' : ''}${d.toFixed(it.dec)}</span></b></div>${spark(it.vals, good ? 'var(--good)' : 'var(--bad)')}</div>`;
+  }).join('');
+}
+
+function renderLog() {
+  $('log-body').innerHTML = S.log.slice(0, 200).map(l => { const t = turnLabel(l.turn); return `<div class="log-item ${l.type}"><span class="t">${t.year}.${t.q}Q</span>${esc(l.text)}</div>`; }).join('');
+}
+
+/* ---------------- 엔딩 ---------------- */
+function showEnding() {
+  const e = S.ending, sc = e.score;
+  const changed = allPolicies().filter(p => !currentOption(p, S).cur);
+  const H = S.history, first = H[0];
+  openModal(`<div class="ending">
+    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : '🚨 안보 붕괴'}</h2>
+    ${e.desc ? `<p class="lead">${esc(e.desc)}</p>` : ''}
+    <div class="grade" style="color:${sc.total >= 70 ? 'var(--good)' : sc.total >= 50 ? 'var(--mid)' : 'var(--bad)'}">${sc.grade}</div>
+    <h3>${esc(sc.title)}</h3><p class="muted">${esc(sc.desc)}</p>
+    <p>종합 ${sc.total.toFixed(1)}점 · 국가지표 ${sc.indexScore.toFixed(1)}점 · 최종 지지율 ${sc.approval.toFixed(1)}%</p></div>
+    <div class="rep-grid">${Object.entries(STATS).map(([k, m]) => { let d = S.stats[k] - first.stats[k]; if (Math.abs(d) < Math.pow(10, -m.dec) / 2) d = 0; return `<div class="rep-item">${m.name}<b>${fmtStat(k, S.stats[k])}</b><span class="delta ${deltaClass(k, d)}">${d >= 0 ? '+' : ''}${d.toFixed(m.dec)}</span></div>`; }).join('')}</div>
+    <div class="box"><h4>당신이 바꾼 대한민국 (${changed.length}개 제도)</h4>${changed.length ? `<ul>${changed.map(p => `<li>${esc(p.name)}: ${esc(currentOption(p, S).label)}</li>`).join('')}</ul>` : '<span class="muted">아무것도 바꾸지 않았습니다.</span>'}</div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">기록 둘러보기</button><button class="btn primary" onclick="restart()">새 게임</button></div>`);
+}
+function restart() { clearSave(); S = null; closeModal(); $('game').classList.add('hidden'); $('start').classList.remove('hidden'); renderStart(); }
+
+/* ---------------- 설정 ---------------- */
+$('btn-settings').onclick = () => {
+  const c = ClaudeAI.cfg();
+  const host = ClaudeAI.hostMode();
+  openModal(`<h2>⚙️ 설정</h2>
+    <h3 class="sec">🤖 Claude AI 연동</h3>
+    ${host ? `<p class="muted">claude.ai에서 열린 페이지라 <b>API 키 없이 내 Claude 계정</b>으로 실제 Claude가 위기 해결 판단, 직접 입안 정책 분석, 분기 논평, 정책 자문을 수행합니다. 처음 호출할 때 허용 여부를 묻고, 내 Claude 사용량이 쓰입니다.</p>
+    <label class="switch"><input type="checkbox" id="cfg-host" ${c.useHost !== false ? 'checked' : ''}><span></span> Claude 사용</label>`
+    : `<p class="muted">API 키를 넣으면 실제 Claude가 위기 해결 판단, 직접 입안 정책 분석, 분기 논평, 정책 자문을 수행합니다. 키가 없으면 내장 AI 참모(규칙 기반)가 판단합니다. 키는 이 브라우저(localStorage)에만 저장되고 Anthropic API로만 전송됩니다. API 사용량에 따라 요금이 발생합니다.</p>
+    <div class="settings-row"><label for="cfg-key">Anthropic API 키</label><input id="cfg-key" type="password" placeholder="sk-ant-..." value="${esc(c.apiKey || '')}"></div>
+    <div class="settings-row"><label for="cfg-model">모델</label><select id="cfg-model">${ClaudeAI.MODELS.map(m => `<option value="${m.id}" ${m.id === c.model ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
+    <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
+    <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
+    <h3 class="sec">게임</h3>
+    <div class="modal-actions" style="justify-content:flex-start">
+      <button class="btn" id="cfg-theme">🌓 테마 전환</button>
+      <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
+    </div>
+    <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
+  const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
+  $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
+  $('cfg-test').onclick = async () => {
+    ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
+    try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }
+    catch (e) { $('cfg-msg').textContent = '❌ 실패: ' + e.message; }
+  };
+  $('cfg-theme').onclick = () => {
+    const root = document.documentElement; const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    root.dataset.theme = cur === 'light' ? 'dark' : 'light'; try { localStorage.setItem('newkorea_theme', root.dataset.theme); } catch {}
+  };
+  $('cfg-reset').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.armed) return restart();
+    b.dataset.armed = '1'; b.textContent = '정말 삭제하고 새로 시작합니다 (한 번 더 클릭)';
+  };
+};
+
+/* ---------------- 초기화 ---------------- */
+try { const th = localStorage.getItem('newkorea_theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
+renderStart();
+ClaudeAI.whenReady(() => { if (S) renderCrises(); });
+
+</script>

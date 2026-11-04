@@ -3,11 +3,12 @@
  *  - API 키를 넣으면 Claude가 직접 정책 효과 분석, 위기 해결 판단, 분기 논평을 수행
  *  - 키가 없거나 오류가 나면 규칙 기반 AI 참모(engine.js)로 자동 대체
  *  - API 키는 이 브라우저의 localStorage에만 저장되며 Anthropic API로만 전송됨
+ *  - claude.ai 아티팩트로 열면 API 키 없이 보는 사람의 Claude 계정(sample 기능)으로 동작
  * ========================================================= */
 
 const ClaudeAI = (() => {
   // 로컬 번들(js/vendor) 우선, 실패 시 CDN
-  const SDK_LOCAL = new URL('vendor/anthropic-sdk.mjs', document.currentScript.src).href;
+  const SDK_LOCAL = new URL('vendor/anthropic-sdk.mjs', (document.currentScript && document.currentScript.src) || location.href).href;
   const SDK_CDN = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.135.0/+esm';
   const CFG_KEY = 'newkorea_claude_cfg';
   let client = null, clientKey = null, sdkPromise = null;
@@ -23,7 +24,29 @@ const ClaudeAI = (() => {
     catch { return { model: 'claude-opus-5-5', effort: 'low' }; }
   }
   function setCfg(c) { try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch {} client = null; }
-  function enabled() { return !!cfg().apiKey; }
+  // claude.ai 아티팩트 환경: 보는 사람의 Claude 계정으로 호출 (API 키 불필요)
+  let sampleFn = null, sampleDenied = false;
+  const onReady = [];
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('sample').then(fn => { sampleFn = fn || null; onReady.forEach(f => { try { f(); } catch {} }); }).catch(() => {});
+  }
+  function hostMode() { return !!sampleFn && !sampleDenied; }
+  function whenReady(f) { onReady.push(f); }
+  function enabled() { const c = cfg(); return hostMode() ? c.useHost !== false : !!c.apiKey; }
+
+  async function callHost({ system, user, schema }) {
+    let prompt = system + '\n\n' + user;
+    if (schema) prompt += '\n\n아래 JSON Schema를 정확히 따르는 JSON 값 하나만 답하세요. 다른 텍스트는 쓰지 마세요.\n' + JSON.stringify(schema);
+    else prompt += '\n\n답변 본문만 쓰세요.';
+    try {
+      return schema ? await sampleFn.json(prompt, { cache: false }) : (await sampleFn(prompt, { cache: false })).text;
+    } catch (e) {
+      const code = e && e.code;
+      if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) sampleDenied = true;
+      const msg = { not_granted: 'Claude 사용이 허용되지 않았습니다', rate_limited: '요청이 많아 잠시 후 다시 시도하세요', refused: 'Claude가 요청을 거절했습니다', invalid_json: '응답 형식 오류', session_expired: '다시 로그인이 필요합니다' }[code];
+      throw new Error(msg || (e && e.message) || 'Claude 호출 실패');
+    }
+  }
 
   async function getClient() {
     const c = cfg();
@@ -62,6 +85,7 @@ const ClaudeAI = (() => {
   const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });
 
   async function call({ system, user, schema, maxTokens = 4000 }) {
+    if (hostMode() && cfg().useHost !== false) return await callHost({ system, user, schema });
     const c = cfg();
     const cl = await getClient();
     const params = {
@@ -207,5 +231,5 @@ ${stateSummary(s)}
     return r;
   }
 
-  return { MODELS, cfg, setCfg, enabled, analyzePolicy, resolveCrisis, briefing, advise, test };
+  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, resolveCrisis, briefing, advise, test };
 })();

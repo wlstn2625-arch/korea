@@ -13,6 +13,10 @@ python3 -m http.server 8000
 # → http://localhost:8000 접속
 ```
 
+## 바로 플레이 (claude.ai)
+
+https://claude.ai/artifact/1hQDme9GwVtEEd22LTyRQv — claude.ai에서 열면 API 키 없이 내 Claude 계정으로 AI 판단이 동작합니다. (공유는 페이지의 Share 메뉴에서)
+
 ## 게임 구조
 
 | 요소 | 설명 |
@@ -45,6 +49,7 @@ js/engine.js            시뮬레이션 엔진, 국회 표결, 규칙 기반 AI 
 js/claude.js            Claude API 연동 (선택)
 js/ui.js                UI 렌더링과 게임 흐름
 js/vendor/anthropic-sdk.mjs   Anthropic TypeScript SDK 브라우저 번들 (0.135.0)
+tools/build_artifact.py  claude.ai 아티팩트용 단일 HTML 빌드 (dist/newkorea.html)
 ```
 
 ## 정책 추가하기
