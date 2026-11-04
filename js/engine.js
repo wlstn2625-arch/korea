@@ -236,7 +236,7 @@ function previewPolicy(s, p, opt, lobby = 0) {
   const vote = voteModel(s, opt, lobby);
   const gains = [], losses = [];
   for (const part of val.parts) {
-    if (Math.abs(part.val) < 0.05) continue;
+    if (Math.abs(part.val) < 0.05 || (part.k === 'approval' && Math.abs(part.delta) < 0.05)) continue;
     (part.val > 0 ? gains : losses).push(part);
   }
   gains.sort((a, b) => b.val - a.val); losses.sort((a, b) => a.val - b.val);
