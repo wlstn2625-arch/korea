@@ -207,6 +207,30 @@ function annex(s, k, peaceful) {
   }
 }
 
+/* ---------------- 전선: 전황 점수 → 점령된 시·도 ---------------- */
+const CAPITAL = { nk: '평양', jp: '도쿄', tw: '타이베이', cn: '베이징', ru: '블라디보스토크', kr: '서울' };
+const dist2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
+function warOccupation(s) {
+  const out = { byUs: new Set(), byEnemy: new Set(), seoulLost: false, enemyCapitalTaken: false };
+  const w = s.war; if (!w || typeof MAP_DATA === 'undefined') return out;
+  const seoul = MAP_DATA.cities['서울'], cap = MAP_DATA.cities[CAPITAL[w.k]];
+  if (w.score > 0 && MAP_DATA.prov[w.k]) {
+    // 우리 쪽에서 가까운 곳부터 진격
+    const list = [...MAP_DATA.prov[w.k]].filter(p => p.c).sort((a, b) => dist2(a.c, seoul) - dist2(b.c, seoul));
+    const n = Math.round(w.score / 100 * list.length);
+    list.slice(0, n).forEach(p => out.byUs.add(p.id));
+    out.enemyCapitalTaken = n >= list.length * 0.85;
+  }
+  if (w.score < 0) {
+    // 적은 자기 수도 쪽에서 가까운 우리 시·도부터 점령
+    const list = [...MAP_DATA.prov.kr].filter(p => p.c).sort((a, b) => dist2(a.c, cap) - dist2(b.c, cap));
+    const n = Math.round(-w.score / 100 * list.length);
+    list.slice(0, n).forEach(p => out.byEnemy.add(p.id));
+    out.seoulLost = list.slice(0, n).some(p => p.n === '서울특별시');
+  }
+  return out;
+}
+
 /* ---------------- 분기 처리 ---------------- */
 function worldTurn(s, report) {
   report.world = { events: [] };
@@ -234,7 +258,12 @@ function worldTurn(s, report) {
   s.stats.gdp -= 0.5; s.stats.happiness -= 1.5; s.stats.debt += 1.5; s.stats.fiscal -= 0.3; s.stats.safety -= 1;
   if (w.turns > 1) s.approval = clamp(s.approval - 1.5, 0, 100);
   for (const c of w.allies) relBump(s, c, 1, 0);
-  const line = `${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q 전황 ${delta >= 0 ? '진격' : '후퇴'} (${delta >= 0 ? '+' : ''}${delta.toFixed(0)}) → 전황 점수 ${w.score.toFixed(0)}`;
+  // 점령당한 우리 시·도만큼 추가 피해, 서울 함락 시 큰 타격
+  const occ = warOccupation(s);
+  s.stats.gdp -= 0.12 * occ.byEnemy.size; s.stats.happiness -= 0.4 * occ.byEnemy.size;
+  if (occ.seoulLost) { s.stats.gdp -= 1; s.approval = clamp(s.approval - 4, 0, 100); }
+  const occTxt = occ.byUs.size ? ` · 아군이 ${RELATIONS[w.k].name} ${occ.byUs.size}개 지역 장악` : occ.byEnemy.size ? ` · 적이 우리 시·도 ${occ.byEnemy.size}곳 점령${occ.seoulLost ? '(서울 함락!)' : ''}` : '';
+  const line = `${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q 전황 ${delta >= 0 ? '진격' : '후퇴'} (${delta >= 0 ? '+' : ''}${delta.toFixed(0)}) → 전황 점수 ${w.score.toFixed(0)}${occTxt}`;
   w.log.push(line); report.world.war = line;
   // 핵 사용 위험
   if (Math.random() < nukeRisk(s)) {

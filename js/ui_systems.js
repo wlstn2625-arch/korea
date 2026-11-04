@@ -2,6 +2,7 @@
  *  확장 시스템 화면: 국회·세력 / 경제 / 외교·전쟁
  * ========================================================= */
 let selCountry = 'nk';
+let mapScroll = null;
 
 function renderSystemsTabs() {
   if (!S) return;
@@ -89,26 +90,7 @@ function renderEconomy() {
 /* ---------------- 외교·전쟁 ---------------- */
 function renderWorld() {
   const el = $('tab-world'); if (!el) return;
-  const krPos = [60, 46];
-  const relColor = v => v >= 70 ? 'var(--good)' : v >= 45 ? 'var(--accent)' : v >= 25 ? 'var(--mid)' : 'var(--bad)';
-  const lines = Object.entries(COUNTRIES).map(([k, c]) => {
-    if (S.annexed[k]) return '';
-    const d = S.diplo[k], atWar = S.war && (S.war.k === k || S.war.enemyAllies.includes(k));
-    const color = atWar ? 'var(--bad)' : d.alliance ? 'var(--good)' : relColor(S.rel[k]);
-    return `<line x1="${krPos[0]}" y1="${krPos[1]}" x2="${c.pos[0]}" y2="${c.pos[1]}" stroke="${color}" stroke-width="${d.alliance || atWar ? 0.9 : 0.4}" ${d.alliance || atWar ? '' : 'stroke-dasharray="1.5 1.5"'} opacity="0.8"/>`;
-  }).join('');
-  const tiles = Object.entries(COUNTRIES).map(([k, c]) => {
-    const r = RELATIONS[k], d = S.diplo[k], an = S.annexed[k];
-    const atWar = S.war && (S.war.k === k || S.war.enemyAllies.includes(k));
-    const ally = S.war && S.war.allies.includes(k);
-    return `<button class="ctile ${selCountry === k ? 'sel' : ''} ${atWar ? 'war' : ''} ${an ? 'annexed' : ''}" style="left:${c.pos[0]}%;top:${c.pos[1]}%" data-c="${k}">
-      <span class="cflag">${r.flag}</span><span class="cname">${r.name}</span>
-      ${an ? '<span class="cstat">🇰🇷 합병</span>' : `<span class="crel" style="color:${relColor(S.rel[k])}">${S.rel[k].toFixed(0)}</span>`}
-      <span class="cicons">${d.alliance ? '🛡️' : ''}${d.fta ? '📦' : ''}${d.sanction ? '🚫' : ''}${atWar ? '⚔️' : ''}${ally ? '🤝' : ''}${c.nukes ? '☢️' : ''}</span>
-    </button>`;
-  }).join('');
-  const kr = `<div class="ctile kr" style="left:${krPos[0]}%;top:${krPos[1]}%"><span class="cflag">🇰🇷</span><span class="cname">대한민국</span><span class="crel">군사력 ${milPower(S).toFixed(0)}</span></div>`;
-
+  const mapHtml = renderGeoMap();
   const k = selCountry, c = COUNTRIES[k], d = S.diplo[k];
   const odds = !c.far && !S.annexed[k] ? (() => { const o = warOdds(S, k); const allies = warAllies(S, k, 'kr'), en = warAllies(S, k, 'them');
     return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>우리 편: ${['대한민국', ...allies.map(x => RELATIONS[x].name)].join(', ')} (전력 ${o.ours.toFixed(0)})<br>상대 편: ${[RELATIONS[k].name, ...en.map(x => RELATIONS[x].name)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
@@ -131,8 +113,7 @@ function renderWorld() {
 
   el.innerHTML = `${warPanel}
     <div class="world-grid">
-      <div class="map"><svg viewBox="0 0 100 100" preserveAspectRatio="none" class="map-lines">${lines}</svg>${tiles}${kr}
-        <div class="map-legend">🛡️동맹 📦FTA 🚫제재 ⚔️전쟁 ☢️핵보유 · 숫자=관계</div></div>
+      ${mapHtml}
       <div class="cpanel">
         <h3>${RELATIONS[k].flag} ${RELATIONS[k].name}</h3>
         <div class="muted small">${esc(c.note)} · 인구 ${c.pop}</div>
@@ -142,12 +123,81 @@ function renderWorld() {
         <h4 class="sec">외교 행동</h4><div class="dacts">${actions}</div>
       </div>
     </div>`;
-  el.querySelectorAll('.ctile[data-c]').forEach(b => b.onclick = () => { selCountry = b.dataset.c; renderWorld(); });
+  // 좁은 화면: 지도를 가로 스크롤하되 한반도를 가운데에, 다시 그려도 위치 유지
+  const sc = el.querySelector('.geo-scroll');
+  if (sc && sc.scrollWidth > sc.clientWidth) {
+    sc.scrollLeft = mapScroll ?? (MAP_DATA.labels.kr[0] / MAP_DATA.w) * sc.scrollWidth - sc.clientWidth / 2;
+    sc.onscroll = () => { mapScroll = sc.scrollLeft; };
+  }
+  el.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { selCountry = b.dataset.c; renderWorld(); });
   el.querySelectorAll('[data-dact]').forEach(b => b.onclick = () => {
     if (b.dataset.dact === 'war') return confirmWar(k);
     act(diploAction)(S, b.dataset.dact, k);
   });
   el.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
+}
+
+/* ---------------- 실제 지도 (Natural Earth) ---------------- */
+// 관계 0→100 을 빨강→노랑→초록 색조로
+const relHue = v => Math.round(clamp(v, 0, 100) * 1.25);
+function landFill(k) {
+  if (k === 'kr' || S.annexed[k]) return 'var(--kr-fill)';
+  if (S.war && (S.war.k === k || S.war.enemyAllies.includes(k))) return 'var(--enemy-fill)';
+  if (S.war && S.war.allies.includes(k)) return 'var(--ally-fill)';
+  return `hsl(${relHue(S.rel[k])} var(--land-s) var(--land-l))`;
+}
+function renderGeoMap() {
+  if (typeof MAP_DATA === 'undefined') return '<div class="empty">지도 데이터를 불러오지 못했습니다.</div>';
+  const occ = warOccupation(S);
+  const sel = selCountry;
+  const provCountries = new Set(Object.keys(MAP_DATA.prov));
+  const land = MAP_DATA.land.map(l => {
+    const game = l.k !== 'x' && l.k !== 'mn';
+    const fill = game ? landFill(l.k) : 'var(--land-neutral)';
+    // 시·도 데이터가 있는 나라는 아래 시·도 레이어가 덮음 (국경선만 남김)
+    return `<path d="${l.d}" class="${game ? 'gland' : 'nland'} ${l.k === sel ? 'gsel' : ''}" style="fill:${provCountries.has(l.k) ? 'var(--land-neutral)' : fill}" ${game && l.k !== 'kr' ? `data-c="${l.k}"` : ''}><title>${esc(game ? (l.k === 'kr' ? '대한민국' : RELATIONS[l.k].name) : l.name)}</title></path>`;
+  }).join('');
+  const provs = Object.entries(MAP_DATA.prov).map(([k, list]) => list.map(p => {
+    let fill = landFill(k), cls = 'prov';
+    if (occ.byUs.has(p.id)) { fill = 'url(#hatch-kr)'; cls += ' occ'; }
+    if (occ.byEnemy.has(p.id)) { fill = 'url(#hatch-enemy)'; cls += ' occ'; }
+    const tip = `${p.n}${occ.byUs.has(p.id) ? ' — 아군 점령' : occ.byEnemy.has(p.id) ? ' — 적군 점령' : ''}`;
+    return `<path d="${p.d}" class="${cls} ${k === sel ? 'gsel' : ''}" style="fill:${fill}" ${k !== 'kr' ? `data-c="${k}"` : ''}><title>${esc(tip)}</title></path>`;
+  }).join('')).join('');
+  // 라벨: 나라 이름 + 관계 수치 + 상태 아이콘
+  const labelPos = MAP_DATA.labels;
+  const labels = Object.entries(labelPos).map(([k, [x, y]]) => {
+    if (k === 'mn') return `<text x="${x}" y="${y}" class="glabel dim">몽골</text>`;
+    if (k === 'kr') return `<text x="${x}" y="${y}" class="glabel kr">대한민국</text><text x="${x}" y="${y + 20}" class="gsub">군사력 ${milPower(S).toFixed(0)}</text>`;
+    if (S.annexed[k]) return `<text x="${x}" y="${y}" class="glabel kr">${RELATIONS[k].name}</text><text x="${x}" y="${y + 18}" class="gsub">🇰🇷 편입</text>`;
+    const d = S.diplo[k], atWar = S.war && (S.war.k === k || S.war.enemyAllies.includes(k));
+    const icons = `${d.alliance ? '🛡️' : ''}${d.fta ? '📦' : ''}${d.sanction ? '🚫' : ''}${atWar ? '⚔️' : ''}${COUNTRIES[k].nukes ? '☢️' : ''}`;
+    return `<g class="glabel-g" data-c="${k}"><text x="${x}" y="${y}" class="glabel">${RELATIONS[k].name} ${S.rel[k].toFixed(0)}</text><text x="${x}" y="${y + 18}" class="gsub">${icons}</text></g>`;
+  }).join('');
+  const cities = Object.entries(MAP_DATA.cities).map(([n, [x, y]]) => n === '서울' || n === '평양' || n === '베이징' || n === '도쿄' || n === '타이베이'
+    ? `<g class="city"><circle cx="${x}" cy="${y}" r="${n === '서울' ? 5 : 3.5}"/><text x="${x + 7}" y="${y - 6}">${n}</text></g>` : '').join('');
+  // 전선 표시: 전쟁 중이면 수도 사이에 화살표
+  let front = '';
+  if (S.war) {
+    const a = MAP_DATA.cities['서울'], b = MAP_DATA.cities[CAPITAL[S.war.k]];
+    if (b) front = `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="front"/>`;
+  }
+  const far = ['us', 'eu'].map(k => {
+    const d = S.diplo[k];
+    return `<button class="farcard ${k} ${sel === k ? 'sel' : ''}" data-c="${k}"><span class="cflag">${RELATIONS[k].flag}</span><b>${RELATIONS[k].name}</b><span>관계 ${S.rel[k].toFixed(0)}</span><span>${d.alliance ? '🛡️' : ''}${d.fta ? '📦' : ''}${d.sanction ? '🚫' : ''}☢️</span><small>${k === 'us' ? '태평양 너머 →' : '← 유라시아 너머'}</small></button>`;
+  }).join('');
+  return `<div class="map">
+    <div class="geo-scroll"><svg viewBox="0 0 ${MAP_DATA.w} ${MAP_DATA.h}" class="geo" role="img" aria-label="동아시아 외교 지도">
+      <defs>
+        <pattern id="hatch-kr" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" style="fill:var(--enemy-fill)"/><rect width="5" height="10" style="fill:var(--kr-fill)"/></pattern>
+        <pattern id="hatch-enemy" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" style="fill:var(--kr-fill)"/><rect width="5" height="10" style="fill:var(--enemy-fill)"/></pattern>
+      </defs>
+      <rect width="${MAP_DATA.w}" height="${MAP_DATA.h}" class="sea"/>
+      ${land}${provs}${front}${cities}${labels}
+    </svg></div>
+    ${far}
+    <div class="map-legend"><span><i style="background:var(--kr-fill)"></i>대한민국</span><span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span>🛡️동맹 📦FTA 🚫제재 ☢️핵 · 숫자=관계 · 나라를 누르세요</span><span class="credit">지도: Natural Earth</span></div>
+  </div>`;
 }
 
 function confirmWar(k) {

@@ -84,6 +84,7 @@ function showTab(name) {
   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
   if (name === 'trend') renderTrend();
+  if (name === 'world' && typeof renderWorld === 'function') renderWorld();
 }
 
 /* ---------------- 렌더링 ---------------- */
