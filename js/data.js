@@ -36,6 +36,7 @@ const RELATIONS = {
   nk: { name: '북한', flag: '🇰🇵', base: 12 },
   ru: { name: '러시아', flag: '🇷🇺', base: 28 },
   eu: { name: 'EU',   flag: '🇪🇺', base: 66 },
+  tw: { name: '대만', flag: '🇹🇼', base: 62 },
 };
 
 /* ---------- 이해관계 세력 ---------- */

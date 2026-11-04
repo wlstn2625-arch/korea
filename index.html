@@ -69,6 +69,9 @@
       <main class="main">
         <nav class="tabs" id="tabs">
           <button data-tab="policy" class="active">📜 정책 결정</button>
+          <button data-tab="politics">🏛️ 국회·세력 <span id="bill-badge" class="badge info hidden">0</span></button>
+          <button data-tab="economy">🏭 경제</button>
+          <button data-tab="world">🌏 외교·전쟁 <span id="war-badge" class="badge hidden">전쟁</span></button>
           <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
           <button data-tab="report">📊 국정 보고서</button>
           <button data-tab="trend">📈 추이</button>
@@ -97,6 +100,9 @@
           <div id="resolved-list"></div>
         </div>
 
+        <div id="tab-politics" class="tab"></div>
+        <div id="tab-economy" class="tab"></div>
+        <div id="tab-world" class="tab"></div>
         <div id="tab-report" class="tab"><div id="report-body"></div></div>
         <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
         <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
@@ -118,7 +124,11 @@
   <script src="js/details/b.js"></script>
   <script src="js/details/c.js"></script>
   <script src="js/engine.js"></script>
+  <script src="js/politics.js"></script>
+  <script src="js/economy.js"></script>
+  <script src="js/world.js"></script>
   <script src="js/claude.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/ui_systems.js"></script>
 </body>
 </html>

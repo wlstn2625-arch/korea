@@ -234,6 +234,64 @@ h1, h2, h3 { margin: 0; }
   .top-actions { margin-left: auto; }
 }
 
+/* ---------- 확장 시스템: 국회·세력 / 경제 / 외교·전쟁 ---------- */
+.badge.info { background: var(--accent); }
+.small { font-size: 12px; }
+.sys-head { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.big-kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.big-kpi span { font-size: 12px; color: var(--muted); }
+.big-kpi b { font-size: 24px; font-variant-numeric: tabular-nums; }
+.big-kpi small { font-size: 11.5px; color: var(--muted); }
+.row-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.bill { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 8px; display: grid; gap: 6px; }
+.bill-top { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.bill-stage { font-size: 12.5px; color: var(--muted); }
+.grp-list { display: grid; gap: 6px; }
+.grp { display: grid; grid-template-columns: minmax(150px, 1.2fr) 2fr auto; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.grp-name { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.grp-bars { display: grid; grid-template-columns: 90px 1fr; gap: 3px 8px; align-items: center; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); }
+table.sector { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+table.sector th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+table.sector td { padding: 6px 10px; border-bottom: 1px solid var(--line); }
+table.sector tr:last-child td { border-bottom: none; }
+table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
+.spark-cell { width: 110px; }
+.spark-cell svg { width: 100px; height: 28px; display: block; }
+
+.world-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 12px; }
+.map { position: relative; aspect-ratio: 1 / 0.82; max-width: 100%; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  background: radial-gradient(60% 50% at 30% 40%, var(--card2), transparent 70%), radial-gradient(40% 40% at 70% 20%, var(--card2), transparent 70%), var(--bg2); }
+.map-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ctile { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 8px; min-width: 64px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.ctile:hover, .ctile.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.ctile.war { border-color: var(--bad); }
+.ctile.annexed { opacity: .75; border-style: dashed; }
+.ctile.kr { border: 2px solid var(--accent); cursor: default; }
+.cflag { font-size: 20px; line-height: 1; }
+.cname { font-weight: 700; }
+.crel { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cicons { font-size: 11px; min-height: 13px; }
+.map-legend { position: absolute; left: 8px; bottom: 6px; right: 8px; font-size: 11px; color: var(--muted); }
+.cpanel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.cpanel h3 { font-size: 18px; }
+.cfacts { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.dacts { display: grid; gap: 6px; }
+.dact { display: flex; justify-content: space-between; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: var(--card2); }
+.dact.off { opacity: .6; }
+.warbox { background: var(--card); border: 2px solid var(--bad); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; display: grid; gap: 6px; }
+.warbox h3 { color: var(--bad); font-size: 16px; }
+.warbar { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--bad), var(--card2) 50%, var(--good)); display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); padding-top: 16px; margin-bottom: 14px; }
+.warbar i { position: absolute; top: -3px; width: 4px; height: 20px; background: var(--text); border-radius: 2px; transform: translateX(-50%); }
+@media (max-width: 900px) {
+  .world-grid { grid-template-columns: 1fr; }
+  .grp { grid-template-columns: 1fr; gap: 6px; }
+  .map { aspect-ratio: 1 / 1.35; }
+  .ctile { min-width: 0; padding: 4px 5px; font-size: 10.5px; }
+  .cflag { font-size: 16px; }
+}
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -293,6 +351,9 @@ h1, h2, h3 { margin: 0; }
       <main class="main">
         <nav class="tabs" id="tabs">
           <button data-tab="policy" class="active">📜 정책 결정</button>
+          <button data-tab="politics">🏛️ 국회·세력 <span id="bill-badge" class="badge info hidden">0</span></button>
+          <button data-tab="economy">🏭 경제</button>
+          <button data-tab="world">🌏 외교·전쟁 <span id="war-badge" class="badge hidden">전쟁</span></button>
           <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
           <button data-tab="report">📊 국정 보고서</button>
           <button data-tab="trend">📈 추이</button>
@@ -321,6 +382,9 @@ h1, h2, h3 { margin: 0; }
           <div id="resolved-list"></div>
         </div>
 
+        <div id="tab-politics" class="tab"></div>
+        <div id="tab-economy" class="tab"></div>
+        <div id="tab-world" class="tab"></div>
         <div id="tab-report" class="tab"><div id="report-body"></div></div>
         <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
         <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
@@ -376,6 +440,7 @@ const RELATIONS = {
   nk: { name: '북한', flag: '🇰🇵', base: 12 },
   ru: { name: '러시아', flag: '🇷🇺', base: 28 },
   eu: { name: 'EU',   flag: '🇪🇺', base: 66 },
+  tw: { name: '대만', flag: '🇹🇼', base: 62 },
 };
 
 /* ---------- 이해관계 세력 ---------- */
@@ -2841,7 +2906,12 @@ const DIFFICULTY = {
 };
 const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
-const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k;
+const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k + (s.pcapBonus || 0);
+
+// 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
+const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [] };
+function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
+function migrateState(s) { runHooks('migrate', s); return s; }
 
 const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
 const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선
@@ -2962,6 +3032,7 @@ function newGame(partyKey, presidentName, difficulty = 'normal') {
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
     autoAI: true, over: false, ending: null, userOptions: {},
   };
+  migrateState(s);
   s.history.push(snapshot(s));
   addLog(s, 'info', `${presidentName || '대통령'}님, 제21대 대한민국 대통령 취임을 축하드립니다. 5년 단임 임기(20분기)가 시작됩니다.`);
   return s;
@@ -3050,7 +3121,7 @@ function voteModel(s, opt, lobby = 0) {
   };
   let exp = 0, varr = 0;
   for (const b in s.seats) { const pr = p(b); exp += s.seats[b] * pr; varr += s.seats[b] * pr * (1 - pr); }
-  exp = Math.min(298, exp + lobby * 16); // 야당 협상(협치)으로 확보한 찬성표
+  exp = Math.min(298, exp + lobby * 16 + (typeof coalitionSeatBonus === 'function' ? coalitionSeatBonus(s, opt) : 0)); // 야당 협상(협치) + 연합 세력 압력
   varr += 36; // 이탈표 불확실성
   const need = opt.lt === 'const' ? 200 : 151;
   const sd = Math.sqrt(varr);
@@ -3105,43 +3176,50 @@ function enactPolicy(s, pid, oid, lobby = 0) {
   const cost = policyCost(s, opt) + lobby * LOBBY_COST;
   if (s.pcap < cost) return { ok: false, msg: `정치자본이 부족합니다. (필요 ${cost}, 보유 ${Math.floor(s.pcap)})` };
 
+  s.enactedThisTurn.push(pid);
+  // 법률·개헌은 국회 심의 절차로 (politics.js)
+  if (opt.lt && opt.lt !== 'decree' && typeof proposeBill === 'function') return proposeBill(s, p, opt, old, lobby, cost);
+  s.pcap -= cost;
+  return finalVote(s, p, opt, old, lobby, cost, true);
+}
+
+// 최종 표결(본회의·국민투표). paid: 비용을 이미 냈는지
+function finalVote(s, p, opt, old, lobby, cost, paid) {
   const vote = voteModel(s, opt, lobby);
   let passed = true, detail = '';
   if (vote.type !== 'decree') {
-    if (lobby) detail = `야당 협상 ${lobby}단계(⚡${lobby * LOBBY_COST}) · `;
+    if (lobby) detail = `야당 협상 ${lobby}단계 · `;
     const yes = Math.round(clamp(vote.exp + gauss() * vote.sd, 0, 300));
     passed = yes >= vote.need;
-    detail += `국회 표결: 찬성 ${yes} / 재적 300 (가결 기준 ${vote.need})`;
+    detail += `본회의 표결: 찬성 ${yes} / 재적 300 (가결 기준 ${vote.need})`;
     if (passed && vote.type === 'const') {
       const sup = clamp(refendumSupport(s, opt) + gauss() * 6, 5, 95);
       detail += ` → 국민투표 찬성 ${sup.toFixed(1)}%`;
       passed = sup > 50;
     }
   } else detail = '대통령령·행정조치로 즉시 시행';
-
-  s.enactedThisTurn.push(pid);
   if (!passed) {
-    s.pcap -= Math.ceil(cost / 2);
+    if (!paid) s.pcap -= Math.ceil(cost / 2); else s.pcap += Math.floor(cost / 2); // 부결 시 절반 환급
     s.approval = clamp(s.approval - 1.5, 0, 100);
     addLog(s, 'bad', `❌ [${p.name}] '${opt.label}' 부결. ${detail}`);
     return { ok: true, passed: false, detail, p, opt };
   }
+  applyPassed(s, p, opt, old);
+  addLog(s, 'good', `✅ [${p.name}] '${old.label}' → '${opt.label}' 시행 확정. ${detail}`);
+  return { ok: true, passed: true, detail, p, opt };
+}
 
-  s.pcap -= cost;
+function applyPassed(s, p, opt, old) {
+  const pid = p.id, oid = opt.id;
   const d = diffEffects(opt, old);
   s.policies[pid] = oid;
-  // 세력 즉시 반응
   for (const k in d.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + d.f[k], 0, 100);
-  // 효과는 lag 분기에 걸쳐 서서히
   const lag = Math.max(1, opt.lag || 4);
-  s.pending = s.pending.filter(x => x.pid !== pid); // 같은 분야 진행 중이던 효과는 새 정책으로 대체
+  s.pending = s.pending.filter(x => x.pid !== pid);
   s.pending.push({ pid, oid, src: p.custom ? p.name : `${p.name}: ${opt.label}`, e: d.e, rel: d.rel, left: lag, lag });
-  // 부작용 리스크 잠복
   for (const r of (opt.r || [])) {
     s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
   }
-  addLog(s, 'good', `✅ [${p.name}] '${old.label}' → '${opt.label}' 시행 확정. ${detail}`);
-  return { ok: true, passed: true, detail, p, opt };
 }
 
 /* ---------------- 위기(부작용·돌발사건) 생성 ---------------- */
@@ -3315,14 +3393,15 @@ function endTurn(s) {
   }
   s.pending = s.pending.filter(pe => pe.left > 0);
 
+  runHooks('preMacro', s, report);
   // 2) 거시경제 동학
   const st = s.stats;
   const potential = 1.8 - s.turn * 0.02 + (st.innovation - 72) * 0.02 + (st.tfr - 0.8) * 0.5;
   for (const k in STATS) {
     if (k === 'debt' || k === 'happiness') continue;
     let eq = STATS[k].base + s.mods[k];
-    if (k === 'gdp') eq = potential + s.mods.gdp - Math.max(0, st.debt - 90) * 0.03;
-    if (k === 'unemp') eq = STATS.unemp.base + s.mods.unemp - (st.gdp - potential) * 0.4;
+    if (k === 'gdp') eq = potential + s.mods.gdp - Math.max(0, st.debt - 90) * 0.03 + (s.econDelta || 0);
+    if (k === 'unemp') eq = STATS.unemp.base + s.mods.unemp - (st.gdp - potential) * 0.4 + (s.econUnemp || 0);
     if (k === 'fiscal') eq = STATS.fiscal.base + s.mods.fiscal - Math.max(0, st.debt - 51.6) * 0.03 + (st.gdp - 1.8) * 0.2;
     if (k === 'tfr') eq = STATS.tfr.base + s.mods.tfr + (st.housing - 37) * 0.002 + (st.happiness - 42) * 0.001;
     const rate = k === 'tfr' ? 0.2 : 0.35;
@@ -3339,12 +3418,14 @@ function endTurn(s) {
   st.happiness = clamp(st.happiness + (hEq - st.happiness) * 0.35 + gauss() * 0.5, 0, 100);
   // 외교관계
   for (const k in RELATIONS) {
+    if (s.annexed && s.annexed[k]) continue;
     const eq = RELATIONS[k].base + s.relMods[k];
     s.rel[k] = clamp(s.rel[k] + (eq - s.rel[k]) * 0.25 + gauss() * 1, 0, 100);
   }
   // 안보는 북한 관계와 미국 관계 영향
   st.security = clamp(st.security + (s.rel.us - 76) * 0.01 + (s.rel.nk - 12) * 0.01, 0, 100);
 
+  runHooks('postMacro', s, report);
   // 3) 세력 지지 변화
   const ft = factionTargets(s);
   for (const k in s.factions) s.factions[k] = clamp(s.factions[k] + (ft[k] - s.factions[k]) * 0.1 + gauss() * 0.8, 0, 100);
@@ -3367,6 +3448,7 @@ function endTurn(s) {
     pool.splice(pool.indexOf(pick), 1);
     newCrises.push(makeCrisis(s, { ...pick, facTarget: FACTIONS[pick.target] ? pick.target : undefined, relTarget: RELATIONS[pick.target] ? pick.target : undefined }));
   }
+  runHooks('events', s, report, newCrises);
   for (const c of newCrises) { applyShock(s, c); s.crises.push(c); }
   report.crises = newCrises.map(c => c.id);
 
@@ -3381,6 +3463,7 @@ function endTurn(s) {
   if (s.turn === GENERAL_ELECTION_TURN) report.elections.push(generalElection(s));
   if (s.turn === LOCAL_ELECTION_TURN) report.elections.push(localElection(s));
 
+  runHooks('postTurn', s, report);
   // 8) 기록·다음 분기
   report.diff = {};
   for (const k in STATS) report.diff[k] = st[k] - prev.stats[k];
@@ -3422,7 +3505,8 @@ function localElection(s) {
 
 function checkGameOver(s, report) {
   const opp = 300 - (s.ruling === 'P' ? s.seats.P : s.seats[s.ruling]);
-  if (s.approval < 15 && opp >= 200 && Math.random() < 0.45) {
+  if (s.forceEnding) { s.over = true; s.ending = s.forceEnding; }
+  else if (s.approval < 15 && opp >= 200 && Math.random() < 0.45) {
     s.over = true; s.ending = { type: 'impeach', title: '탄핵', desc: `지지율 ${s.approval.toFixed(1)}%. 국회가 탄핵소추안을 가결했고 헌법재판소가 파면을 선고했습니다.` };
   } else if (s.stats.debt > 130 || s.stats.fiscal < -14) {
     s.over = true; s.ending = { type: 'default', title: '국가 부도', desc: '국가채무가 감당할 수 없는 수준에 이르러 IMF 구제금융을 신청했습니다.' };
@@ -3445,7 +3529,7 @@ function finalScore(s) {
   idx -= Math.abs(s.stats.infl - 2) * 4;
   let relScore = 0; for (const k in RELATIONS) relScore += (s.rel[k] - RELATIONS[k].base) * 0.15;
   const indexScore = clamp(50 + idx * 0.8 + relScore, 0, 100);
-  const total = clamp(s.approval * 0.4 + indexScore * 0.6, 0, 100);
+  const total = clamp(s.approval * 0.4 + indexScore * 0.6 + (s.scoreBonus || 0), 0, 100);
   const ending = ENDINGS.find(e => total >= e.min);
   return { total, indexScore, approval: s.approval, grade: ending.grade, title: ending.title, desc: ending.desc };
 }
@@ -3523,6 +3607,590 @@ const SAVE_KEY = 'newkorea_save_v1';
 function saveGame(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); return true; } catch { return false; } }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }
+
+</script>
+<script>
+/* js/politics.js */
+/* =========================================================
+ *  정치 시스템: 국회 법안 심의 + 이익집단 영향력·국정 연합
+ * ========================================================= */
+
+/* ---------------- 이익집단 영향력 ---------------- */
+// 기본 영향력(합 100). 경제·제도 변화에 따라 매 분기 다시 계산
+const CLOUT_BASE = { biz: 18, labor: 12, youth: 8, elder: 12, con: 10, lib: 10, mil: 6, legal: 6, teach: 5, medic: 5, farm: 4, local: 4 };
+// 함께 연합하면 마찰이 생기는 조합
+const RIVALS = [['con', 'lib'], ['biz', 'labor'], ['youth', 'elder'], ['medic', 'local']];
+const INITIAL_COALITION = { lib: ['lib', 'labor', 'youth', 'teach'], con: ['con', 'biz', 'elder', 'mil'], ind: ['youth', 'local'] };
+
+// 세력 이름에 맞는 조사(이/가)
+const iga = w => { const c = w.charCodeAt(w.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 ? '이' : '가'; };
+
+function computeClout(s) {
+  const st = s.stats, pol = s.policies, c = { ...CLOUT_BASE };
+  c.biz += (st.innovation - 72) * 0.15 + (st.gdp - 1.8) * 1.5 + (pol.chaebol === 'loosen' ? 3 : pol.chaebol === 'tighten' ? -3 : 0);
+  c.labor += (pol.labor_union === 'repeal' || pol.labor_union === 'flex_fire' ? -4 : 0) + (pol.platform === 'worker' ? 2 : 0) - (st.unemp - 2.8) * 0.8;
+  c.elder += s.turn * 0.12;            // 고령화로 노년층 영향력 증가
+  c.youth += -s.turn * 0.05 + (pol.vote_age === 'a16' ? 2 : 0);
+  c.mil += (st.security - 68) * 0.1 + (s.war ? 4 : 0);
+  c.legal += pol.prosecution === 'restore' ? 3 : pol.prosecution === 'jury' ? -2 : 0;
+  c.medic += pol.med_school === 'cur' ? 1 : -1;
+  c.farm += -s.turn * 0.04 + (pol.trade === 'cptpp' ? -1 : 0);
+  c.local += pol.decentral === 'federal' ? 4 : pol.decentral === 'megacity' ? 2 : 0;
+  for (const k in c) c[k] = Math.max(1, c[k]);
+  const sum = Object.values(c).reduce((a, b) => a + b, 0);
+  for (const k in c) c[k] = (c[k] / sum) * 100;
+  return c;
+}
+
+function legitimacy(s) { return (s.coalition || []).reduce((a, k) => a + (s.clout?.[k] || 0), 0); }
+function coalitionFriction(s) {
+  const co = new Set(s.coalition || []);
+  return RIVALS.filter(([a, b]) => co.has(a) && co.has(b));
+}
+
+// 연합 세력이 법안에 찬성/반대하면 국회 표결에 압력이 됨 (의석 환산)
+function coalitionSeatBonus(s, opt) {
+  let b = 0;
+  for (const k of (s.coalition || [])) b += clamp(opt.f?.[k] || 0, -15, 15) * (s.clout?.[k] || 0) * 0.04;
+  return clamp(b, -25, 25);
+}
+
+function joinCost(s, k) { return Math.round(15 + (s.clout?.[k] || 5) * 1.2); }
+function canJoin(s, k) {
+  if ((s.coalition || []).includes(k)) return { ok: false, why: '이미 연합에 있습니다.' };
+  if ((s.coalition || []).length >= 6) return { ok: false, why: '연합은 최대 6개 세력까지입니다.' };
+  if (s.factions[k] < 42) return { ok: false, why: `지지도가 42 이상이어야 합니다. (현재 ${s.factions[k].toFixed(0)})` };
+  if (s.pcap < joinCost(s, k)) return { ok: false, why: `정치자본 ⚡${joinCost(s, k)}이 필요합니다.` };
+  return { ok: true };
+}
+function joinCoalition(s, k) {
+  const c = canJoin(s, k); if (!c.ok) return c;
+  s.pcap -= joinCost(s, k); s.coalition.push(k);
+  s.factions[k] = clamp(s.factions[k] + 8, 0, 100);
+  for (const [a, b] of RIVALS) { const r = a === k ? b : b === k ? a : null; if (r) s.factions[r] = clamp(s.factions[r] - 6, 0, 100); }
+  addLog(s, 'good', `🤝 ${FACTIONS[k].name}${iga(FACTIONS[k].name)} 국정 연합에 합류했습니다.`);
+  return { ok: true };
+}
+function leaveCoalition(s, k, forced = false) {
+  s.coalition = s.coalition.filter(x => x !== k);
+  s.factions[k] = clamp(s.factions[k] - (forced ? 4 : 10), 0, 100);
+  addLog(s, 'bad', forced ? `💔 ${FACTIONS[k].name}${iga(FACTIONS[k].name)} 불만을 품고 국정 연합에서 이탈했습니다.` : `👋 ${FACTIONS[k].name}${iga(FACTIONS[k].name)} 국정 연합에서 빠졌습니다.`);
+}
+
+/* ---------------- 국회 법안 심의 ---------------- */
+const BILL_STAGES = {
+  law: [[0, '소관 상임위원회 심사'], [40, '법제사법위원회 체계·자구 심사'], [75, '본회의 상정 대기']],
+  const: [[0, '개헌안 발의·공고'], [30, '개헌특위 심사'], [70, '본회의 의결 대기(2/3)']],
+};
+function billStage(b) { const st = BILL_STAGES[b.lt]; let name = st[0][1]; for (const [t, n] of st) if (b.progress >= t) name = n; return name; }
+function billSpeed(s, b) {
+  const p = policyById(b.pid, s), o = optionOf(p, b.oid);
+  const prob = voteModel(s, o, b.lobby).prob;
+  const base = b.lt === 'const' ? 14 : 24;
+  return base + prob * (b.lt === 'const' ? 26 : 36) + (b.fast ? 15 : 0);
+}
+function estimateBillTurns(s, o, lobby = 0) {
+  const fake = { lt: o.lt, lobby, progress: 0 };
+  const prob = voteModel(s, o, lobby).prob;
+  const sp = (o.lt === 'const' ? 14 : 24) + prob * (o.lt === 'const' ? 26 : 36);
+  return Math.max(1, Math.ceil(100 / sp));
+}
+
+function proposeBill(s, p, opt, old, lobby, cost) {
+  s.pcap -= cost;
+  const b = { id: uid(), pid: p.id, oid: opt.id, prevOid: old.id, lt: opt.lt, lobby, cost, progress: 0, turns: 0, fast: false, stalled: 0, log: [] };
+  s.bills.push(b);
+  const t = estimateBillTurns(s, opt, lobby);
+  addLog(s, 'info', `📨 [${p.name}] '${opt.label}' ${opt.lt === 'const' ? '개헌안' : '법안'}을 국회에 제출했습니다. (예상 심의 ${t}분기)`);
+  return { ok: true, passed: null, bill: true, detail: `국회에 제출되었습니다. ${billStage(b)} 단계부터 심의가 시작되며, 예상 심의 기간은 약 ${t}분기입니다.`, p, opt };
+}
+
+const BILL_EVENTS = [
+  { w: 3, t: '여야 합의로 심사 속도', d: +18, good: true },
+  { w: 2, t: '상임위 공청회에서 찬성 여론 확산', d: +12, good: true },
+  { w: 3, t: '여야 대치로 회의 공전', d: -15 },
+  { w: 2, t: '야당 필리버스터(무제한 토론)', d: -22, needOpp: true },
+  { w: 2, t: '이익집단 로비로 수정 요구 빗발', d: -10, lobby: true },
+];
+
+function billsTurn(s, report) {
+  report.bills = [];
+  for (const b of [...s.bills]) {
+    const p = policyById(b.pid, s), o = optionOf(p, b.oid), old = optionOf(p, b.prevOid) || currentOption(p, s);
+    if (!p || !o) { s.bills = s.bills.filter(x => x !== b); continue; }
+    b.turns++;
+    let delta = billSpeed(s, b), ev = null;
+    if (Math.random() < 0.35) {
+      const opp = 300 - (s.ruling === 'P' ? s.seats.P : s.seats[s.ruling]);
+      const pool = BILL_EVENTS.filter(e => !e.needOpp || opp >= 150);
+      let r = Math.random() * pool.reduce((a, e) => a + e.w, 0);
+      ev = pool.find(e => (r -= e.w) <= 0) || pool[0];
+      delta += ev.d;
+      if (ev.lobby) { // 손해 보는 세력이 로비
+        const loser = Object.entries(o.f || {}).sort((a, c) => a[1] - c[1])[0];
+        if (loser) ev = { ...ev, t: `${FACTIONS[loser[0]]?.name || '이해관계자'}의 반대 로비로 수정 요구 빗발` };
+      }
+      b.log.push(`${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q ${ev.t}`);
+    }
+    b.progress = clamp(b.progress + Math.max(0, delta), 0, 100);
+    const line = { name: p.name, label: o.label, progress: b.progress, stage: billStage(b), ev: ev && ev.t, good: ev && ev.good };
+    if (b.progress >= 100) {
+      const r = finalVote(s, p, o, old, b.lobby, b.cost, true);
+      line.result = r.passed ? 'passed' : 'failed'; line.detail = r.detail;
+      if (r.passed) report.enacted = report.enacted || [];
+      s.bills = s.bills.filter(x => x !== b);
+    } else if (b.turns >= (b.lt === 'const' ? 10 : 8)) {
+      line.result = 'expired';
+      addLog(s, 'bad', `🗑️ [${p.name}] '${o.label}' 법안이 장기 계류 끝에 폐기되었습니다.`);
+      s.bills = s.bills.filter(x => x !== b);
+    }
+    report.bills.push(line);
+  }
+}
+
+// 법안 조작
+function billAction(s, billId, act) {
+  const b = s.bills.find(x => x.id === billId); if (!b) return { ok: false, msg: '법안을 찾을 수 없습니다.' };
+  const p = policyById(b.pid, s), o = optionOf(p, b.oid);
+  if (act === 'lobby') {
+    if (b.lobby >= 3) return { ok: false, msg: '협상은 3단계가 최대입니다.' };
+    if (s.pcap < LOBBY_COST) return { ok: false, msg: `정치자본 ⚡${LOBBY_COST}이 필요합니다.` };
+    s.pcap -= LOBBY_COST; b.lobby++;
+    addLog(s, 'info', `🤝 [${p.name}] 야당과 협상 ${b.lobby}단계 진행.`);
+  } else if (act === 'fast') {
+    if (b.fast) return { ok: false, msg: '이미 신속처리 안건입니다.' };
+    if (s.pcap < 20) return { ok: false, msg: '정치자본 ⚡20이 필요합니다.' };
+    s.pcap -= 20; b.fast = true; b.progress = clamp(b.progress + 15, 0, 99);
+    s.factions.con = clamp(s.factions.con - (s.ruling === 'L' ? 3 : 0), 0, 100); s.factions.lib = clamp(s.factions.lib - (s.ruling === 'R' ? 3 : 0), 0, 100);
+    addLog(s, 'info', `⏩ [${p.name}] 신속처리안건(패스트트랙)으로 지정했습니다. 야당 반발.`);
+  } else if (act === 'withdraw') {
+    s.bills = s.bills.filter(x => x !== b);
+    s.pcap += Math.floor(b.cost / 3);
+    s.approval = clamp(s.approval - 0.5, 0, 100);
+    addLog(s, 'info', `↩️ [${p.name}] '${o.label}' 법안을 철회했습니다.`);
+  }
+  return { ok: true };
+}
+
+/* ---------------- 분기 처리 ---------------- */
+function politicsTurn(s, report) {
+  s.clout = computeClout(s);
+  const L = legitimacy(s), fr = coalitionFriction(s);
+  // 정당성(연합 영향력 합)과 내부 마찰이 정치자본 회복에 반영
+  let bonus = (L - 40) * 0.25 - fr.length * 3;
+  // 충성 세력: 연합 내 지지도 70+ → 보너스
+  for (const k of s.coalition) if (s.factions[k] >= 70) bonus += 1.5;
+  s.pcapBonus = bonus;
+  report.politics = { legitimacy: L, friction: fr.map(([a, b]) => `${FACTIONS[a].name}↔${FACTIONS[b].name}`), left: [], radical: [] };
+  // 연합 내 불만 세력 이탈
+  for (const k of [...s.coalition]) {
+    if (s.factions[k] < 30 && Math.random() < 0.4) { leaveCoalition(s, k, true); report.politics.left.push(FACTIONS[k].name); s.approval = clamp(s.approval - 2, 0, 100); }
+  }
+  // 급진화: 지지도 20 미만이고 영향력 있는 세력은 집단 행동
+  s.radical = Object.keys(FACTIONS).filter(k => s.factions[k] < 20 && s.clout[k] >= 6);
+  report.politics.radical = s.radical.map(k => FACTIONS[k].name);
+}
+function radicalEvents(s, report, newCrises) {
+  for (const k of (s.radical || [])) {
+    if (Math.random() < 0.3) newCrises.push(makeCrisis(s, { tpl: 'protest', title: `${FACTIONS[k].name} 급진화: 대정부 투쟁`, desc: `지지도가 바닥난 ${FACTIONS[k].name}${iga(FACTIONS[k].name)} 대규모 집회와 집단행동에 나섰습니다. 영향력 ${s.clout[k].toFixed(0)}%의 세력입니다.`, sev: s.clout[k] >= 12 ? 3 : 2, facTarget: k }));
+  }
+}
+
+HOOKS.migrate.push(s => {
+  if (!s.bills) s.bills = [];
+  if (!s.coalition) s.coalition = [...(INITIAL_COALITION[s.party] || [])];
+  if (!s.clout) s.clout = computeClout(s);
+});
+HOOKS.preMacro.push(billsTurn);
+HOOKS.postMacro.push(politicsTurn);
+HOOKS.events.push(radicalEvents);
+
+</script>
+<script>
+/* js/economy.js */
+/* =========================================================
+ *  산업·경제 시뮬레이션
+ *  - 12개 산업이 각자 성장률을 가지며, 가중 합이 GDP 성장률에 반영
+ *  - 지표·외교관계·제도 변화가 산업별로 다르게 작용
+ * ========================================================= */
+
+// share: GDP 비중(%), emp: 고용 비중(%), base: 기본 연 성장률(%), exp: 수출 비중(%)
+// drv: 지표/관계 민감도(기준값 대비 1단위당 성장률 %p), pol: 제도별 성장률 보정
+const SECTORS = [
+  { id: 'semi', name: '반도체', icon: '💾', share: 10, emp: 2, base: 4.0, exp: 22,
+    drv: { innovation: 0.10, 'rel.us': 0.03, 'rel.cn': 0.03, 'rel.jp': 0.01 },
+    pol: { chip: { mega: 3, cut: -3 }, work_hours: { d4: -1, flex: 0.5 }, nuclear: { phaseout: -0.8, expand: 0.5 } } },
+  { id: 'auto', name: '자동차·배터리', icon: '🚗', share: 7, emp: 4, base: 2.0, exp: 14,
+    drv: { 'rel.us': 0.04, 'rel.eu': 0.02, innovation: 0.03 },
+    pol: { trade: { protect: -1.5, cptpp: 0.8 }, carbon: { strong: -0.8 }, labor_union: { repeal: 0.4 } } },
+  { id: 'ship', name: '조선·방산', icon: '🚢', share: 4, emp: 2, base: 3.0, exp: 9,
+    drv: { 'rel.us': 0.05, security: 0.03, 'rel.eu': 0.02 },
+    pol: { immig: { agency: 1.5, restrict: -2.5 }, def_budget: { up35: 2, up5: 3.5, down2: -1.5 }, oda: { ukr: 1.5 } } },
+  { id: 'heavy', name: '석유화학·철강', icon: '🏗️', share: 7, emp: 3, base: 0.5, exp: 12,
+    drv: { 'rel.cn': 0.03, env: -0.02 },
+    pol: { carbon: { strong: -2.5, weak: 1 }, carbon_tax: { tax: -1.5 }, nuclear: { phaseout: -0.8 } } },
+  { id: 'build', name: '건설·부동산', icon: '🏢', share: 8, emp: 8, base: 0.0,  exp: 1,
+    drv: { housing: -0.03 },
+    pol: { supply: { public: 2, dereg: 2.5, greenbelt: 2 }, loan: { loosen: 1.5, tighten: -1 }, property_tax: { raise: -1, abolish: 0.8 }, capital: { sejong: 1.5 } } },
+  { id: 'fin', name: '금융', icon: '🏦', share: 7, emp: 3, base: 2.0, exp: 2,
+    drv: { debt: -0.03, justice: 0.02 },
+    pol: { bok: { control: -2.5, dual: -0.3 }, fin_tax: { introduce: -1 }, chaebol: { tighten: 0.5 } } },
+  { id: 'it', name: 'IT·플랫폼·AI', icon: '💻', share: 8, emp: 4, base: 4.0, exp: 5,
+    drv: { innovation: 0.08, freedom: 0.03, education: 0.03 },
+    pol: { ai_edu: { full: 1 }, telemed: { full: 1 }, press: { punitive: -0.8 } } },
+  { id: 'culture', name: '콘텐츠·관광', icon: '🎬', share: 3, emp: 3, base: 3.0, exp: 3,
+    drv: { 'rel.cn': 0.05, 'rel.jp': 0.03, freedom: 0.03, safety: 0.02 },
+    pol: {} },
+  { id: 'energy', name: '에너지·전력', icon: '⚡', share: 3, emp: 1, base: 1.0, exp: 1,
+    drv: { env: 0.01 },
+    pol: { nuclear: { expand: 2, phaseout: -1.5 }, renew: { offshore: 2 }, privatize: { private: 1 } } },
+  { id: 'agri', name: '농어업', icon: '🌾', share: 2, emp: 6, base: -0.5, exp: 1,
+    drv: { 'rel.cn': 0.01 },
+    pol: { trade: { cptpp: -3, protect: 1 }, immig: { restrict: -2, agency: 1 } } },
+  { id: 'service', name: '서비스·자영업', icon: '🛍️', share: 25, emp: 40, base: 1.2, exp: 2,
+    drv: { happiness: 0.05, infl: -0.3, housing: 0.01 },
+    pol: { min_wage: { w12k: -0.8, freeze: 0.3, diff: 0.5 }, smb: { support: 1, restructure: -0.5 }, work_hours: { d45: 0.4, d4: 0.6 } } },
+  { id: 'public', name: '공공·보건·교육', icon: '🏥', share: 16, emp: 24, base: 2.0, exp: 0,
+    drv: { welfare: 0.03, health: 0.03, education: 0.02 },
+    pol: { health_ins: { expand: 0.8, private: -0.5 }, free_edu: { univ: 0.4, all_univ: 0.8 } } },
+];
+const SECTOR_BASE_AVG = SECTORS.reduce((a, x) => a + x.share * x.base, 0) / SECTORS.reduce((a, x) => a + x.share, 0);
+const DRIVER_BASE = k => k.startsWith('rel.') ? RELATIONS[k.slice(4)].base : STATS[k].base;
+const driverVal = (s, k) => k.startsWith('rel.') ? s.rel[k.slice(4)] : s.stats[k];
+
+function sectorGrowth(s, x) {
+  let g = x.base;
+  for (const k in x.drv) g += x.drv[k] * (driverVal(s, k) - DRIVER_BASE(k));
+  for (const pid in x.pol) { const v = x.pol[pid][s.policies[pid]]; if (v) g += v; }
+  const inv = (s.sectorInvest || []).find(i => i.id === x.id); if (inv) g += 2.5;
+  const sh = (s.sectorShock || {})[x.id]; if (sh) g += sh;
+  if (s.war) g -= x.id === 'ship' ? -2 : 3;     // 전쟁: 방산 특수, 나머지 타격
+  if (s.annexed?.nk && (x.id === 'build' || x.id === 'agri')) g += 1.5; // 통일 재건 수요
+  return clamp(g, -15, 20);
+}
+
+function economyTurn(s) {
+  if (!s.sectors) return;
+  let wsum = 0, esum = 0, tot = 0;
+  for (const x of SECTORS) {
+    const g = sectorGrowth(s, x) + gauss() * 0.6;
+    const sec = s.sectors[x.id];
+    sec.g = g; sec.idx *= 1 + g / 400; sec.hist.push(+sec.idx.toFixed(2)); if (sec.hist.length > 24) sec.hist.shift();
+    wsum += x.share * (g - x.base); esum += x.emp * (g - x.base); tot += x.share;
+  }
+  // 산업 성장의 기준 대비 차이가 GDP·실업 균형에 반영
+  s.econDelta = clamp(wsum / tot * 0.45, -3, 3);
+  s.econUnemp = clamp(-esum / 100 * 0.05, -1, 1);
+  // 육성 투자 기간 차감
+  s.sectorInvest = (s.sectorInvest || []).filter(i => --i.left > 0);
+  for (const k in (s.sectorShock || {})) { s.sectorShock[k] *= 0.6; if (Math.abs(s.sectorShock[k]) < 0.2) delete s.sectorShock[k]; }
+}
+
+// 이벤트가 특정 산업을 흔듦
+const EVENT_SECTOR = { chip_boom: { semi: 6, it: 2 }, us_tariff: { auto: -4, semi: -2 }, cn_sanction: { culture: -6, heavy: -2 }, recession: { semi: -4, auto: -3, heavy: -3, fin: -2 },
+  exchange: { fin: -3 }, pf_crisis: { build: -5, fin: -3 }, oil: { heavy: -3, service: -1 }, kpop: { culture: 6 }, pandemic: { service: -4, culture: -6 }, typhoon: { agri: -4, build: 1 } };
+function sectorEventShocks(s, report, newCrises) {
+  s.sectorShock = s.sectorShock || {};
+  for (const c of newCrises) {
+    const ev = WORLD_EVENTS.find(e => e.title === c.title); const m = ev && EVENT_SECTOR[ev.id];
+    if (m) for (const k in m) s.sectorShock[k] = (s.sectorShock[k] || 0) + m[k];
+  }
+}
+
+const INVEST_COST = 25;
+function investSector(s, id) {
+  s.sectorInvest = s.sectorInvest || [];
+  if (s.sectorInvest.some(i => i.id === id)) return { ok: false, msg: '이미 집중 육성 중인 산업입니다.' };
+  if (s.sectorInvest.length >= 3) return { ok: false, msg: '집중 육성은 동시에 3개 산업까지입니다.' };
+  if (s.pcap < INVEST_COST) return { ok: false, msg: `정치자본 ⚡${INVEST_COST}이 필요합니다.` };
+  s.pcap -= INVEST_COST;
+  s.sectorInvest.push({ id, left: 8 });
+  s.stats.fiscal = clamp(s.stats.fiscal - 0.25, STATS.fiscal.min, STATS.fiscal.max);
+  s.mods.fiscal -= 0.1;
+  s.factions.biz = clamp(s.factions.biz + 3, 0, 100);
+  const x = SECTORS.find(z => z.id === id);
+  addLog(s, 'info', `🏭 ${x.name} 산업 집중 육성 착수 (8분기, 성장률 +2.5%p, 재정 부담).`);
+  return { ok: true };
+}
+
+HOOKS.migrate.push(s => {
+  if (!s.sectors) { s.sectors = {}; for (const x of SECTORS) s.sectors[x.id] = { idx: 100, g: x.base, hist: [100] }; }
+  if (!s.sectorInvest) s.sectorInvest = [];
+});
+HOOKS.preMacro.push(economyTurn);
+HOOKS.events.push(sectorEventShocks);
+
+</script>
+<script>
+/* js/world.js */
+/* =========================================================
+ *  외교·지도·전쟁
+ *  - 동아시아 주요국의 국력·관계·조약
+ *  - 외교 행동(정상회담·원조·FTA·동맹·제재·최후통첩·선전포고·평화통일)
+ *  - 전쟁: 국력·동맹 개입으로 전황 점수가 움직이고, 승리 시 합병·통일·배상
+ * ========================================================= */
+
+// mil: 군사력(0~100), eco: 경제 규모, nukes: 핵보유, annex: 합병 가능, far: 원거리(전쟁 불가)
+const COUNTRIES = {
+  nk: { mil: 50, eco: 3,   nukes: true,  annex: true,  pos: [55, 30], pop: '2,600만', note: '핵·미사일 보유, 세계 최대급 재래식 병력' },
+  cn: { mil: 95, eco: 95,  nukes: true,  annex: false, pos: [24, 42], pop: '14억',    note: '최대 교역국, 북한의 사실상 후견국' },
+  jp: { mil: 62, eco: 70,  nukes: false, annex: true,  pos: [80, 52], pop: '1억 2천만', note: '한미일 안보협력 축, 과거사 갈등' },
+  ru: { mil: 80, eco: 35,  nukes: true,  annex: false, pos: [62, 13],  pop: '1억 4천만', note: '북러 군사협력 강화' },
+  us: { mil: 100, eco: 100, nukes: true, annex: false, far: true, pos: [93, 28], pop: '3억 4천만', note: '유일한 군사동맹국, 주한미군 주둔' },
+  tw: { mil: 42, eco: 35,  nukes: false, annex: true,  pos: [42, 82], pop: '2,300만', note: '반도체 경쟁국, 양안 긴장' },
+  eu: { mil: 65, eco: 90,  nukes: true,  annex: false, far: true, pos: [9, 15],  pop: '4억 5천만', note: '가치 외교 파트너, 탄소국경세' },
+};
+// 상대를 공격하면 편을 드는 나라: [나라, 조건]
+const PROTECTORS = {
+  nk: [['cn', s => s.rel.cn < 65 && !s.diplo.cn.alliance], ['ru', s => s.rel.ru < 40]],
+  tw: [['us', s => s.rel.us < 90], ['jp', s => s.rel.jp < 85]],
+  jp: [['us', s => true]],
+  cn: [['ru', s => s.rel.ru < 60], ['nk', s => !s.annexed.nk]],
+  ru: [['cn', s => s.rel.cn < 50]],
+};
+
+function milPower(s) {
+  const p = s.policies;
+  let m = s.stats.security * 0.8;
+  m += { up35: 6, up5: 12, down2: -5 }[p.def_budget] || 0;
+  m += { volunteer: -4, both: 4, m24: 3 }[p.conscript] || 0;
+  m += { armed: 15, latent: 3 }[p.nuke] || 0;
+  if (s.annexed?.nk) m += 8;
+  return clamp(m, 5, 120);
+}
+const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' : COUNTRIES[k].nukes;
+
+/* ---------------- 외교 행동 ---------------- */
+const DIPLO_ACTIONS = [
+  { id: 'summit', name: '정상회담', icon: '🤝', pc: 12, desc: '관계 +8 (지속 +3). 2분기 쿨타임.',
+    can: (s, k) => k === 'nk' && s.rel.nk < 25 ? '북한이 회담을 거부합니다(관계 25 이상 필요).' : (s.diplo[k].cd > s.turn ? '최근에 회담했습니다.' : null),
+    run: (s, k) => { relBump(s, k, 8, 3); s.diplo[k].cd = s.turn + 2; return `${RELATIONS[k].name}과 정상회담을 가졌습니다.`; } },
+  { id: 'aid', name: '경제 원조', icon: '🎁', pc: 8, desc: '관계 +6 (지속 +2). 재정 -0.2%p.',
+    can: (s, k) => k === 'us' || k === 'eu' ? '원조 대상이 아닙니다.' : null,
+    run: (s, k) => { relBump(s, k, 6, 2); s.stats.fiscal -= 0.2; if (k === 'nk') { s.factions.lib += 3; s.factions.con -= 3; } return `${RELATIONS[k].name}에 경제 원조를 제공했습니다.`; } },
+  { id: 'fta', name: 'FTA 체결', icon: '📦', pc: 30, desc: '성장률 +0.08%p, 관계 +5. 농어민 반발. 관계 55 이상.',
+    can: (s, k) => s.diplo[k].fta ? '이미 FTA가 있습니다.' : k === 'nk' ? '북한과는 불가합니다.' : s.rel[k] < 55 ? '관계 55 이상 필요.' : null,
+    cost: (s, k) => s.diplo[k].offer >= s.turn ? 15 : 30,
+    run: (s, k) => { s.diplo[k].fta = true; s.mods.gdp += 0.08; relBump(s, k, 3, 5); s.factions.farm -= 6; s.factions.biz += 5; return `${RELATIONS[k].name}과 FTA를 체결했습니다.`; } },
+  { id: 'alliance', name: '안보 동맹', icon: '🛡️', pc: 40, desc: '안보 +5. 상대 진영 반발. 관계 75 이상.',
+    can: (s, k) => s.diplo[k].alliance ? '이미 동맹입니다.' : k === 'nk' ? '불가합니다.' : s.rel[k] < 75 ? '관계 75 이상 필요.' : null,
+    run: (s, k) => {
+      s.diplo[k].alliance = true; s.mods.security += 5; relBump(s, k, 3, 5);
+      if (['us', 'jp', 'tw'].includes(k)) s.relMods.cn -= 8;
+      if (k === 'cn' || k === 'ru') { s.relMods.us -= 12; s.relMods.jp -= 6; }
+      return `${RELATIONS[k].name}과 안보 동맹을 맺었습니다.`; } },
+  { id: 'unally', name: '동맹 파기', icon: '✂️', pc: 10, desc: '안보 -5, 관계 -15.',
+    can: (s, k) => s.diplo[k].alliance ? null : '동맹이 아닙니다.',
+    run: (s, k) => { s.diplo[k].alliance = false; s.mods.security -= 5; relBump(s, k, -10, -15); return `${RELATIONS[k].name}과의 동맹을 파기했습니다.`; } },
+  { id: 'sanction', name: '경제 제재', icon: '🚫', pc: 12, desc: '관계 -15, 우리 경제도 일부 타격.',
+    can: (s, k) => s.diplo[k].sanction ? '이미 제재 중입니다.' : null,
+    run: (s, k) => { s.diplo[k].sanction = true; relBump(s, k, -10, -15); s.mods.gdp -= 0.03 * COUNTRIES[k].eco / 50; return `${RELATIONS[k].name}에 경제 제재를 가했습니다.`; } },
+  { id: 'unsanction', name: '제재 해제', icon: '🔓', pc: 5, desc: '관계 +8.',
+    can: (s, k) => s.diplo[k].sanction ? null : '제재 중이 아닙니다.',
+    run: (s, k) => { s.diplo[k].sanction = false; s.mods.gdp += 0.03 * COUNTRIES[k].eco / 50; relBump(s, k, 5, 8); return `${RELATIONS[k].name}에 대한 제재를 해제했습니다.`; } },
+  { id: 'ultimatum', name: '최후통첩', icon: '📜', pc: 20, desc: '양보를 요구. 거부하면 전쟁 명분이 생깁니다. 관계 35 미만.',
+    can: (s, k) => COUNTRIES[k].far ? '원거리 국가입니다.' : s.rel[k] >= 35 ? '관계 35 미만에서만 가능합니다.' : s.war ? '전쟁 중입니다.' : null,
+    run: (s, k) => {
+      const ratio = (milPower(s) + allyPower(s, k, 'kr')) / (COUNTRIES[k].mil + allyPower(s, k, 'them'));
+      if (ratio > 1.3 && Math.random() < 0.4 + (ratio - 1.3)) {
+        s.stats.fiscal += 0.6; s.mods.fiscal += 0.15; relBump(s, k, -8, -6); s.approval = clamp(s.approval + 4, 0, 100);
+        return `✅ ${RELATIONS[k].name}이(가) 최후통첩을 수용하고 양보(배상·경제 이권)했습니다.`;
+      }
+      s.diplo[k].casusBelli = s.turn + 4; relBump(s, k, -10, -8);
+      return `❌ ${RELATIONS[k].name}이(가) 최후통첩을 거부했습니다. 4분기 동안 전쟁 명분이 생겼습니다.`; } },
+  { id: 'war', name: '선전포고', icon: '⚔️', pc: 30, desc: '전쟁을 시작합니다. 관계 25 미만 또는 최후통첩 거부 시.',
+    can: (s, k) => COUNTRIES[k].far ? '원거리 국가와는 전쟁할 수 없습니다.' : s.war ? '이미 전쟁 중입니다.' : (s.rel[k] >= 25 && !(s.diplo[k].casusBelli >= s.turn)) ? '관계 25 미만이거나 최후통첩 거부 명분이 필요합니다.' : null,
+    run: (s, k, goal) => startWar(s, k, 'kr', goal) },
+  { id: 'unify', name: '평화통일 협상', icon: '🕊️', pc: 60, desc: '남북 관계 80 이상. 남북 동시 국민투표.',
+    can: (s, k) => k !== 'nk' ? '북한만 해당합니다.' : s.annexed.nk ? '이미 통일되었습니다.' : s.rel.nk < 80 ? '남북 관계 80 이상 필요.' : null,
+    run: (s, k) => {
+      const sup = s.approval * 0.5 + 25 + (s.rel.nk - 80) * 0.5 + gauss() * 5;
+      if (sup > 50) { annex(s, 'nk', true); return `🕊️ 국민투표 찬성 ${sup.toFixed(1)}%! 평화통일이 이루어졌습니다.`; }
+      relBump(s, 'nk', -5, 0); return `국민투표 찬성 ${sup.toFixed(1)}%로 부결되었습니다.`; } },
+];
+
+function relBump(s, k, now, lasting) {
+  s.rel[k] = clamp(s.rel[k] + now, 0, 100); s.relMods[k] += lasting;
+}
+function diploCost(s, a, k) { return a.cost ? a.cost(s, k) : a.pc; }
+function diploAction(s, aid, k, goal) {
+  const a = DIPLO_ACTIONS.find(x => x.id === aid);
+  if (s.annexed[k]) return { ok: false, msg: '이미 합병된 지역입니다.' };
+  const why = a.can(s, k); if (why) return { ok: false, msg: why };
+  const cost = diploCost(s, a, k);
+  if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  s.pcap -= cost;
+  const msg = a.run(s, k, goal);
+  for (const f in s.factions) s.factions[f] = clamp(s.factions[f], 0, 100);
+  addLog(s, /❌|파기|제재를 가/.test(msg) ? 'bad' : 'good', `${a.icon} ${msg}`);
+  return { ok: true, msg };
+}
+
+/* ---------------- 전쟁 ---------------- */
+function allyPower(s, k, side) {
+  if (side === 'kr') return (s.war?.allies || warAllies(s, k, 'kr')).reduce((a, c) => a + COUNTRIES[c].mil * 0.5, 0);
+  return (s.war?.enemyAllies || warAllies(s, k, 'them')).reduce((a, c) => a + COUNTRIES[c].mil * 0.5, 0);
+}
+function warAllies(s, k, side, aggressor = 'kr') {
+  if (side === 'them') return (PROTECTORS[k] || []).filter(([c, cond]) => c !== k && !s.annexed[c] && !(s.diplo[c]?.alliance) && cond(s)).map(([c]) => c);
+  const out = [];
+  for (const c of Object.keys(COUNTRIES)) {
+    if (c === k || !s.diplo[c]?.alliance || s.annexed[c]) continue;
+    if ((PROTECTORS[k] || []).some(([p]) => p === c)) continue;
+    // 방어전이거나, 북한 상대 전쟁에 미국이 동의할 때 참전
+    if (aggressor === 'them' || (k === 'nk' && c === 'us' && s.rel.us >= 70) || s.rel[c] >= 85) out.push(c);
+  }
+  return out;
+}
+function warOdds(s, k) {
+  const ours = milPower(s) + allyPower(s, k, 'kr'), theirs = COUNTRIES[k].mil + allyPower(s, k, 'them');
+  return { ours, theirs, edge: (ours - theirs) / (ours + theirs) };
+}
+function nukeRisk(s) {
+  const w = s.war; if (!w) return 0;
+  const enemyNuke = hasNukes(s, w.k) || w.enemyAllies.some(c => COUNTRIES[c].nukes);
+  if (!enemyNuke || w.score < 40) return 0;
+  const deter = hasNukes(s, 'kr') || w.allies.includes('us');
+  return clamp((deter ? 0.02 : 0.06) + (w.score - 40) / (deter ? 1500 : 500), 0, 0.3);
+}
+
+const GOAL_NAMES = { annex: '합병', unify: '흡수통일', concession: '배상·이권 획득' };
+function startWar(s, k, aggressor, goal) {
+  goal = goal || (k === 'nk' ? 'unify' : COUNTRIES[k].annex ? 'annex' : 'concession');
+  if (goal !== 'concession' && !COUNTRIES[k].annex) goal = 'concession';
+  const allies = warAllies(s, k, 'kr', aggressor), enemyAllies = warAllies(s, k, 'them');
+  s.war = { k, goal, aggressor, score: 0, turns: 0, allies, enemyAllies, log: [] };
+  for (const c of enemyAllies) relBump(s, c, -25, -20);
+  if (aggressor === 'kr') {
+    // 침략 전쟁에 대한 국제 사회 반발 (미국이 함께 싸우는 대북 전쟁은 예외)
+    const approved = k === 'nk' && allies.includes('us');
+    for (const c of ['us', 'eu', 'jp', 'cn']) if (c !== k && !allies.includes(c) && !enemyAllies.includes(c)) relBump(s, c, approved ? -3 : -15, approved ? -2 : -12);
+    s.factions.lib -= 10; s.factions.youth -= 6; s.factions.mil += 8; s.factions.con += k === 'nk' ? 6 : 0;
+    s.approval = clamp(s.approval + (approved ? 3 : -4), 0, 100);
+  } else {
+    s.approval = clamp(s.approval + 8, 0, 100); // 결집 효과
+    s.factions.mil += 10; s.factions.con += 5;
+  }
+  relBump(s, k, -40, -40);
+  const msg = `⚔️ ${RELATIONS[k].name}과 전쟁 발발! (${aggressor === 'kr' ? '우리가 선전포고' : '상대의 침공'}) 목표: ${GOAL_NAMES[goal]}. 우리 편: ${allies.map(c => RELATIONS[c].name).join(', ') || '없음'} / 상대 편: ${enemyAllies.map(c => RELATIONS[c].name).join(', ') || '없음'}`;
+  addLog(s, 'bad', msg);
+  return msg;
+}
+
+function warAction(s, act) {
+  const w = s.war; if (!w) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  if (act === 'offensive') {
+    if (s.pcap < 15) return { ok: false, msg: '정치자본 ⚡15가 필요합니다.' };
+    s.pcap -= 15; w.push = 12; s.stats.happiness -= 1; s.stats.debt += 1;
+    addLog(s, 'info', '🎖️ 총공세를 명령했습니다. 다음 분기 전황에 큰 영향을 줍니다.');
+    return { ok: true };
+  }
+  if (act === 'peace') {
+    const sc = w.score;
+    if (sc >= 40) { endWar(s, 'concession'); return { ok: true, msg: '상대가 불리한 조건으로 강화에 응했습니다. 배상과 이권을 얻었습니다.' }; }
+    if (sc >= -20 && Math.random() < 0.6) { endWar(s, 'white'); return { ok: true, msg: '현 전선에서 휴전 협정이 체결되었습니다.' }; }
+    if (sc < -20) { endWar(s, 'concede'); return { ok: true, msg: '불리한 조건으로 강화했습니다. 배상금을 지불합니다.' }; }
+    addLog(s, 'bad', '🕊️ 휴전 제안이 거부되었습니다.');
+    return { ok: true, msg: '상대가 휴전 제안을 거부했습니다.' };
+  }
+}
+
+function endWar(s, outcome) {
+  const w = s.war; const k = w.k; s.war = null;
+  const name = RELATIONS[k].name;
+  if (outcome === 'victory') {
+    if (w.goal === 'concession') endWar2Concession(s, k);
+    else annex(s, k, false);
+  } else if (outcome === 'concession') endWar2Concession(s, k);
+  else if (outcome === 'white') { addLog(s, 'info', `🏳️ ${name}과 휴전했습니다. 영토 변화는 없습니다.`); relBump(s, k, 10, 15); }
+  else if (outcome === 'concede') { s.stats.fiscal -= 1.5; s.mods.fiscal -= 0.3; s.approval = clamp(s.approval - 10, 0, 100); s.stats.security -= 5; addLog(s, 'bad', `📉 ${name}에 배상금을 지불하는 조건으로 강화했습니다.`); relBump(s, k, 10, 15); }
+  for (const c of [...w.allies, ...w.enemyAllies]) relBump(s, c, 0, c && w.enemyAllies.includes(c) ? 8 : 0);
+}
+function endWar2Concession(s, k) {
+  s.stats.fiscal += 1.0; s.mods.fiscal += 0.25; s.mods.gdp += 0.05; s.approval = clamp(s.approval + 6, 0, 100);
+  relBump(s, k, 10, 10);
+  addLog(s, 'good', `🏆 ${RELATIONS[k].name}으로부터 배상과 경제 이권을 얻어냈습니다.`);
+}
+
+// 합병·통일
+function annex(s, k, peaceful) {
+  s.annexed[k] = true; s.diplo[k].sanction = false;
+  if (k === 'nk') {
+    s.stats.debt += peaceful ? 14 : 22; s.mods.gdp += 0.35; s.mods.tfr += 0.08; s.mods.security += 12; s.mods.gini += 0.015;
+    s.stats.happiness -= peaceful ? 1 : 5; s.relMods.cn -= peaceful ? 5 : 18; s.relMods.ru -= peaceful ? 2 : 10;
+    s.approval = clamp(s.approval + (peaceful ? 15 : 10), 0, 100); s.scoreBonus = (s.scoreBonus || 0) + (peaceful ? 15 : 10);
+    s.rel.nk = 100; s.unifiedTurn = s.turn;
+    addLog(s, 'good', peaceful ? '🇰🇷 한반도 평화통일 달성! 통일 비용과 함께 새로운 성장 동력이 생겼습니다.' : '🇰🇷 전쟁 끝에 한반도가 통일되었습니다. 막대한 재건 비용과 주변국 반발이 뒤따릅니다.');
+  } else {
+    const g = { tw: { gdp: 0.25, inn: 5, debt: 8 }, jp: { gdp: 0.6, inn: 6, debt: 15 } }[k] || { gdp: 0.1, inn: 1, debt: 10 };
+    s.stats.debt += g.debt; s.mods.gdp += g.gdp; s.mods.innovation += g.inn; s.stats.happiness -= 3;
+    for (const c of ['us', 'cn', 'eu', 'jp', 'ru']) if (c !== k && !s.annexed[c]) relBump(s, c, -15, k === 'tw' && c === 'cn' ? -25 : -15);
+    s.approval = clamp(s.approval + 5, 0, 100); s.scoreBonus = (s.scoreBonus || 0) + 4;
+    s.occupied = s.occupied || {}; s.occupied[k] = s.turn;
+    s.rel[k] = 50;
+    addLog(s, 'good', `🚩 ${RELATIONS[k].name}을(를) 합병했습니다. 점령지 저항과 국제 사회의 강한 반발이 예상됩니다.`);
+  }
+}
+
+/* ---------------- 분기 처리 ---------------- */
+function worldTurn(s, report) {
+  report.world = { events: [] };
+  // 상대국 AI: 북한의 기습 침공(관계 최악·우리 군사력 약할 때)
+  if (!s.war && !s.annexed.nk && s.rel.nk < 8 && milPower(s) < 58 && Math.random() < 0.04) {
+    report.world.events.push(startWar(s, 'nk', 'them', 'concession'));
+  }
+  // 우호국의 FTA 제안
+  for (const k of Object.keys(COUNTRIES)) {
+    const d = s.diplo[k]; if (s.annexed[k] || d.fta || k === 'nk') continue;
+    if (s.rel[k] >= 68 && Math.random() < 0.08) { d.offer = s.turn + 2; const t = `📨 ${RELATIONS[k].name}이(가) FTA 체결을 제안했습니다. (2분기 동안 비용 ⚡15)`; addLog(s, 'info', t); report.world.events.push(t); }
+  }
+  // 제재 중인 상대의 보복
+  for (const k of Object.keys(COUNTRIES)) if (s.diplo[k].sanction && !s.annexed[k]) { s.rel[k] = clamp(s.rel[k] - 2, 0, 100); }
+  // 점령지 저항
+  for (const k in (s.occupied || {})) { s.stats.safety -= 0.8; s.stats.fiscal -= 0.1; }
+
+  const w = s.war; if (!w) return;
+  w.turns++;
+  const o = warOdds(s, w.k);
+  const delta = o.edge * 45 + gauss() * 10 + (w.push || 0);
+  w.push = 0;
+  w.score = clamp(w.score + delta, -100, 100);
+  // 전쟁 비용
+  s.stats.gdp -= 0.5; s.stats.happiness -= 1.5; s.stats.debt += 1.5; s.stats.fiscal -= 0.3; s.stats.safety -= 1;
+  if (w.turns > 1) s.approval = clamp(s.approval - 1.5, 0, 100);
+  for (const c of w.allies) relBump(s, c, 1, 0);
+  const line = `${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q 전황 ${delta >= 0 ? '진격' : '후퇴'} (${delta >= 0 ? '+' : ''}${delta.toFixed(0)}) → 전황 점수 ${w.score.toFixed(0)}`;
+  w.log.push(line); report.world.war = line;
+  // 핵 사용 위험
+  if (Math.random() < nukeRisk(s)) {
+    s.forceEnding = { type: 'nuke', title: '핵 공격', desc: `패색이 짙어진 ${RELATIONS[w.k].name} 진영이 핵무기를 사용했습니다. 한반도는 회복하기 어려운 피해를 입었습니다.` };
+    return;
+  }
+  if (w.score >= 100) { report.world.events.push(`🏆 ${RELATIONS[w.k].name}과의 전쟁에서 승리했습니다!`); endWar(s, 'victory'); }
+  else if (w.score <= -100) { s.forceEnding = { type: 'defeat', title: '패전', desc: `${RELATIONS[w.k].name} 진영과의 전쟁에서 패배했습니다. 정부는 항복 문서에 서명했습니다.` }; }
+  else if (w.turns >= 8) { report.world.events.push('장기전 끝에 국제 사회 중재로 정전협정이 맺어졌습니다.'); endWar(s, 'white'); }
+}
+
+// 통일·합병 후 사라진 상대와 관련된 돌발 사건 제거, 점령지 저항 사건 추가
+function worldEvents(s, report, newCrises) {
+  for (let i = newCrises.length - 1; i >= 0; i--) {
+    const c = newCrises[i];
+    if ((s.annexed.nk && (c.relTarget === 'nk' || /북한|NLL/.test(c.title))) || (c.relTarget && s.annexed[c.relTarget])) newCrises.splice(i, 1);
+  }
+  for (const k in (s.occupied || {})) if (Math.random() < 0.2) newCrises.push(makeCrisis(s, { tpl: 'security', title: `${RELATIONS[k].name} 점령지 저항 운동`, desc: `합병된 ${RELATIONS[k].name} 지역에서 무장 저항과 대규모 시위가 이어지고 있습니다.`, sev: 2 }));
+}
+
+HOOKS.migrate.push(s => {
+  if (s.rel.tw == null) { s.rel.tw = RELATIONS.tw.base; s.relMods.tw = 0; }
+  if (!s.diplo) {
+    s.diplo = {};
+    for (const k in COUNTRIES) s.diplo[k] = { fta: ['us', 'cn', 'eu', 'jp'].includes(k), alliance: k === 'us', sanction: false, cd: 0 };
+  }
+  if (!s.annexed) s.annexed = {};
+  if (s.war === undefined) s.war = null;
+});
+HOOKS.postMacro.push(worldTurn);
+HOOKS.events.push(worldEvents);
 
 </script>
 <script>
@@ -3608,7 +4276,8 @@ const ClaudeAI = (() => {
 지표: ${st}
 외교관계(0~100): ${rel}
 세력별 지지(0~100): ${fac}
-현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}`;
+현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}
+국정 연합: ${(s.coalition || []).map(k => FACTIONS[k].name).join(', ') || '없음'}${s.war ? `\n전쟁 중: ${RELATIONS[s.war.k].name} (전황 ${s.war.score.toFixed(0)})` : ''}${s.annexed && s.annexed.nk ? '\n한반도 통일 달성' : ''}${s.bills && s.bills.length ? `\n국회 계류 법안 ${s.bills.length}건` : ''}`;
   }
 
   const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });
@@ -3870,6 +4539,9 @@ $('btn-start').onclick = () => {
       <li>법률은 국회 과반, <b>개헌은 국회 2/3 + 국민투표</b>가 필요합니다. 행정조치는 즉시 시행됩니다.</li>
       <li>정책을 바꾸면 효과가 몇 분기에 걸쳐 나타나고, <b>부작용(위기)</b>이 터질 수 있습니다. 위기가 오면 <b>AI가 해결책을 판단해 결과를 도출</b>합니다. (직접 결정 모드도 가능)</li>
       <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
+      <li><b>🏛️ 국회·세력</b>: 법률·개헌은 여러 분기에 걸쳐 국회 심의를 거칩니다. 협상·신속처리로 밀어붙이고, 재계·노동계 등 이익집단을 국정 연합에 영입해 정당성을 높이세요.</li>
+      <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. 전략 산업을 집중 육성할 수 있습니다.</li>
+      <li><b>🌏 외교·전쟁</b>: 정상회담·FTA·동맹·제재·최후통첩, 그리고 전쟁. 승리하면 배상·합병·통일까지 가능하지만, 주변국 개입과 핵 위험이 따릅니다.</li>
       <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
       <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
     </ul></div>
@@ -3878,6 +4550,7 @@ $('btn-start').onclick = () => {
 $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
+  migrateState(S);
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
@@ -3895,6 +4568,7 @@ function showTab(name) {
 /* ---------------- 렌더링 ---------------- */
 function renderAll() {
   renderHeader(); renderSide(); renderPolicies(); renderCrises(); renderReport(); renderLog();
+  if (typeof renderSystemsTabs === 'function') renderSystemsTabs();
   if ($('tab-trend').classList.contains('active')) renderTrend();
 }
 function renderHeader() {
@@ -3933,9 +4607,11 @@ function renderPolicies() {
     const cur = currentOption(p, S);
     const locked = S.enactedThisTurn.includes(p.id);
     const pend = S.pending.find(x => x.pid === p.id);
+    const bill = S.bills && S.bills.find(x => x.pid === p.id);
     return `<div class="pcard ${!cur.cur ? 'changed' : ''}">
       <div class="phead"><h4>${esc(p.name)} ${p.custom ? '<span class="tag new">직접 입안</span>' : ''} ${!cur.cur ? '<span class="tag new">변경됨</span>' : ''}</h4>${p.bg || p.options.some(o => o.pro) ? `<button class="btn sm ghost" data-explain="${p.id}">📖 해설</button>` : ''}</div>
       <p class="pdesc">${esc(p.desc)}</p>
+      ${bill ? `<p class="pdesc">🏛️ 국회 심의 중: '${esc(optionOf(p, bill.oid).label)}' ${Math.round(bill.progress)}% (${esc(billStage(bill))})</p>` : ''}
       ${pend ? `<p class="pdesc">⏳ 효과 반영 중: ${Math.round((1 - pend.left / pend.lag) * 100)}%</p>` : ''}
       <div class="opts">${p.options.map(o => {
         const isCur = o.id === cur.id;
@@ -4011,10 +4687,11 @@ function openPreview(pid, oid, lobby = 0) {
   const p = policyById(pid, S); const o0 = optionOf(p, oid); const o = normalizeOpt(p, o0);
   const cur = currentOption(p, S);
   if (S.enactedThisTurn.includes(pid)) return toast('이 분야는 이번 분기에 이미 손댔습니다. 다음 분기에 다시 시도하세요.');
+  if (S.bills && S.bills.some(b => b.pid === pid)) return toast('이 분야 법안이 국회에서 심의 중입니다. [🏛️ 국회·세력] 탭에서 철회 후 다시 추진할 수 있습니다.');
   const pv = previewPolicy(S, p, o, lobby);
   const fmtPart = x => x.rel ? `${x.name} ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(0)}` : x.k === 'approval' ? `지지율 ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(1)}%p (세력 반응)` : `${x.name} ${fmtStat(x.k, x.delta, true)}`;
   const voteTxt = pv.vote.type === 'decree' ? '대통령령·행정조치 — 국회 표결 없이 즉시 시행'
-    : `${pv.vote.type === 'const' ? '개헌: 국회 2/3(200석) + 국민투표 과반' : '법률: 국회 과반(151석)'} · 예상 찬성 ${pv.vote.exp}석${pv.vote.type === 'const' ? ` · 국민투표 통과 ${(pv.vote.refProb * 100).toFixed(0)}%` : ''}`;
+    : `${pv.vote.type === 'const' ? '개헌: 국회 2/3(200석) + 국민투표 과반' : '법률: 국회 과반(151석)'} · 국회 심의 약 ${typeof estimateBillTurns === 'function' ? estimateBillTurns(S, o, lobby) : 1}분기 후 본회의 표결 · 예상 찬성 ${pv.vote.exp}석${pv.vote.type === 'const' ? ` · 국민투표 통과 ${(pv.vote.refProb * 100).toFixed(0)}%` : ''}`;
   const probPct = Math.round(pv.vote.prob * 100);
   const probColor = probPct >= 70 ? 'var(--good)' : probPct >= 40 ? 'var(--mid)' : 'var(--bad)';
   openModal(`<h2>${esc(p.name)}</h2>
@@ -4044,6 +4721,7 @@ function openPreview(pid, oid, lobby = 0) {
     if (o0.cur) { delete o0.lt; delete o0.lean; delete o0.pc; delete o0.lag; }
     if (!r.ok) return toast(r.msg);
     closeModal(); saveGame(S); renderAll();
+    if (r.bill) return openModal(`<h2>📨 국회 제출</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p><p class="muted">심의 진행과 협상·신속처리·철회는 [🏛️ 국회·세력] 탭에서 관리할 수 있습니다.</p><div class="modal-actions"><button class="btn" onclick="closeModal();showTab('politics')">국회 탭 보기</button><button class="btn primary" onclick="closeModal()">확인</button></div>`);
     openModal(`<h2>${r.passed ? '✅ 시행 확정' : '❌ 부결'}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p>
       ${r.passed ? `<p class="muted">효과는 ${pv.lag}분기에 걸쳐 나타납니다. 세력 반응은 즉시 반영되었습니다.${pv.risks.length ? ' 부작용이 잠복 중이니 주의하세요.' : ''}</p>` : '<p class="muted">정치자본의 절반이 소모되었고 지지율이 소폭 하락했습니다. 다음 분기에 다시 시도할 수 있습니다.</p>'}
       <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
@@ -4187,6 +4865,7 @@ function reportHTML(report, recs) {
     </div>
     <h3 class="sec">🚨 발생한 위기와 AI 해결 결과</h3>
     ${recs && recs.length ? recs.map(resolvedCard).join('') : report.pendingCrises ? `<div class="verdict bad">새 위기 ${report.pendingCrises}건이 대통령의 결정을 기다립니다. [위기 대응] 탭을 확인하세요.</div>` : '<div class="empty">이번 분기에는 특별한 위기가 없었습니다.</div>'}
+    ${typeof reportExtras === 'function' ? reportExtras(report) : ''}
     <div id="brief-slot">${report.brief ? `<div class="ai-box"><span class="who">🤖 Claude 분기 논평</span>${esc(report.brief)}</div>` : ''}</div>`;
 }
 function showReportModal(report, recs) {
@@ -4231,7 +4910,7 @@ function showEnding() {
   const changed = allPolicies().filter(p => !currentOption(p, S).cur);
   const H = S.history, first = H[0];
   openModal(`<div class="ending">
-    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : '🚨 안보 붕괴'}</h2>
+    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : e.type === 'nuke' ? '☢️ 핵 공격' : e.type === 'defeat' ? '🏳️ 패전' : '🚨 안보 붕괴'}</h2>
     ${e.desc ? `<p class="lead">${esc(e.desc)}</p>` : ''}
     <div class="grade" style="color:${sc.total >= 70 ? 'var(--good)' : sc.total >= 50 ? 'var(--mid)' : 'var(--bad)'}">${sc.grade}</div>
     <h3>${esc(sc.title)}</h3><p class="muted">${esc(sc.desc)}</p>
@@ -4283,5 +4962,182 @@ $('btn-settings').onclick = () => {
 try { const th = localStorage.getItem('newkorea_theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
 renderStart();
 ClaudeAI.whenReady(() => { if (S) renderCrises(); });
+
+</script>
+<script>
+/* js/ui_systems.js */
+/* =========================================================
+ *  확장 시스템 화면: 국회·세력 / 경제 / 외교·전쟁
+ * ========================================================= */
+let selCountry = 'nk';
+
+function renderSystemsTabs() {
+  if (!S) return;
+  renderPolitics(); renderEconomy(); renderWorld();
+  const wb = $('war-badge'); if (wb) wb.classList.toggle('hidden', !S.war);
+  const bb = $('bill-badge'); if (bb) { bb.textContent = S.bills.length; bb.classList.toggle('hidden', !S.bills.length); }
+}
+
+const pbar = (v, color, max = 100) => `<div class="bar"><i style="width:${clamp(v / max * 100, 0, 100)}%;background:${color}"></i></div>`;
+function act(fn) { return (...a) => { const r = fn(...a); if (r && r.ok === false) toast(esc(r.msg || r.why)); else if (r && r.msg) toast(esc(r.msg), 3500); saveGame(S); renderAll(); return r; }; }
+
+/* ---------------- 국회·세력 ---------------- */
+function renderPolitics() {
+  const el = $('tab-politics'); if (!el) return;
+  const L = legitimacy(S), fr = coalitionFriction(S);
+  const bills = S.bills.map(b => {
+    const p = policyById(b.pid, S), o = optionOf(p, b.oid);
+    const prob = voteModel(S, o, b.lobby).prob, left = Math.max(0, Math.ceil((100 - b.progress) / billSpeed(S, b)));
+    return `<div class="bill">
+      <div class="bill-top"><b>${esc(p.name)}</b> → ${esc(o.label)} <span class="tag ${b.lt}">${b.lt === 'const' ? '개헌안' : '법률안'}</span>${b.fast ? '<span class="tag new">신속처리</span>' : ''}${b.lobby ? `<span class="tag">협상 ${b.lobby}단계</span>` : ''}</div>
+      <div class="bill-stage">${esc(billStage(b))} · ${b.turns}분기째 · 남은 기간 약 ${left}분기 · 본회의 통과 가능성 <b>${Math.round(prob * 100)}%</b></div>
+      ${pbar(b.progress, 'var(--accent)')}
+      ${b.log.length ? `<div class="muted small">${esc(b.log[b.log.length - 1])}</div>` : ''}
+      <div class="row-btns">
+        <button class="btn sm" data-bill="${b.id}" data-act="lobby" ${b.lobby >= 3 ? 'disabled' : ''}>🤝 야당 협상 ⚡${LOBBY_COST}</button>
+        <button class="btn sm" data-bill="${b.id}" data-act="fast" ${b.fast ? 'disabled' : ''}>⏩ 신속처리 지정 ⚡20</button>
+        <button class="btn sm ghost" data-bill="${b.id}" data-act="withdraw">↩️ 철회</button>
+      </div></div>`;
+  }).join('') || '<div class="empty">국회에 계류 중인 법안이 없습니다. 법률·개헌 정책을 추진하면 이곳에서 심의가 진행됩니다.</div>';
+
+  const groups = Object.entries(FACTIONS).sort((a, b) => S.clout[b[0]] - S.clout[a[0]]).map(([k, f]) => {
+    const inC = S.coalition.includes(k), sup = S.factions[k], cl = S.clout[k];
+    const chips = [inC ? '<span class="tag cur">국정 연합</span>' : '', S.radical?.includes(k) ? '<span class="tag const">급진화</span>' : '', inC && sup >= 70 ? '<span class="tag new">충성</span>' : '', inC && sup < 30 ? '<span class="tag const">이탈 위기</span>' : ''].join('');
+    const cj = canJoin(S, k);
+    return `<div class="grp">
+      <div class="grp-name">${f.icon} <b>${f.name}</b> ${chips}</div>
+      <div class="grp-bars"><span class="muted small">영향력 ${cl.toFixed(1)}%</span>${pbar(cl, 'var(--accent)', 25)}<span class="muted small">지지도 ${sup.toFixed(0)}</span>${pbar(sup, sup >= 60 ? 'var(--good)' : sup >= 35 ? 'var(--mid)' : 'var(--bad)')}</div>
+      <div>${inC ? `<button class="btn sm ghost" data-leave="${k}">연합 제외</button>` : `<button class="btn sm" data-join="${k}" ${cj.ok ? '' : `disabled title="${esc(cj.why)}"`}>연합 영입 ⚡${joinCost(S, k)}</button>`}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sys-head">
+      <div class="big-kpi"><span>국정 정당성</span><b style="color:${L >= 50 ? 'var(--good)' : L >= 35 ? 'var(--mid)' : 'var(--bad)'}">${L.toFixed(0)}%</b><small>연합 세력 영향력 합계</small></div>
+      <div class="big-kpi"><span>정치자본 보정</span><b>${S.pcapBonus >= 0 ? '+' : ''}${(S.pcapBonus || 0).toFixed(1)}</b><small>분기당 (정당성·마찰·충성)</small></div>
+      <div class="big-kpi"><span>연합 내 마찰</span><b>${fr.length}</b><small>${fr.map(([a, b]) => FACTIONS[a].name + '↔' + FACTIONS[b].name).join(', ') || '없음'}</small></div>
+    </div>
+    <p class="muted">국정 연합에 든 세력은 자기에게 유리한 법안에 찬성표를 몰아주고(불리하면 반대), 정당성이 높을수록 정치자본이 더 많이 회복됩니다. 지지도가 30 아래로 떨어진 연합 세력은 이탈할 수 있고, 20 아래인 세력은 급진화해 집단행동에 나섭니다.</p>
+    <h3 class="sec">🏛️ 국회 계류 법안 (${S.bills.length})</h3>${bills}
+    <h3 class="sec">👥 이익집단</h3><div class="grp-list">${groups}</div>`;
+  el.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => act(billAction)(S, b.dataset.bill, b.dataset.act));
+  el.querySelectorAll('[data-join]').forEach(b => b.onclick = () => act(joinCoalition)(S, b.dataset.join));
+  el.querySelectorAll('[data-leave]').forEach(b => b.onclick = () => { leaveCoalition(S, b.dataset.leave); saveGame(S); renderAll(); });
+}
+
+/* ---------------- 경제 ---------------- */
+function renderEconomy() {
+  const el = $('tab-economy'); if (!el) return;
+  const rows = SECTORS.map(x => {
+    const sec = S.sectors[x.id], g = sec.g, inv = S.sectorInvest.find(i => i.id === x.id);
+    const color = g >= x.base + 0.5 ? 'var(--good)' : g <= x.base - 0.5 ? 'var(--bad)' : 'var(--text)';
+    return `<tr>
+      <td>${x.icon} <b>${x.name}</b></td>
+      <td class="num">${x.share}%</td><td class="num">${x.emp}%</td>
+      <td class="num" style="color:${color}">${g >= 0 ? '+' : ''}${g.toFixed(1)}%</td>
+      <td class="num">${sec.idx.toFixed(1)}</td>
+      <td class="spark-cell">${spark(sec.hist, color)}</td>
+      <td>${inv ? `<span class="tag new">육성 중 ${inv.left}분기</span>` : `<button class="btn sm" data-invest="${x.id}">집중 육성 ⚡${INVEST_COST}</button>`}</td>
+    </tr>`;
+  }).join('');
+  const contrib = S.econDelta || 0;
+  el.innerHTML = `
+    <div class="sys-head">
+      <div class="big-kpi"><span>경제성장률</span><b>${fmtStat('gdp', S.stats.gdp)}</b><small>산업 구조 기여 ${contrib >= 0 ? '+' : ''}${contrib.toFixed(2)}%p</small></div>
+      <div class="big-kpi"><span>실업률</span><b>${fmtStat('unemp', S.stats.unemp)}</b><small>산업 고용 기여 ${(S.econUnemp || 0) >= 0 ? '+' : ''}${(S.econUnemp || 0).toFixed(2)}%p</small></div>
+      <div class="big-kpi"><span>집중 육성</span><b>${S.sectorInvest.length}/3</b><small>8분기간 성장률 +2.5%p, 재정 부담</small></div>
+    </div>
+    <p class="muted">각 산업의 성장률은 산업 경쟁력·외교관계·제도 변화에 따라 달라지고, 비중만큼 GDP 성장률과 고용에 반영됩니다. 예: 반도체는 미·중 관계와 반도체 지원책, 건설은 주택 공급·대출 규제, 농어업은 FTA·CPTPP에 민감합니다.</p>
+    <div class="table-wrap"><table class="sector">
+      <thead><tr><th>산업</th><th>GDP 비중</th><th>고용 비중</th><th>성장률(연)</th><th>규모 지수</th><th>추이</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  el.querySelectorAll('[data-invest]').forEach(b => b.onclick = () => act(investSector)(S, b.dataset.invest));
+}
+
+/* ---------------- 외교·전쟁 ---------------- */
+function renderWorld() {
+  const el = $('tab-world'); if (!el) return;
+  const krPos = [60, 46];
+  const relColor = v => v >= 70 ? 'var(--good)' : v >= 45 ? 'var(--accent)' : v >= 25 ? 'var(--mid)' : 'var(--bad)';
+  const lines = Object.entries(COUNTRIES).map(([k, c]) => {
+    if (S.annexed[k]) return '';
+    const d = S.diplo[k], atWar = S.war && (S.war.k === k || S.war.enemyAllies.includes(k));
+    const color = atWar ? 'var(--bad)' : d.alliance ? 'var(--good)' : relColor(S.rel[k]);
+    return `<line x1="${krPos[0]}" y1="${krPos[1]}" x2="${c.pos[0]}" y2="${c.pos[1]}" stroke="${color}" stroke-width="${d.alliance || atWar ? 0.9 : 0.4}" ${d.alliance || atWar ? '' : 'stroke-dasharray="1.5 1.5"'} opacity="0.8"/>`;
+  }).join('');
+  const tiles = Object.entries(COUNTRIES).map(([k, c]) => {
+    const r = RELATIONS[k], d = S.diplo[k], an = S.annexed[k];
+    const atWar = S.war && (S.war.k === k || S.war.enemyAllies.includes(k));
+    const ally = S.war && S.war.allies.includes(k);
+    return `<button class="ctile ${selCountry === k ? 'sel' : ''} ${atWar ? 'war' : ''} ${an ? 'annexed' : ''}" style="left:${c.pos[0]}%;top:${c.pos[1]}%" data-c="${k}">
+      <span class="cflag">${r.flag}</span><span class="cname">${r.name}</span>
+      ${an ? '<span class="cstat">🇰🇷 합병</span>' : `<span class="crel" style="color:${relColor(S.rel[k])}">${S.rel[k].toFixed(0)}</span>`}
+      <span class="cicons">${d.alliance ? '🛡️' : ''}${d.fta ? '📦' : ''}${d.sanction ? '🚫' : ''}${atWar ? '⚔️' : ''}${ally ? '🤝' : ''}${c.nukes ? '☢️' : ''}</span>
+    </button>`;
+  }).join('');
+  const kr = `<div class="ctile kr" style="left:${krPos[0]}%;top:${krPos[1]}%"><span class="cflag">🇰🇷</span><span class="cname">대한민국</span><span class="crel">군사력 ${milPower(S).toFixed(0)}</span></div>`;
+
+  const k = selCountry, c = COUNTRIES[k], d = S.diplo[k];
+  const odds = !c.far && !S.annexed[k] ? (() => { const o = warOdds(S, k); const allies = warAllies(S, k, 'kr'), en = warAllies(S, k, 'them');
+    return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>우리 편: ${['대한민국', ...allies.map(x => RELATIONS[x].name)].join(', ')} (전력 ${o.ours.toFixed(0)})<br>상대 편: ${[RELATIONS[k].name, ...en.map(x => RELATIONS[x].name)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
+      판정: <b style="color:${o.edge > 0.15 ? 'var(--good)' : o.edge > -0.05 ? 'var(--mid)' : 'var(--bad)'}">${o.edge > 0.25 ? '압도적 우세' : o.edge > 0.1 ? '우세' : o.edge > -0.05 ? '팽팽함' : o.edge > -0.2 ? '열세' : '절대 열세'}</b>${(c.nukes || en.some(x => COUNTRIES[x].nukes)) ? ' · ☢️ 상대 진영 핵보유: 몰리면 핵 사용 위험' : ''}</div>`; })() : '';
+  const actions = S.annexed[k] ? '<div class="empty">합병된 지역입니다.</div>' : DIPLO_ACTIONS.map(a => {
+    const why = a.can(S, k), cost = diploCost(S, a, k);
+    return `<div class="dact ${why ? 'off' : ''}"><div><b>${a.icon} ${a.name}</b> <span class="tag">⚡${cost}</span><div class="muted small">${esc(why || a.desc)}</div></div>
+      <button class="btn sm ${a.id === 'war' ? 'danger' : ''}" data-dact="${a.id}" ${why ? 'disabled' : ''}>실행</button></div>`;
+  }).join('');
+
+  const w = S.war;
+  const warPanel = w ? `<div class="warbox">
+    <h3>⚔️ 전쟁 중: ${RELATIONS[w.k].name} (${w.turns}분기째) · 목표 ${GOAL_NAMES[w.goal]}</h3>
+    <div class="warbar"><i style="left:${50 + w.score / 2}%"></i><span>패전 -100</span><span>0</span><span>승리 +100</span></div>
+    <div>전황 점수 <b>${w.score.toFixed(0)}</b> · 우리 편 ${['대한민국', ...w.allies.map(x => RELATIONS[x].name)].join(', ')} · 상대 편 ${[RELATIONS[w.k].name, ...w.enemyAllies.map(x => RELATIONS[x].name)].join(', ')}</div>
+    <div class="muted small">분기마다 성장률·행복도·재정이 깎이고 채무가 늘어납니다. 8분기가 지나면 국제 중재로 정전됩니다.${nukeRisk(S) > 0 ? ` <b style="color:var(--bad)">☢️ 핵 사용 위험 분기당 ${(nukeRisk(S) * 100).toFixed(1)}%</b>` : ''}</div>
+    ${w.log.length ? `<div class="muted small">${esc(w.log[w.log.length - 1])}</div>` : ''}
+    <div class="row-btns"><button class="btn sm danger" data-war="offensive">🎖️ 총공세 ⚡15</button><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button></div>
+  </div>` : '';
+
+  el.innerHTML = `${warPanel}
+    <div class="world-grid">
+      <div class="map"><svg viewBox="0 0 100 100" preserveAspectRatio="none" class="map-lines">${lines}</svg>${tiles}${kr}
+        <div class="map-legend">🛡️동맹 📦FTA 🚫제재 ⚔️전쟁 ☢️핵보유 · 숫자=관계</div></div>
+      <div class="cpanel">
+        <h3>${RELATIONS[k].flag} ${RELATIONS[k].name}</h3>
+        <div class="muted small">${esc(c.note)} · 인구 ${c.pop}</div>
+        <div class="cfacts"><span>관계 <b>${S.rel[k].toFixed(0)}</b></span><span>군사력 <b>${c.mil}</b></span><span>경제 규모 <b>${c.eco}</b></span><span>${c.nukes ? '☢️ 핵보유' : '비핵'}</span></div>
+        <div class="cfacts">${d.alliance ? '<span class="tag cur">동맹</span>' : ''}${d.fta ? '<span class="tag">FTA</span>' : ''}${d.sanction ? '<span class="tag const">제재 중</span>' : ''}${d.casusBelli >= S.turn ? '<span class="tag const">전쟁 명분</span>' : ''}${d.offer >= S.turn ? '<span class="tag new">FTA 제안 받음</span>' : ''}</div>
+        ${odds}
+        <h4 class="sec">외교 행동</h4><div class="dacts">${actions}</div>
+      </div>
+    </div>`;
+  el.querySelectorAll('.ctile[data-c]').forEach(b => b.onclick = () => { selCountry = b.dataset.c; renderWorld(); });
+  el.querySelectorAll('[data-dact]').forEach(b => b.onclick = () => {
+    if (b.dataset.dact === 'war') return confirmWar(k);
+    act(diploAction)(S, b.dataset.dact, k);
+  });
+  el.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
+}
+
+function confirmWar(k) {
+  const c = COUNTRIES[k], o = warOdds(S, k);
+  const goals = k === 'nk' ? ['unify', 'concession'] : c.annex ? ['annex', 'concession'] : ['concession'];
+  openModal(`<h2>⚔️ ${RELATIONS[k].name}에 선전포고</h2>
+    <p class="lead">전력 비교: 우리 편 ${o.ours.toFixed(0)} vs 상대 편 ${o.theirs.toFixed(0)}. 침략 전쟁은 국제 사회의 강한 반발(미국·EU·중국 관계 하락)을 부릅니다. 전쟁 중에는 매 분기 경제·행복도·재정이 타격을 입습니다.${c.nukes ? ' 상대는 핵보유국입니다. 몰리면 핵을 쓸 수 있습니다.' : ''}</p>
+    <h3 class="sec">전쟁 목표</h3>
+    ${goals.map(g => `<button class="btn ${g === 'concession' ? '' : 'danger'}" data-goal="${g}" style="margin:4px">${GOAL_NAMES[g]}${g === 'concession' ? ' (배상금·경제 이권)' : g === 'unify' ? ' (승리 시 한반도 통일)' : ' (승리 시 영토 편입)'}</button>`).join('')}
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">취소</button></div>`);
+  document.querySelectorAll('[data-goal]').forEach(b => b.onclick = () => { closeModal(); act(diploAction)(S, 'war', k, b.dataset.goal); });
+}
+
+/* 분기 보고서 추가 항목 */
+function reportExtras(report) {
+  const out = [];
+  if (report.bills?.length) out.push(`<div class="box" style="margin-top:8px"><h4>🏛️ 국회 심의</h4><ul>${report.bills.map(b => `<li>${esc(b.name)} — ${esc(b.label)}: ${b.result === 'passed' ? '<b class="good-t">본회의 통과</b>' : b.result === 'failed' ? '<b class="bad-t">본회의 부결</b>' : b.result === 'expired' ? '<b class="bad-t">폐기</b>' : `${esc(b.stage)} ${Math.round(b.progress)}%`}${b.ev ? ` <span class="muted">(${esc(b.ev)})</span>` : ''}</li>`).join('')}</ul></div>`);
+  const pol = report.politics;
+  if (pol && (pol.left.length || pol.radical.length)) out.push(`<div class="verdict bad">${pol.left.length ? `연합 이탈: ${pol.left.map(esc).join(', ')}. ` : ''}${pol.radical.length ? `급진화 세력: ${pol.radical.map(esc).join(', ')}` : ''}</div>`);
+  const w = report.world;
+  if (w && (w.war || w.events.length)) out.push(`<div class="box" style="margin-top:8px"><h4>🌏 외교·안보</h4><ul>${[w.war, ...w.events].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`);
+  return out.join('');
+}
 
 </script>

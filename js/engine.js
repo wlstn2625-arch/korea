@@ -10,7 +10,12 @@ const DIFFICULTY = {
 };
 const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
-const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k;
+const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k + (s.pcapBonus || 0);
+
+// 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
+const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [] };
+function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
+function migrateState(s) { runHooks('migrate', s); return s; }
 
 const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
 const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선
@@ -131,6 +136,7 @@ function newGame(partyKey, presidentName, difficulty = 'normal') {
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
     autoAI: true, over: false, ending: null, userOptions: {},
   };
+  migrateState(s);
   s.history.push(snapshot(s));
   addLog(s, 'info', `${presidentName || '대통령'}님, 제21대 대한민국 대통령 취임을 축하드립니다. 5년 단임 임기(20분기)가 시작됩니다.`);
   return s;
@@ -219,7 +225,7 @@ function voteModel(s, opt, lobby = 0) {
   };
   let exp = 0, varr = 0;
   for (const b in s.seats) { const pr = p(b); exp += s.seats[b] * pr; varr += s.seats[b] * pr * (1 - pr); }
-  exp = Math.min(298, exp + lobby * 16); // 야당 협상(협치)으로 확보한 찬성표
+  exp = Math.min(298, exp + lobby * 16 + (typeof coalitionSeatBonus === 'function' ? coalitionSeatBonus(s, opt) : 0)); // 야당 협상(협치) + 연합 세력 압력
   varr += 36; // 이탈표 불확실성
   const need = opt.lt === 'const' ? 200 : 151;
   const sd = Math.sqrt(varr);
@@ -274,43 +280,50 @@ function enactPolicy(s, pid, oid, lobby = 0) {
   const cost = policyCost(s, opt) + lobby * LOBBY_COST;
   if (s.pcap < cost) return { ok: false, msg: `정치자본이 부족합니다. (필요 ${cost}, 보유 ${Math.floor(s.pcap)})` };
 
+  s.enactedThisTurn.push(pid);
+  // 법률·개헌은 국회 심의 절차로 (politics.js)
+  if (opt.lt && opt.lt !== 'decree' && typeof proposeBill === 'function') return proposeBill(s, p, opt, old, lobby, cost);
+  s.pcap -= cost;
+  return finalVote(s, p, opt, old, lobby, cost, true);
+}
+
+// 최종 표결(본회의·국민투표). paid: 비용을 이미 냈는지
+function finalVote(s, p, opt, old, lobby, cost, paid) {
   const vote = voteModel(s, opt, lobby);
   let passed = true, detail = '';
   if (vote.type !== 'decree') {
-    if (lobby) detail = `야당 협상 ${lobby}단계(⚡${lobby * LOBBY_COST}) · `;
+    if (lobby) detail = `야당 협상 ${lobby}단계 · `;
     const yes = Math.round(clamp(vote.exp + gauss() * vote.sd, 0, 300));
     passed = yes >= vote.need;
-    detail += `국회 표결: 찬성 ${yes} / 재적 300 (가결 기준 ${vote.need})`;
+    detail += `본회의 표결: 찬성 ${yes} / 재적 300 (가결 기준 ${vote.need})`;
     if (passed && vote.type === 'const') {
       const sup = clamp(refendumSupport(s, opt) + gauss() * 6, 5, 95);
       detail += ` → 국민투표 찬성 ${sup.toFixed(1)}%`;
       passed = sup > 50;
     }
   } else detail = '대통령령·행정조치로 즉시 시행';
-
-  s.enactedThisTurn.push(pid);
   if (!passed) {
-    s.pcap -= Math.ceil(cost / 2);
+    if (!paid) s.pcap -= Math.ceil(cost / 2); else s.pcap += Math.floor(cost / 2); // 부결 시 절반 환급
     s.approval = clamp(s.approval - 1.5, 0, 100);
     addLog(s, 'bad', `❌ [${p.name}] '${opt.label}' 부결. ${detail}`);
     return { ok: true, passed: false, detail, p, opt };
   }
+  applyPassed(s, p, opt, old);
+  addLog(s, 'good', `✅ [${p.name}] '${old.label}' → '${opt.label}' 시행 확정. ${detail}`);
+  return { ok: true, passed: true, detail, p, opt };
+}
 
-  s.pcap -= cost;
+function applyPassed(s, p, opt, old) {
+  const pid = p.id, oid = opt.id;
   const d = diffEffects(opt, old);
   s.policies[pid] = oid;
-  // 세력 즉시 반응
   for (const k in d.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + d.f[k], 0, 100);
-  // 효과는 lag 분기에 걸쳐 서서히
   const lag = Math.max(1, opt.lag || 4);
-  s.pending = s.pending.filter(x => x.pid !== pid); // 같은 분야 진행 중이던 효과는 새 정책으로 대체
+  s.pending = s.pending.filter(x => x.pid !== pid);
   s.pending.push({ pid, oid, src: p.custom ? p.name : `${p.name}: ${opt.label}`, e: d.e, rel: d.rel, left: lag, lag });
-  // 부작용 리스크 잠복
   for (const r of (opt.r || [])) {
     s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
   }
-  addLog(s, 'good', `✅ [${p.name}] '${old.label}' → '${opt.label}' 시행 확정. ${detail}`);
-  return { ok: true, passed: true, detail, p, opt };
 }
 
 /* ---------------- 위기(부작용·돌발사건) 생성 ---------------- */
@@ -484,14 +497,15 @@ function endTurn(s) {
   }
   s.pending = s.pending.filter(pe => pe.left > 0);
 
+  runHooks('preMacro', s, report);
   // 2) 거시경제 동학
   const st = s.stats;
   const potential = 1.8 - s.turn * 0.02 + (st.innovation - 72) * 0.02 + (st.tfr - 0.8) * 0.5;
   for (const k in STATS) {
     if (k === 'debt' || k === 'happiness') continue;
     let eq = STATS[k].base + s.mods[k];
-    if (k === 'gdp') eq = potential + s.mods.gdp - Math.max(0, st.debt - 90) * 0.03;
-    if (k === 'unemp') eq = STATS.unemp.base + s.mods.unemp - (st.gdp - potential) * 0.4;
+    if (k === 'gdp') eq = potential + s.mods.gdp - Math.max(0, st.debt - 90) * 0.03 + (s.econDelta || 0);
+    if (k === 'unemp') eq = STATS.unemp.base + s.mods.unemp - (st.gdp - potential) * 0.4 + (s.econUnemp || 0);
     if (k === 'fiscal') eq = STATS.fiscal.base + s.mods.fiscal - Math.max(0, st.debt - 51.6) * 0.03 + (st.gdp - 1.8) * 0.2;
     if (k === 'tfr') eq = STATS.tfr.base + s.mods.tfr + (st.housing - 37) * 0.002 + (st.happiness - 42) * 0.001;
     const rate = k === 'tfr' ? 0.2 : 0.35;
@@ -508,12 +522,14 @@ function endTurn(s) {
   st.happiness = clamp(st.happiness + (hEq - st.happiness) * 0.35 + gauss() * 0.5, 0, 100);
   // 외교관계
   for (const k in RELATIONS) {
+    if (s.annexed && s.annexed[k]) continue;
     const eq = RELATIONS[k].base + s.relMods[k];
     s.rel[k] = clamp(s.rel[k] + (eq - s.rel[k]) * 0.25 + gauss() * 1, 0, 100);
   }
   // 안보는 북한 관계와 미국 관계 영향
   st.security = clamp(st.security + (s.rel.us - 76) * 0.01 + (s.rel.nk - 12) * 0.01, 0, 100);
 
+  runHooks('postMacro', s, report);
   // 3) 세력 지지 변화
   const ft = factionTargets(s);
   for (const k in s.factions) s.factions[k] = clamp(s.factions[k] + (ft[k] - s.factions[k]) * 0.1 + gauss() * 0.8, 0, 100);
@@ -536,6 +552,7 @@ function endTurn(s) {
     pool.splice(pool.indexOf(pick), 1);
     newCrises.push(makeCrisis(s, { ...pick, facTarget: FACTIONS[pick.target] ? pick.target : undefined, relTarget: RELATIONS[pick.target] ? pick.target : undefined }));
   }
+  runHooks('events', s, report, newCrises);
   for (const c of newCrises) { applyShock(s, c); s.crises.push(c); }
   report.crises = newCrises.map(c => c.id);
 
@@ -550,6 +567,7 @@ function endTurn(s) {
   if (s.turn === GENERAL_ELECTION_TURN) report.elections.push(generalElection(s));
   if (s.turn === LOCAL_ELECTION_TURN) report.elections.push(localElection(s));
 
+  runHooks('postTurn', s, report);
   // 8) 기록·다음 분기
   report.diff = {};
   for (const k in STATS) report.diff[k] = st[k] - prev.stats[k];
@@ -591,7 +609,8 @@ function localElection(s) {
 
 function checkGameOver(s, report) {
   const opp = 300 - (s.ruling === 'P' ? s.seats.P : s.seats[s.ruling]);
-  if (s.approval < 15 && opp >= 200 && Math.random() < 0.45) {
+  if (s.forceEnding) { s.over = true; s.ending = s.forceEnding; }
+  else if (s.approval < 15 && opp >= 200 && Math.random() < 0.45) {
     s.over = true; s.ending = { type: 'impeach', title: '탄핵', desc: `지지율 ${s.approval.toFixed(1)}%. 국회가 탄핵소추안을 가결했고 헌법재판소가 파면을 선고했습니다.` };
   } else if (s.stats.debt > 130 || s.stats.fiscal < -14) {
     s.over = true; s.ending = { type: 'default', title: '국가 부도', desc: '국가채무가 감당할 수 없는 수준에 이르러 IMF 구제금융을 신청했습니다.' };
@@ -614,7 +633,7 @@ function finalScore(s) {
   idx -= Math.abs(s.stats.infl - 2) * 4;
   let relScore = 0; for (const k in RELATIONS) relScore += (s.rel[k] - RELATIONS[k].base) * 0.15;
   const indexScore = clamp(50 + idx * 0.8 + relScore, 0, 100);
-  const total = clamp(s.approval * 0.4 + indexScore * 0.6, 0, 100);
+  const total = clamp(s.approval * 0.4 + indexScore * 0.6 + (s.scoreBonus || 0), 0, 100);
   const ending = ENDINGS.find(e => total >= e.min);
   return { total, indexScore, approval: s.approval, grade: ending.grade, title: ending.title, desc: ending.desc };
 }

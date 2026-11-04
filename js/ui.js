@@ -60,6 +60,9 @@ $('btn-start').onclick = () => {
       <li>법률은 국회 과반, <b>개헌은 국회 2/3 + 국민투표</b>가 필요합니다. 행정조치는 즉시 시행됩니다.</li>
       <li>정책을 바꾸면 효과가 몇 분기에 걸쳐 나타나고, <b>부작용(위기)</b>이 터질 수 있습니다. 위기가 오면 <b>AI가 해결책을 판단해 결과를 도출</b>합니다. (직접 결정 모드도 가능)</li>
       <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
+      <li><b>🏛️ 국회·세력</b>: 법률·개헌은 여러 분기에 걸쳐 국회 심의를 거칩니다. 협상·신속처리로 밀어붙이고, 재계·노동계 등 이익집단을 국정 연합에 영입해 정당성을 높이세요.</li>
+      <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. 전략 산업을 집중 육성할 수 있습니다.</li>
+      <li><b>🌏 외교·전쟁</b>: 정상회담·FTA·동맹·제재·최후통첩, 그리고 전쟁. 승리하면 배상·합병·통일까지 가능하지만, 주변국 개입과 핵 위험이 따릅니다.</li>
       <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
       <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
     </ul></div>
@@ -68,6 +71,7 @@ $('btn-start').onclick = () => {
 $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
+  migrateState(S);
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
@@ -85,6 +89,7 @@ function showTab(name) {
 /* ---------------- 렌더링 ---------------- */
 function renderAll() {
   renderHeader(); renderSide(); renderPolicies(); renderCrises(); renderReport(); renderLog();
+  if (typeof renderSystemsTabs === 'function') renderSystemsTabs();
   if ($('tab-trend').classList.contains('active')) renderTrend();
 }
 function renderHeader() {
@@ -123,9 +128,11 @@ function renderPolicies() {
     const cur = currentOption(p, S);
     const locked = S.enactedThisTurn.includes(p.id);
     const pend = S.pending.find(x => x.pid === p.id);
+    const bill = S.bills && S.bills.find(x => x.pid === p.id);
     return `<div class="pcard ${!cur.cur ? 'changed' : ''}">
       <div class="phead"><h4>${esc(p.name)} ${p.custom ? '<span class="tag new">직접 입안</span>' : ''} ${!cur.cur ? '<span class="tag new">변경됨</span>' : ''}</h4>${p.bg || p.options.some(o => o.pro) ? `<button class="btn sm ghost" data-explain="${p.id}">📖 해설</button>` : ''}</div>
       <p class="pdesc">${esc(p.desc)}</p>
+      ${bill ? `<p class="pdesc">🏛️ 국회 심의 중: '${esc(optionOf(p, bill.oid).label)}' ${Math.round(bill.progress)}% (${esc(billStage(bill))})</p>` : ''}
       ${pend ? `<p class="pdesc">⏳ 효과 반영 중: ${Math.round((1 - pend.left / pend.lag) * 100)}%</p>` : ''}
       <div class="opts">${p.options.map(o => {
         const isCur = o.id === cur.id;
@@ -201,10 +208,11 @@ function openPreview(pid, oid, lobby = 0) {
   const p = policyById(pid, S); const o0 = optionOf(p, oid); const o = normalizeOpt(p, o0);
   const cur = currentOption(p, S);
   if (S.enactedThisTurn.includes(pid)) return toast('이 분야는 이번 분기에 이미 손댔습니다. 다음 분기에 다시 시도하세요.');
+  if (S.bills && S.bills.some(b => b.pid === pid)) return toast('이 분야 법안이 국회에서 심의 중입니다. [🏛️ 국회·세력] 탭에서 철회 후 다시 추진할 수 있습니다.');
   const pv = previewPolicy(S, p, o, lobby);
   const fmtPart = x => x.rel ? `${x.name} ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(0)}` : x.k === 'approval' ? `지지율 ${x.delta > 0 ? '+' : ''}${x.delta.toFixed(1)}%p (세력 반응)` : `${x.name} ${fmtStat(x.k, x.delta, true)}`;
   const voteTxt = pv.vote.type === 'decree' ? '대통령령·행정조치 — 국회 표결 없이 즉시 시행'
-    : `${pv.vote.type === 'const' ? '개헌: 국회 2/3(200석) + 국민투표 과반' : '법률: 국회 과반(151석)'} · 예상 찬성 ${pv.vote.exp}석${pv.vote.type === 'const' ? ` · 국민투표 통과 ${(pv.vote.refProb * 100).toFixed(0)}%` : ''}`;
+    : `${pv.vote.type === 'const' ? '개헌: 국회 2/3(200석) + 국민투표 과반' : '법률: 국회 과반(151석)'} · 국회 심의 약 ${typeof estimateBillTurns === 'function' ? estimateBillTurns(S, o, lobby) : 1}분기 후 본회의 표결 · 예상 찬성 ${pv.vote.exp}석${pv.vote.type === 'const' ? ` · 국민투표 통과 ${(pv.vote.refProb * 100).toFixed(0)}%` : ''}`;
   const probPct = Math.round(pv.vote.prob * 100);
   const probColor = probPct >= 70 ? 'var(--good)' : probPct >= 40 ? 'var(--mid)' : 'var(--bad)';
   openModal(`<h2>${esc(p.name)}</h2>
@@ -234,6 +242,7 @@ function openPreview(pid, oid, lobby = 0) {
     if (o0.cur) { delete o0.lt; delete o0.lean; delete o0.pc; delete o0.lag; }
     if (!r.ok) return toast(r.msg);
     closeModal(); saveGame(S); renderAll();
+    if (r.bill) return openModal(`<h2>📨 국회 제출</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p><p class="muted">심의 진행과 협상·신속처리·철회는 [🏛️ 국회·세력] 탭에서 관리할 수 있습니다.</p><div class="modal-actions"><button class="btn" onclick="closeModal();showTab('politics')">국회 탭 보기</button><button class="btn primary" onclick="closeModal()">확인</button></div>`);
     openModal(`<h2>${r.passed ? '✅ 시행 확정' : '❌ 부결'}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p>
       ${r.passed ? `<p class="muted">효과는 ${pv.lag}분기에 걸쳐 나타납니다. 세력 반응은 즉시 반영되었습니다.${pv.risks.length ? ' 부작용이 잠복 중이니 주의하세요.' : ''}</p>` : '<p class="muted">정치자본의 절반이 소모되었고 지지율이 소폭 하락했습니다. 다음 분기에 다시 시도할 수 있습니다.</p>'}
       <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
@@ -377,6 +386,7 @@ function reportHTML(report, recs) {
     </div>
     <h3 class="sec">🚨 발생한 위기와 AI 해결 결과</h3>
     ${recs && recs.length ? recs.map(resolvedCard).join('') : report.pendingCrises ? `<div class="verdict bad">새 위기 ${report.pendingCrises}건이 대통령의 결정을 기다립니다. [위기 대응] 탭을 확인하세요.</div>` : '<div class="empty">이번 분기에는 특별한 위기가 없었습니다.</div>'}
+    ${typeof reportExtras === 'function' ? reportExtras(report) : ''}
     <div id="brief-slot">${report.brief ? `<div class="ai-box"><span class="who">🤖 Claude 분기 논평</span>${esc(report.brief)}</div>` : ''}</div>`;
 }
 function showReportModal(report, recs) {
@@ -421,7 +431,7 @@ function showEnding() {
   const changed = allPolicies().filter(p => !currentOption(p, S).cur);
   const H = S.history, first = H[0];
   openModal(`<div class="ending">
-    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : '🚨 안보 붕괴'}</h2>
+    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : e.type === 'nuke' ? '☢️ 핵 공격' : e.type === 'defeat' ? '🏳️ 패전' : '🚨 안보 붕괴'}</h2>
     ${e.desc ? `<p class="lead">${esc(e.desc)}</p>` : ''}
     <div class="grade" style="color:${sc.total >= 70 ? 'var(--good)' : sc.total >= 50 ? 'var(--mid)' : 'var(--bad)'}">${sc.grade}</div>
     <h3>${esc(sc.title)}</h3><p class="muted">${esc(sc.desc)}</p>

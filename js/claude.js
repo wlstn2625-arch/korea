@@ -79,7 +79,8 @@ const ClaudeAI = (() => {
 지표: ${st}
 외교관계(0~100): ${rel}
 세력별 지지(0~100): ${fac}
-현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}`;
+현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}
+국정 연합: ${(s.coalition || []).map(k => FACTIONS[k].name).join(', ') || '없음'}${s.war ? `\n전쟁 중: ${RELATIONS[s.war.k].name} (전황 ${s.war.score.toFixed(0)})` : ''}${s.annexed && s.annexed.nk ? '\n한반도 통일 달성' : ''}${s.bills && s.bills.length ? `\n국회 계류 법안 ${s.bills.length}건` : ''}`;
   }
 
   const numObj = (keys) => ({ type: 'object', properties: Object.fromEntries(keys.map(k => [k, { type: 'number' }])), required: keys, additionalProperties: false });
