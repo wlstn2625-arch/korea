@@ -4,6 +4,7 @@
 let S = null;
 let activeCat = 'const';
 let selectedParty = 'lib';
+let selectedDiff = 'normal';
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -40,16 +41,19 @@ function renderStart() {
   $('party-pick').innerHTML = Object.entries(PARTIES).map(([k, p]) =>
     `<div class="party-opt ${k === selectedParty ? 'sel' : ''}" data-p="${k}"><b>${p.name}</b><span>${p.desc}</span></div>`).join('');
   $('party-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedParty = el.dataset.p; renderStart(); });
+  $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
+  $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
   const name = $('pres-name').value.trim() || '대통령';
-  S = newGame(selectedParty, name);
+  S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
-    <p class="lead">${esc(PARTIES[selectedParty].name)} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
+    <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
     <div class="box"><h4>게임 방법</h4><ul>
       <li><b>📜 정책 결정</b>: 헌법·세제·국방·외교·교육·검경·민법 등 13개 분야 ${POLICIES.length}개 제도가 <b>현재 대한민국 그대로</b> 설정되어 있습니다. 원하는 제도를 바꾸세요.</li>
       <li>바꾸기 전에 <b>AI 참모가 이득·손해·부작용·국회 통과 가능성</b>을 분석해 줍니다.</li>
@@ -87,7 +91,7 @@ function renderHeader() {
   const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
   $('hdr-date').textContent = `${t.year}년 ${t.q}분기 · 임기 ${t.termYear}년차 (${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS})`;
   const a = $('hdr-appr'); a.textContent = S.approval.toFixed(1) + '%'; a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
-  $('hdr-pcap').textContent = Math.floor(S.pcap);
+  { const g = pcapGain(S); $('hdr-pcap').innerHTML = `${Math.floor(S.pcap)}<small class="gain">${g >= 0 ? '+' : ''}${Math.round(g)}/분기</small>`; }
   const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling];
   const se = $('hdr-seats'); se.textContent = `${rs}/300`; se.style.color = rs >= 151 ? 'var(--good)' : 'var(--mid)';
   $('btn-end').disabled = S.over;
@@ -127,7 +131,7 @@ function renderPolicies() {
         const isCur = o.id === cur.id;
         return `<button class="opt ${isCur ? 'current' : ''} ${locked && !isCur ? 'disabled' : ''}" data-p="${p.id}" data-o="${o.id}" ${isCur ? 'disabled' : ''}>
           <span>${isCur ? '✔ ' : ''}${esc(o.label)}${o.user ? ' <span class="tag new">직접 입력</span>' : ''}</span>
-          <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">⚡${o.pc || 0}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">⚡20</span>` : ''}</span>
+          <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">⚡${policyCost(S, o)}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">⚡${policyCost(S, { pc: 20 })}</span>` : ''}</span>
         </button>`;
       }).join('')}</div>
       <div class="custom-row own"><input id="own-${p.id}" data-own="${p.id}" placeholder="✍️ 직접 입력: ${esc(ownHint(p))}" maxlength="80"><button class="btn sm" data-ownbtn="${p.id}">AI 분석</button></div>
@@ -179,7 +183,7 @@ function openExplain(pid) {
     ${p.issue ? `<div class="box" style="margin-top:8px"><h4>쟁점</h4><p class="ptext">${esc(p.issue)}</p></div>` : ''}
     <h3 class="sec">선택지 ${p.options.length}개</h3>
     ${p.options.map(o => { const isCur = o.id === cur.id; return `<div class="xopt ${isCur ? 'is-cur' : ''}">
-      <div class="xhead"><b>${isCur ? '✔ ' : ''}${esc(o.label)}</b> <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ltTag(o) + `<span class="tag">⚡${o.pc || 0}</span>`}${o.user ? '<span class="tag new">직접 입력</span>' : ''}</span>
+      <div class="xhead"><b>${isCur ? '✔ ' : ''}${esc(o.label)}</b> <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ltTag(o) + `<span class="tag">⚡${policyCost(S, o)}</span>`}${o.user ? '<span class="tag new">직접 입력</span>' : ''}</span>
       ${isCur ? '' : `<button class="btn sm" data-review="${o.id}">이 안 검토</button>`}</div>
       ${o.desc && !o.cur ? `<div class="muted">${esc(o.desc)}</div>` : ''}${argBox(o)}</div>`; }).join('')}
     <div class="modal-actions"><button class="btn primary" onclick="closeModal()">닫기</button></div>`);

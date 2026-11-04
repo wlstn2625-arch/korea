@@ -2,6 +2,16 @@
  *  새로운 대한민국 — 시뮬레이션 엔진 + 규칙 기반 AI 판단
  * ========================================================= */
 
+// 난이도: 정치자본 시작값·분기 회복·상한·정책 비용 배율
+const DIFFICULTY = {
+  easy:   { name: '쉬움',   desc: '정치자본 넉넉, 정책 비용 30% 할인. 마음껏 바꿔 보세요.', start: 250, base: 40, k: 0.6, cap: 500, costMul: 0.7, crisisBonus: 8 },
+  normal: { name: '보통',   desc: '분기마다 정책 2~3개를 바꿀 수 있는 수준.', start: 160, base: 28, k: 0.5, cap: 350, costMul: 1, crisisBonus: 5 },
+  hard:   { name: '어려움', desc: '정치자본이 빠듯합니다. 한 분기에 한 개 바꾸기도 벅찹니다.', start: 100, base: 10, k: 0.3, cap: 200, costMul: 1, crisisBonus: 0 },
+};
+const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
+const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
+const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k;
+
 const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
 const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선
 const LOCAL_ELECTION_TURN = 14;   // 2030년 2분기 지방선거
@@ -97,7 +107,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName) {
+function newGame(partyKey, presidentName, difficulty = 'normal') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }
@@ -117,7 +127,7 @@ function newGame(partyKey, presidentName) {
   const s = {
     v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
-    approval: 58, pcap: 100, pending: [], latent: [], crises: [], resolved: [],
+    difficulty, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
     autoAI: true, over: false, ending: null, userOptions: {},
   };
@@ -250,7 +260,7 @@ function previewPolicy(s, p, opt, lobby = 0) {
   else if (net > -8) verdict = { cls: 'bad', text: '신중 검토: 손해와 부작용이 이득보다 클 가능성이 높습니다.' };
   else verdict = { cls: 'bad', text: '비추천: 심각한 손실이 예상됩니다.' };
   if (vote.prob < 0.35) verdict.text += ' 또한 국회 통과 가능성이 낮습니다.';
-  return { diff: d, gains, losses, risks, vote, net, verdict, cost: (opt.pc || 0) + lobby * LOBBY_COST, lag: opt.lag || 4 };
+  return { diff: d, gains, losses, risks, vote, net, verdict, cost: policyCost(s, opt) + lobby * LOBBY_COST, lag: opt.lag || 4 };
 }
 
 /* ---------------- 정책 시행 ---------------- */
@@ -261,7 +271,7 @@ function enactPolicy(s, pid, oid, lobby = 0) {
   if (old.id === opt.id) return { ok: false, msg: '이미 시행 중인 정책입니다.' };
   if (s.enactedThisTurn.includes(pid)) return { ok: false, msg: '같은 분야는 한 분기에 한 번만 바꿀 수 있습니다.' };
   if (!opt.lt || opt.lt === 'decree') lobby = 0;
-  const cost = (opt.pc || 0) + lobby * LOBBY_COST;
+  const cost = policyCost(s, opt) + lobby * LOBBY_COST;
   if (s.pcap < cost) return { ok: false, msg: `정치자본이 부족합니다. (필요 ${cost}, 보유 ${Math.floor(s.pcap)})` };
 
   const vote = voteModel(s, opt, lobby);
@@ -407,6 +417,7 @@ function resolveCrisis(s, crisisId, solIndex, by = 'player', reasoning = '') {
   const okAdj = clamp(sol.ok + (s.approval - 45) * 0.004 - (s.pcap < (sol.pc || 0) ? 0.25 : 0), 0.05, 0.97);
   const success = Math.random() < okAdj;
   s.pcap = Math.max(0, s.pcap - (sol.pc || 0));
+  if (success && !c.good) s.pcap = Math.min(diff(s).cap, s.pcap + diff(s).crisisBonus); // 위기 극복 보너스
   const fx = expandSolution(s, c, sol, success);
   // 효과의 60%는 즉시, 40%는 구조적(지속) 변화
   for (const k in fx.e) {
@@ -533,7 +544,7 @@ function endTurn(s) {
   target += (st.gdp - 1.8) * 2.5 - (st.unemp - 2.8) * 3 - Math.max(0, st.infl - 2.5) * 2.5 + (st.happiness - 42) * 0.4;
   target -= Math.max(0, s.turn - 12) * 0.6; // 임기 말 레임덕
   s.approval = clamp(s.approval + (target - s.approval) * 0.45 + gauss() * 1.2, 2, 95);
-  s.pcap = clamp(s.pcap + 10 + (s.approval - 45) * 0.3, 0, 200);
+  s.pcap = clamp(s.pcap + pcapGain(s), 0, diff(s).cap);
 
   // 7) 선거
   if (s.turn === GENERAL_ELECTION_TURN) report.elections.push(generalElection(s));
