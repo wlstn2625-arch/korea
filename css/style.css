@@ -119,6 +119,17 @@ h1, h2, h3 { margin: 0; }
 .policy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
 .pcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; display: flex; flex-direction: column; gap: 8px; }
 .pcard.changed { border-color: var(--accent); }
+.phead { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.custom-row.own input { padding: 6px 9px; font-size: 13px; background: var(--card2); }
+.args { display: grid; gap: 4px; font-size: 13px; background: var(--card2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; margin: 0 0 12px; }
+.args b { margin-right: 4px; }
+.good-t { color: var(--good); } .bad-t { color: var(--bad); }
+.ptext { margin: 0; }
+.xopt { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: grid; gap: 6px; }
+.xopt.is-cur { border-color: var(--good); }
+.xopt .args { margin: 0; }
+.xhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.xhead .btn { margin-left: auto; }
 .pcard h4 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .pcard .pdesc { color: var(--muted); font-size: 12.5px; margin: 0; }
 .opts { display: grid; gap: 6px; }

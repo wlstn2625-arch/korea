@@ -64,6 +64,7 @@ $('btn-start').onclick = () => {
 $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
+  hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
   renderAll();
@@ -119,19 +120,70 @@ function renderPolicies() {
     const locked = S.enactedThisTurn.includes(p.id);
     const pend = S.pending.find(x => x.pid === p.id);
     return `<div class="pcard ${!cur.cur ? 'changed' : ''}">
-      <h4>${esc(p.name)} ${p.custom ? '<span class="tag new">직접 입안</span>' : ''} ${!cur.cur ? '<span class="tag new">변경됨</span>' : ''}</h4>
+      <div class="phead"><h4>${esc(p.name)} ${p.custom ? '<span class="tag new">직접 입안</span>' : ''} ${!cur.cur ? '<span class="tag new">변경됨</span>' : ''}</h4>${p.bg || p.options.some(o => o.pro) ? `<button class="btn sm ghost" data-explain="${p.id}">📖 해설</button>` : ''}</div>
       <p class="pdesc">${esc(p.desc)}</p>
       ${pend ? `<p class="pdesc">⏳ 효과 반영 중: ${Math.round((1 - pend.left / pend.lag) * 100)}%</p>` : ''}
       <div class="opts">${p.options.map(o => {
         const isCur = o.id === cur.id;
         return `<button class="opt ${isCur ? 'current' : ''} ${locked && !isCur ? 'disabled' : ''}" data-p="${p.id}" data-o="${o.id}" ${isCur ? 'disabled' : ''}>
-          <span>${isCur ? '✔ ' : ''}${esc(o.label)}</span>
+          <span>${isCur ? '✔ ' : ''}${esc(o.label)}${o.user ? ' <span class="tag new">직접 입력</span>' : ''}</span>
           <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">⚡${o.pc || 0}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">⚡20</span>` : ''}</span>
         </button>`;
       }).join('')}</div>
+      <div class="custom-row own"><input id="own-${p.id}" data-own="${p.id}" placeholder="✍️ 직접 입력: ${esc(ownHint(p))}" maxlength="80"><button class="btn sm" data-ownbtn="${p.id}">AI 분석</button></div>
     </div>`;
   }).join('') || '<div class="empty">이 분야에 정책이 없습니다.</div>';
   $('policy-list').querySelectorAll('.opt:not(.current)').forEach(b => b.onclick = () => openPreview(b.dataset.p, b.dataset.o));
+  $('policy-list').querySelectorAll('[data-explain]').forEach(b => b.onclick = () => openExplain(b.dataset.explain));
+  $('policy-list').querySelectorAll('[data-ownbtn]').forEach(b => b.onclick = () => submitOwn(b.dataset.ownbtn));
+  $('policy-list').querySelectorAll('[data-own]').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submitOwn(i.dataset.own); }));
+}
+
+// 주관식 입력 예시: 현행 수치가 있으면 다른 수치를 제안
+function ownHint(p) {
+  const cur = p.options.find(o => o.cur); const n = numIn(cur.label);
+  if (n != null) {
+    const alt = Number.isInteger(n) ? (n >= 100 ? Math.round(n * 1.1 / 10) * 10 : n + (n >= 10 ? 3 : 1)) : +(n * 1.2).toFixed(1);
+    return '예) ' + cur.label.replace(/[\d,]+(\.\d+)?/, alt.toLocaleString('ko-KR'));
+  }
+  return '내가 원하는 방식을 문장으로';
+}
+
+async function submitOwn(pid) {
+  const inp = $('own-' + pid); const text = inp.value.trim();
+  if (!text) return toast('원하는 안을 입력하세요.');
+  if (S.over || busy) return;
+  const p = policyById(pid, S);
+  busy = true;
+  openModal(`<h2>✍️ 직접 입력 분석 중</h2><p><span class="spinner"></span>${ClaudeAI.enabled() ? 'Claude가' : 'AI 참모가'} [${esc(p.name)}] "${esc(text)}"의 효과를 분석하고 있습니다…</p>`, { closable: false });
+  let a = null, by = 'rule';
+  try { if (ClaudeAI.enabled()) { a = await ClaudeAI.analyzeOption(p, text, S); by = 'claude'; } }
+  catch (e) { toast('Claude 분석 실패 → 규칙 기반 분석으로 대체: ' + esc(e.message), 4000); }
+  if (!a) a = analyzeOptionRule(S, p, text);
+  const o = addUserOption(S, pid, a);
+  busy = false; saveGame(S); closeModal(); renderPolicies();
+  toast(`${by === 'claude' ? '🤖 Claude' : 'AI 참모'} 분석 완료: '${esc(o.label)}' 선택지가 추가되었습니다.`);
+  openPreview(pid, o.id);
+}
+
+function argBox(o) {
+  if (!o.pro && !o.con && !o.ex) return '';
+  return `<div class="args">${o.pro ? `<div><b class="good-t">찬성</b> ${esc(o.pro)}</div>` : ''}${o.con ? `<div><b class="bad-t">반대</b> ${esc(o.con)}</div>` : ''}${o.ex ? `<div><b class="muted">사례</b> ${esc(o.ex)}</div>` : ''}</div>`;
+}
+
+function openExplain(pid) {
+  const p = policyById(pid, S); const cur = currentOption(p, S);
+  openModal(`<h2>📖 ${esc(p.name)}</h2>
+    <p class="lead">${esc(p.desc)}</p>
+    ${p.bg ? `<div class="box"><h4>배경</h4><p class="ptext">${esc(p.bg)}</p></div>` : ''}
+    ${p.issue ? `<div class="box" style="margin-top:8px"><h4>쟁점</h4><p class="ptext">${esc(p.issue)}</p></div>` : ''}
+    <h3 class="sec">선택지 ${p.options.length}개</h3>
+    ${p.options.map(o => { const isCur = o.id === cur.id; return `<div class="xopt ${isCur ? 'is-cur' : ''}">
+      <div class="xhead"><b>${isCur ? '✔ ' : ''}${esc(o.label)}</b> <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ltTag(o) + `<span class="tag">⚡${o.pc || 0}</span>`}${o.user ? '<span class="tag new">직접 입력</span>' : ''}</span>
+      ${isCur ? '' : `<button class="btn sm" data-review="${o.id}">이 안 검토</button>`}</div>
+      ${o.desc && !o.cur ? `<div class="muted">${esc(o.desc)}</div>` : ''}${argBox(o)}</div>`; }).join('')}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">닫기</button></div>`);
+  document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => openPreview(pid, b.dataset.review));
 }
 
 // 현행 복귀 옵션은 비용·표결 정보가 없으므로 기본값 부여
@@ -153,6 +205,7 @@ function openPreview(pid, oid, lobby = 0) {
   const probColor = probPct >= 70 ? 'var(--good)' : probPct >= 40 ? 'var(--mid)' : 'var(--bad)';
   openModal(`<h2>${esc(p.name)}</h2>
     <p class="lead">${esc(cur.label)} → <b>${esc(o.label)}</b><br>${esc(o.desc || '')}</p>
+    ${argBox(o0)}
     <div class="vote"><span>${voteTxt}</span><span>정치자본 <b>⚡${pv.cost}</b> (보유 ${Math.floor(S.pcap)})</span><span>효과 완성까지 <b>${pv.lag}분기</b></span></div>
     <div>통과 가능성 <b style="color:${probColor}">${probPct}%</b><div class="prob"><i style="width:${probPct}%;background:${probColor}"></i></div></div>
     ${pv.vote.type !== 'decree' ? `<div class="vote" style="margin-top:10px"><span>🤝 야당 협상(협치):</span>${[0, 1, 2, 3].map(l => `<button class="btn sm ${l === lobby ? 'primary' : ''}" data-lobby="${l}">${l ? `${l}단계 ⚡+${l * LOBBY_COST}` : '없음'}</button>`).join('')}<span>1단계당 찬성 약 +16석</span></div>` : ''}

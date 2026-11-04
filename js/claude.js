@@ -152,6 +152,48 @@ ${examples}`;
     return a;
   }
 
+  /* ---- 1-b) 특정 제도에 대한 주관식 선택지 분석 ---- */
+  async function analyzeOption(p, text, s) {
+    const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
+    const schema = {
+      type: 'object', additionalProperties: false,
+      required: ['label', 'desc', 'pro', 'con', 'lt', 'lean', 'pc', 'lag', 'e', 'rel', 'f', 'risks'],
+      properties: {
+        label: { type: 'string', description: '선택지 이름(25자 이내)' },
+        desc: { type: 'string', description: '이 안의 구체적 내용(1~2문장)' },
+        pro: { type: 'string', description: '찬성 논리(1~2문장)' },
+        con: { type: 'string', description: '반대 논리(1~2문장)' },
+        lt: { type: 'string', enum: ['decree', 'law', 'const'] },
+        lean: { type: 'string', enum: ['L', 'R', 'N'] },
+        pc: { type: 'integer' }, lag: { type: 'integer' },
+        e: numObj(statKeys), rel: numObj(Object.keys(RELATIONS)), f: numObj(Object.keys(FACTIONS)),
+        risks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['tpl', 'title', 'desc', 'prob', 'sev'],
+          properties: { tpl: { type: 'string', enum: Object.keys(RISK_TEMPLATES) }, title: { type: 'string' }, desc: { type: 'string' }, prob: { type: 'number' }, sev: { type: 'integer' } } } },
+      },
+    };
+    const anchors = p.options.filter(o => !o.user).map(o => o.cur ? `- (현행) ${o.label}: 기준점, 모든 효과 0` : `- ${o.label}: ${o.desc || ''} | lt=${o.lt}, lean=${o.lean}, pc=${o.pc}, lag=${o.lag}, e=${JSON.stringify(o.e || {})}, rel=${JSON.stringify(o.rel || {})}, f=${JSON.stringify(o.f || {})}`).join('\n');
+    const user = `제도 "${p.name}"에 대해 대통령이 직접 새로운 안을 입력했습니다: "${text}"
+현행 제도 설명: ${p.desc}
+
+이 제도의 기존 선택지와 게임 수치(현행 대비 변화량):
+${anchors}
+
+현재 국가 상황:
+${stateSummary(s)}
+
+입력한 안을 이 제도의 새 선택지로 만드세요. 효과 수치는 위 기존 선택지들과 같은 척도로, 입력한 안의 강도에 비례하게 정하세요(예: 기존 두 선택지 사이의 수치라면 효과도 그 사이).
+- e 단위: gdp/unemp/infl/fiscal/debt는 %p, tfr은 명, gini는 0~1 지니계수 변화, 나머지는 0~100 지수 포인트. 관련 없으면 0.
+- rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25). lt: decree/law/const, lean: L/R/N, pc 10~80, lag 1~16.
+- risks: 현실적 부작용 0~2개(prob 0~1, sev 1~3).
+- 입력이 이 제도와 무관하거나 실현 불가능하면 label에 그 취지를 담고 효과를 작게 잡으세요.`;
+    const a = await call({ system: SYSTEM, user, schema });
+    a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
+    a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
+    a.r = (a.risks || []).slice(0, 2).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
+    delete a.risks;
+    return a;
+  }
+
   /* ---- 2) 위기 해결 판단 ---- */
   async function resolveCrisis(c, s, ruleEvals) {
     const statKeys = Object.keys(STATS).filter(k => k !== 'happiness');
@@ -231,5 +273,5 @@ ${stateSummary(s)}
     return r;
   }
 
-  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, resolveCrisis, briefing, advise, test };
+  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, resolveCrisis, briefing, advise, test };
 })();

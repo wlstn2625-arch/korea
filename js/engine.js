@@ -28,6 +28,74 @@ function policyById(id, state) {
 function optionOf(p, oid) { return p.options.find(o => o.id === oid); }
 function currentOption(p, state) { return optionOf(p, state.policies[p.id]) || p.options.find(o => o.cur); }
 
+/* ---------------- 해설·추가 선택지 병합 ---------------- */
+(function applyPolicyDetails() {
+  for (const p of POLICIES) {
+    const d = POLICY_DETAILS[p.id]; if (!d) continue;
+    p.bg = d.bg; p.issue = d.issue;
+    for (const x of (d.extra || [])) if (!p.options.some(o => o.id === x.id)) p.options.push({ ...x, extra: true });
+    for (const o of p.options) { const od = d.opts && d.opts[o.id]; if (od) { o.pro = od.pro; o.con = od.con; o.ex = od.ex; } }
+  }
+})();
+
+/* ---------------- 주관식(직접 입력) 선택지 ---------------- */
+// 저장 데이터의 사용자 선택지를 정책 목록에 다시 붙임 (다른 게임의 것은 제거)
+function hydrateUserOptions(s) {
+  if (!s.userOptions) s.userOptions = {};
+  for (const p of POLICIES) p.options = p.options.filter(o => !o.user);
+  for (const pid in s.userOptions) {
+    const p = POLICIES.find(x => x.id === pid); if (!p) continue;
+    for (const o of s.userOptions[pid]) p.options.push(o);
+  }
+}
+function addUserOption(s, pid, opt) {
+  const p = policyById(pid, s);
+  const o = { ...opt, id: 'u_' + uid(), user: true };
+  if (p.custom) { p.options.push(o); return o; }
+  (s.userOptions[pid] = s.userOptions[pid] || []).push(o);
+  p.options.push(o);
+  return o;
+}
+const numIn = t => { const m = String(t).replace(/,/g, '').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+
+// 규칙 기반: 숫자가 있으면 기존 선택지 사이를 보간, 없으면 가장 비슷한 선택지 + 키워드 분석
+function analyzeOptionRule(s, p, text) {
+  const cur = p.options.find(o => o.cur);
+  const n = numIn(text);
+  const anchors = p.options.filter(o => !o.user && numIn(o.label) != null).map(o => ({ o, v: numIn(o.label) }));
+  const uniq = [...new Map(anchors.map(a => [a.v, a])).values()].sort((a, b) => a.v - b.v);
+  const mix = (A, B, t) => { const r = {}; for (const k of new Set([...Object.keys(A || {}), ...Object.keys(B || {})])) r[k] = (A?.[k] || 0) * (1 - t) + (B?.[k] || 0) * t; return r; };
+  let base, how;
+  if (n != null && uniq.length >= 2 && uniq.some(a => a.o.cur)) {
+    let i = uniq.findIndex(a => a.v >= n); if (i === -1) i = uniq.length - 1; else if (i === 0) i = 1;
+    const a = uniq[i - 1], b = uniq[i];
+    let t = (n - a.v) / (b.v - a.v || 1); t = clamp(t, -0.6, 1.6);
+    const A = a.o.cur ? { e: {}, rel: {}, f: {} } : a.o, B = b.o.cur ? { e: {}, rel: {}, f: {} } : b.o;
+    const near = Math.abs(n - a.v) < Math.abs(n - b.v) ? a.o : b.o;
+    const ref = near.cur ? (a.o.cur ? b.o : a.o) : near;
+    base = { e: mix(A.e, B.e, t), rel: mix(A.rel, B.rel, t), f: mix(A.f, B.f, t), lt: ref.lt, lean: ref.lean, pc: Math.round(clamp(((A.pc || 10) * (1 - t) + (B.pc || 10) * t), 10, 80)), lag: ref.lag || 4,
+      r: (ref.r || []).map(r => [r[0], r[1], r[2], clamp(r[3] * Math.min(1.3, Math.abs(t) + 0.3), 0.05, 0.9), r[4], r[5]]) };
+    const raw = (n - a.v) / (b.v - a.v || 1);
+    how = raw >= 0 && raw <= 1 ? `기존 선택지 '${a.o.label}'와 '${b.o.label}' 사이를 수치로 보간해 추정했습니다.` : `기존 선택지 '${a.o.label}'→'${b.o.label}'의 추세를 연장해 추정했습니다${Math.abs(raw) > 1.6 || raw < -0.6 ? ' (극단값이라 효과에 상한을 두었습니다)' : ''}.`;
+  } else {
+    const bigrams = t => { const r = new Set(); const c = String(t).replace(/\s/g, ''); for (let i = 0; i < c.length - 1; i++) r.add(c.slice(i, i + 2)); return r; };
+    const tb = bigrams(text);
+    const sim = o => { const ob = bigrams(o.label + ' ' + (o.desc || '')); let k = 0; tb.forEach(x => { if (ob.has(x)) k++; }); return k / Math.max(1, tb.size); };
+    const cands = p.options.filter(o => !o.cur && !o.user).map(o => ({ o, sc: sim(o) })).sort((a, b) => b.sc - a.sc);
+    const kw = analyzeCustomRule(text);
+    if (cands.length && cands[0].sc > 0.12) {
+      const o = cands[0].o;
+      base = { e: mix(o.e, kw.e, 0.3), rel: mix(o.rel, kw.rel, 0.3), f: mix(o.f, kw.f, 0.3), lt: o.lt, lean: o.lean, pc: o.pc, lag: o.lag, r: o.r || [] };
+      how = `가장 비슷한 선택지 '${o.label}'를 기준으로 추정했습니다.`;
+    } else {
+      base = { e: kw.e, rel: kw.rel, f: kw.f, lt: kw.lt, lean: kw.lean, pc: kw.pc, lag: kw.lag, r: kw.r };
+      how = '키워드 분석으로 효과를 추정했습니다. 정확한 분석은 Claude 연동 시 가능합니다.';
+    }
+  }
+  for (const k in base.f) base.f[k] = Math.round(base.f[k]);
+  return { label: text.slice(0, 40), desc: `직접 입력한 안. ${how}`, ...base };
+}
+
 /* ---------------- 상태 생성 ---------------- */
 function newGame(partyKey, presidentName) {
   const party = PARTIES[partyKey];
@@ -51,7 +119,7 @@ function newGame(partyKey, presidentName) {
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
     approval: 58, pcap: 100, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
-    autoAI: true, over: false, ending: null,
+    autoAI: true, over: false, ending: null, userOptions: {},
   };
   s.history.push(snapshot(s));
   addLog(s, 'info', `${presidentName || '대통령'}님, 제21대 대한민국 대통령 취임을 축하드립니다. 5년 단임 임기(20분기)가 시작됩니다.`);
