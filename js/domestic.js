@@ -162,10 +162,12 @@ function domesticTurn(s, report) {
   d.scandal = clamp(d.scandal + Math.random() * 4 - (s.stats.justice - 41) * 0.05, 0, 60);
   // 정치 사건: 미처리 사건이 없을 때 분기마다 한 건 정도
   if (!d.pending.length && Math.random() < 0.6) {
-    const pool = Object.entries(DOM_EVENTS).filter(([k, e]) => { try { return e.cond(s); } catch { return false; } });
+    const W = (k, e) => typeof domEventWeight === 'function' ? domEventWeight(s, k, e) : e.w;
+    const pool = Object.entries(DOM_EVENTS).filter(([k, e]) => { try { return W(k, e) > 0 && e.cond(s); } catch { return false; } });
     if (pool.length) {
-      let r = Math.random() * pool.reduce((a, [, e]) => a + e.w, 0);
-      const [key] = pool.find(([, e]) => (r -= e.w) <= 0) || pool[0];
+      let r = Math.random() * pool.reduce((a, [k, e]) => a + W(k, e), 0);
+      const [key] = pool.find(([k, e]) => (r -= W(k, e)) <= 0) || pool[0];
+      d.seen = d.seen || {}; d.seen[key] = s.turn;
       const view = DOM_EVENTS[key].make(s);
       d.pending.push({ id: uid(), key, turn: s.turn, ...view });
     }

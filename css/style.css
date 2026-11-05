@@ -460,7 +460,7 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 760px) {
   .hud { gap: 6px; }
-  .hud-res { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+  .hud-res { order: 3; flex: 1 0 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
   .hud-time { flex: 1; min-width: 0; }
   .seal { display: none; }
   .hud-right .btn { padding: 6px 9px; font-size: 13px; }
@@ -468,8 +468,10 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
   .stage-map .map-tools { gap: 5px; padding-top: 6px; }
   .stage-map .map-tools input { flex: 1 1 100%; max-width: none; }
   .stage-map .map-btns .btn { padding: 4px 8px; font-size: 12px; }
-  .res { min-width: 0; padding: 3px 7px; }
-  .res small { display: none; }
+  .res { min-width: 0; padding: 3px 6px; column-gap: 4px; grid-template-columns: auto minmax(0, 1fr); }
+  .res .ri { font-size: 15px; }
+  .res b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .res small { display: block; font-size: 9.5px; white-space: nowrap; }
   .hud-right { margin-left: auto; }
   .hud-date { min-width: 0; }
   .stage-map { inset: 0 0 86px 0; }
@@ -762,3 +764,15 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .war-hud .l.good { color: var(--good); } .war-hud .l.bad { color: #ff8b8b; }
 .ev-banner.ev-nuke { background: radial-gradient(circle at 50% 70%, #fff3a8, #f0a020 25%, #8a2a10 55%, #1a0b08); }
 @media (prefers-reduced-motion: reduce) { .geo .farrow, .geo .battle .ring, .geo .nuked circle { animation: none; } }
+
+/* 사건 카드 배너 종류 */
+.ev-banner.ev-social { background: linear-gradient(135deg, #2a1f2e, #7a3d5c 60%, #d07a9a); }
+.ev-banner.ev-disaster { background: linear-gradient(135deg, #2b1a0e, #8a4a16 60%, #e08a2e); }
+.ev-banner.ev-tech { background: linear-gradient(135deg, #0e2430, #1f6a8a 60%, #4cc0e0); }
+/* 국가 비상: 극한 위기 카드 */
+.ev-banner.ev-extreme { background: repeating-linear-gradient(135deg, rgba(0,0,0,.25) 0 14px, transparent 14px 28px), radial-gradient(circle at 50% 75%, #ffcf6a, #e0502a 35%, #6a1010 70%, #170606); }
+.ev-banner.ev-extreme .ev-kind { color: #fff; font-weight: 900; letter-spacing: .06em; animation: sirenTxt 1s steps(2) infinite; }
+.modal-card:has(.event.extreme) { border-color: #e0502a; box-shadow: 0 0 0 1px #e0502a, 0 0 40px rgba(224, 80, 42, .45); animation: quake .5s ease-in-out 2; }
+@keyframes sirenTxt { 50% { color: #ffd22e; } }
+@keyframes quake { 0%, 100% { transform: translate(0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, -1px); } }
+@media (prefers-reduced-motion: reduce) { .modal-card:has(.event.extreme), .ev-banner.ev-extreme .ev-kind { animation: none; } }

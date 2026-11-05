@@ -68,9 +68,9 @@ function presRow(p) {
 function openDomEventCard(id) {
   const ev = S.dom.pending.find(x => x.id === id); if (!ev) return closeModal();
   setSpeed(0);
-  const def = DOM_EVENTS[ev.key];
-  openModal(`<div class="event">
-    <div class="ev-banner ev-politics"><span class="ev-art">${def.icon}</span><span class="ev-kind">국내 정치</span><span class="ev-date">${turnLabel(S.turn).year}년 ${turnLabel(S.turn).q}분기</span></div>
+  const def = DOM_EVENTS[ev.key], kind = (typeof EVENT_KINDS !== 'undefined' && EVENT_KINDS[def.kind]) || { cls: 'ev-politics', name: '국내 정치' };
+  openModal(`<div class="event ${def.extreme ? 'extreme' : ''}">
+    <div class="ev-banner ${def.extreme ? 'ev-extreme' : kind.cls}"><span class="ev-art">${def.icon}</span><span class="ev-kind">${def.extreme ? `🚨 국가 비상 · ${kind.name}` : kind.name}</span><span class="ev-date">${turnLabel(S.turn).year}년 ${turnLabel(S.turn).q}분기</span></div>
     <h2>${esc(ev.title)}</h2><p class="ev-desc">${esc(ev.desc)}</p>
     <div class="ev-opts">${def.choices.map((c, i) => `<button class="ev-opt" data-i="${i}" ${c.pc && S.pcap < c.pc ? 'disabled' : ''}><span class="ev-lbl">${esc(c.label)}</span><span class="muted small">${esc(c.desc)}</span>${c.pc ? `<span class="ev-meta">${won(c.pc)}</span>` : ''}</button>`).join('')}</div>
   </div>`, { closable: false });

@@ -575,12 +575,13 @@ function endTurn(s) {
   s.latent = s.latent.filter(r => r.tries > 0 && s.policies[r.pid] === r.oid);
 
   // 5) 외부 돌발 사건
-  const pool = WORLD_EVENTS.filter(ev => { try { return ev.cond(s); } catch { return false; } });
+  s.evSeen = s.evSeen || {};
+  const pool = WORLD_EVENTS.filter(ev => { try { return !(s.evSeen[ev.id] != null && s.turn - s.evSeen[ev.id] < 8) && ev.cond(s); } catch { return false; } });
   const nEvents = Math.random() < 0.55 ? (Math.random() < 0.2 ? 2 : 1) : 0;
   for (let i = 0; i < nEvents && pool.length; i++) {
     const tot = pool.reduce((a, e) => a + e.w, 0); let r = Math.random() * tot; let pick = pool[0];
     for (const e of pool) { r -= e.w; if (r <= 0) { pick = e; break; } }
-    pool.splice(pool.indexOf(pick), 1);
+    pool.splice(pool.indexOf(pick), 1); s.evSeen[pick.id] = s.turn;
     newCrises.push(makeCrisis(s, { ...pick, facTarget: FACTIONS[pick.target] ? pick.target : undefined, relTarget: RELATIONS[pick.target] ? pick.target : undefined }));
   }
   runHooks('events', s, report, newCrises);
