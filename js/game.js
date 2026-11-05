@@ -47,6 +47,7 @@ function afterQuarter(report, recs, newCrises) {
   if (report.imf) blocking.push(() => openImfCard());
   if (report.elections?.length) blocking.push(() => openElectionCard(report));
   for (const id of (report.domEvents || [])) blocking.push(() => openDomEventCard(id));
+  for (const p of (S.world?.proposals || []).filter(p => p.turn === report.turn)) blocking.push(() => openProposalCard(p.id));
   if (S.autoAI && recs.length) blocking.push(() => openAiReportCard(recs));
   if (!S.autoAI) for (const c of newCrises) blocking.push(() => openEventCard(c.id));
   eventQueue.push(...blocking);
@@ -195,6 +196,7 @@ function renderAlerts() {
   const list = [];
   if (S.crises.length) list.push({ k: 'crisis', icon: '🚨', n: S.crises.length, red: true, tip: `대응하지 않은 위기 ${S.crises.length}건`, go: () => S.crises[0] && openEventCard(S.crises[0].id) });
   if (S.dom?.pending.length) list.push({ k: 'dom', icon: '📌', n: S.dom.pending.length, red: true, tip: '결정을 기다리는 정치 현안', go: () => openDomEventCard(S.dom.pending[0].id) });
+  if (S.world?.proposals?.length) list.push({ k: 'prop', icon: '📨', n: S.world.proposals.length, tip: '외국의 조약 제안이 와 있습니다', go: () => openProposalCard(S.world.proposals[0].id) });
   if (S.war) list.push({ k: 'war', icon: '⚔️', red: true, tip: `${cname(S.war.k)}과(와) 전쟁 중 · 전황 ${S.war.score.toFixed(0)}`, go: () => { showTab('world'); zoomTo(S.war.k); } });
   const ripe = (S.bills || []).filter(b => b.progress >= 75); if (ripe.length) list.push({ k: 'bill', icon: '🏛️', n: ripe.length, tip: '본회의 표결이 임박한 법안', go: () => showTab('politics') });
   const ally = (S.world?.conflicts || []).find(c => c.type === 'war' && dip(S, c.b).alliance); if (ally) list.push({ k: 'ally', icon: '🛡️', red: true, tip: `동맹국 ${cname(ally.b)}이(가) 침공당했습니다`, go: () => showTab('world') });

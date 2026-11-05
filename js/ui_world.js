@@ -225,7 +225,7 @@ function renderCountryPanel() {
         <div class="ltags"><span class="tag" style="color:${IDEOLOGIES[L.gov].color};border-color:${IDEOLOGIES[L.gov].color}">${IDEOLOGIES[L.gov].name}</span><span class="tag">${CAMPS[campOf(S, k)].name}</span>${L.traits.map(t => `<span class="tag trait" title="${esc(TRAITS[t].desc)}">${TRAITS[t].name}</span>`).join('')}</div>
         <div class="muted small">대한 태도 ${att >= 4 ? '<b class="good-t">우호적</b>' : att <= -4 ? '<b class="bad-t">냉담</b>' : '중립'} · 대외 공격성 ${agg >= 55 ? '<b class="bad-t">높음</b>' : agg >= 35 ? '보통' : '낮음'} (${agg})</div>
       </div>
-      <button class="btn sm primary" id="btn-talk">🗣️ 대화하기</button>
+      <div class="lbtns"><button class="btn sm primary" id="btn-treaty">📜 조약 협상</button><button class="btn sm" id="btn-talk">🗣️ 대화하기</button></div>
     </div>`;
   })() : owner ? `<div class="verdict bad">${cflag(owner)} ${esc(cname(owner))}에 강제 병합된 지역입니다. <button class="btn sm" id="btn-owner">${esc(cname(owner))} 보기</button></div>` : '';
   const conflicts = (S.world?.conflicts || []).filter(x => x.a === k || x.b === k);
@@ -245,11 +245,14 @@ function renderCountryPanel() {
     <div class="muted small">${[c.note, c.sub || c.reg, !c.isBloc ? `인구 ${fmtPop(c.pop)}` : '', !c.isBloc && c.gdp ? `GDP ${fmtGdp(c.gdp)}` : '', `서울에서 ${Math.round(c.km).toLocaleString('ko-KR')}km`].filter(Boolean).map(esc).join(' · ')}</div>
     <div class="cfacts"><span>관계 <b style="color:hsl(${relHue(r)} 60% 45%)">${r.toFixed(0)}</b></span><span>군사력 <b>${c.mil}</b></span><span>경제 규모 <b>${c.eco}</b></span><span>${c.nukes ? '☢️ 핵보유' : '비핵'}</span>${c.bloc ? `<span>블록 <b>${c.bloc === 'NATO' ? 'NATO' : { csto: '러시아 안보동맹', cnPartner: '중국 우방', usPartner: '미국 우방', ruPartner: '러시아 우방' }[c.bloc]}</b></span>` : ''}</div>
     <div class="cfacts">${d.alliance ? '<span class="tag cur">동맹</span>' : ''}${d.fta ? '<span class="tag">FTA</span>' : ''}${d.sanction ? '<span class="tag const">제재 중</span>' : ''}${d.casusBelli >= S.turn ? '<span class="tag const">전쟁 명분</span>' : ''}${d.offer >= S.turn ? '<span class="tag new">FTA 제안 받음</span>' : ''}${c.eu ? '<span class="tag">EU 회원국</span>' : ''}${!c.core && !c.isBloc ? '<span class="muted small">핵심국이 아닌 나라는 국가 지표에 주는 영향이 경제 규모에 비례합니다.</span>' : ''}</div>
-    ${leaderCard}${confHtml}
+    ${leaderCard}${!L && !owner && !S.annexed[k] ? '<div class="row-btns"><button class="btn sm primary" id="btn-treaty2">📜 조약 협상</button></div>' : ''}${confHtml}
+    ${(S.treaties || []).filter(t => t.k === k).length ? `<div class="box"><h4>📜 체결한 조약</h4>${S.treaties.filter(t => t.k === k).map(t => `<div class="small">${turnLabel(t.turn).year}년 ${turnLabel(t.turn).q}분기: ${t.arts.map(id => artById(id).icon + ' ' + esc(artById(id).name)).join(' · ')}</div>`).join('')}</div>` : ''}
     ${odds}
     <h4 class="sec">외교 행동</h4><div class="dacts">${actions}</div>
   </div>`;
   $('btn-talk') && ($('btn-talk').onclick = () => openTalk(k));
+  $('btn-treaty') && ($('btn-treaty').onclick = () => openTreaty(k));
+  $('btn-treaty2') && ($('btn-treaty2').onclick = () => openTreaty(k));
   $('btn-owner') && ($('btn-owner').onclick = () => { selCountry = owner; zoomTo(owner); updateMap(); renderCountryPanel(); });
   slot.querySelectorAll('[data-dact]').forEach(b => b.onclick = () => {
     if (b.dataset.dact === 'war') return confirmWar(k);

@@ -664,3 +664,31 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .toast { top: auto; bottom: 44px; z-index: 70; }
 .alerts { top: 152px; }
 @media (max-width: 760px) { .alerts { top: 108px; right: 8px; max-width: 70%; } .alert { width: 34px; height: 34px; font-size: 16px; } }
+
+/* ---------- 조약 협상 ---------- */
+.modal-card:has(.treaty) { max-width: 960px; }
+.lbtns { display: grid; gap: 5px; }
+.tr-head { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+.tr-head .avatar { width: 56px; height: 56px; font-size: 24px; flex: 0 0 auto; }
+.tr-reply { margin-top: 4px; font-family: 'Nanum Myeongjo', serif; color: var(--gold); font-size: 14px; animation: fadeUp .25s ease-out; }
+.tr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.tcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 7px; }
+.tcard { position: relative; display: grid; gap: 3px; align-content: start; text-align: left; font: inherit; color: var(--text); min-height: 108px; padding: 9px 10px 22px; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(180deg, #22303e, #1a2531); border: 1px solid var(--line); transition: transform .15s, border-color .15s, box-shadow .15s; }
+.tcard:hover { transform: translateY(-3px) rotate(-.4deg); border-color: var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+.tcard.on { border: 2px solid var(--gold); background: linear-gradient(180deg, #3a3220, #241f15); box-shadow: 0 0 18px rgba(226,194,122,.35); animation: cardPick .25s cubic-bezier(.2,1.5,.4,1); }
+.tcard.ask.on { border-color: #6aa8ff; background: linear-gradient(180deg, #1f3550, #172536); box-shadow: 0 0 18px rgba(106,168,255,.35); }
+.tcard .tc-ic { font-size: 22px; } .tcard b { font-size: 13px; } .tcard small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.tcard .tc-v { position: absolute; left: 10px; bottom: 5px; font-weight: 800; font-size: 12px; }
+.tcard .tc-cost { position: absolute; right: 9px; bottom: 5px; font-size: 11px; color: var(--gold); }
+.accept { margin-top: 12px; padding: 10px 12px; border: 1px solid #7a5d1e; border-radius: 12px; background: #121a22; display: grid; gap: 7px; }
+.acc-top { display: flex; align-items: baseline; gap: 10px; }
+.acc-top b { font: 800 30px 'Nanum Myeongjo', serif; }
+.acc-bar { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, #5a2522, #3d3622 50%, #1f4a33); overflow: hidden; }
+.acc-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #e0645c, #e3b252 50%, #6cc48a); transition: width .45s cubic-bezier(.2,.9,.25,1); opacity: .9; }
+.acc-bar em { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.6); }
+.acc-parts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.acc-sum { margin-left: auto; font-weight: 800; }
+.mid-t { color: var(--mid); }
+@keyframes cardPick { from { transform: scale(.9); } to { transform: none; } }
+@media (max-width: 760px) { .tr-grid { grid-template-columns: 1fr; } .tcards { grid-template-columns: 1fr 1fr; } }
