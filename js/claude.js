@@ -62,11 +62,15 @@ const ClaudeAI = (() => {
     return client;
   }
 
-  const SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
+  const BASE_SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
 - 모든 답변은 한국어로 작성합니다.
 - 실제 한국의 사례와 연구, 해외 사례를 근거로 들되 간결하게 씁니다.
 - 수치 효과는 게임 밸런스를 위해 현실적인 범위로 추정합니다(과장 금지).
-- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.`;
+`;
+  let worldview = 'con';
+  const SYS = () => BASE_SYSTEM + (worldview === 'con'
+    ? '\n- 국정 철학: 자유시장경제, 작은 정부와 재정 건전성, 강한 안보와 한미동맹, 법치와 질서, 공동체의 전통 가치를 중시하는 보수적 관점에서 판단하고 조언합니다. 다만 어떤 선택이든 이득과 손해·위험은 정직하게 모두 제시합니다.'
+    : '\n- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.');
 
   function stateSummary(s) {
     const t = turnLabel(s.turn);
@@ -145,7 +149,7 @@ ${stateSummary(s)}
 - risks: 현실적으로 예상되는 부작용 0~3개(prob 0~1, sev 1~3).
 참고용 기존 정책 데이터 예시:
 ${examples}`;
-    const a = await call({ system: SYSTEM, user, schema });
+    const a = await call({ system: SYS(), user, schema });
     a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
     a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
     a.r = (a.risks || []).slice(0, 3).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
@@ -187,7 +191,7 @@ ${stateSummary(s)}
 - rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25). lt: decree/law/const, lean: L/R/N, pc 10~80, lag 1~16.
 - risks: 현실적 부작용 0~2개(prob 0~1, sev 1~3).
 - 입력이 이 제도와 무관하거나 실현 불가능하면 label에 그 취지를 담고 효과를 작게 잡으세요.`;
-    const a = await call({ system: SYSTEM, user, schema });
+    const a = await call({ system: SYS(), user, schema });
     a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
     a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
     a.r = (a.risks || []).slice(0, 2).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
@@ -223,7 +227,7 @@ ${stateSummary(s)}
 ${opts}
 
 대통령을 대신해 가장 바람직한 해법을 판단하세요. 기존 해법이 모두 부적절하면 choice=-1로 하고 custom에 현실적인 새 해법을 설계하세요(e는 기존 해법과 비슷한 규모, ok는 0.3~0.9, pc는 5~30). choice가 0 이상이면 custom은 형식만 채우세요(0 값).`;
-    const r = await call({ system: SYSTEM, user, schema, maxTokens: 3000 });
+    const r = await call({ system: SYS(), user, schema, maxTokens: 3000 });
     let choice = Number.isInteger(r.choice) ? r.choice : 0;
     if (choice === -1 && r.custom && r.custom.label) {
       c.options.push({ label: '🤖 ' + r.custom.label, desc: r.custom.desc, e: clampObj(r.custom.e, k => statLim(k) / 3), f: clampObj(r.custom.f, () => 10), ok: clamp(r.custom.ok, 0.3, 0.9), pc: clamp(Math.round(r.custom.pc), 5, 30), claude: true });
@@ -249,7 +253,7 @@ ${report.elections.join(' ')}
 ${stateSummary(s)}
 
 형식: ① 총평(2문장) ② 이득과 손해(각 2~3개 불릿) ③ 다음 분기 권고(2~3개 구체적 정책 제안). 300자~500자. 마크다운 없이 줄바꿈과 •만 사용.`;
-    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+    return await call({ system: SYS(), user, maxTokens: 3000 });
   }
 
   /* ---- 4) 정책 자문 ---- */
@@ -266,7 +270,35 @@ ${stateSummary(s)}
 ${stateSummary(s)}
 
 실제 한국과 해외 사례를 근거로 ① 핵심 이득 ② 핵심 손해·위험 ③ 성공 조건/보완책 ④ 추진 여부 권고(추진/보완 후 추진/보류)를 400자 내외로 제시하세요. 마크다운 없이 줄바꿈과 •만 사용.`;
-    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+    return await call({ system: SYS(), user, maxTokens: 3000 });
+  }
+
+  /* ---- 5) 외국 지도자 역할극 ---- */
+  async function leaderTalk(s, k, L, history, msg) {
+    const schema = { type: 'object', additionalProperties: false, required: ['reply', 'mood', 'relDelta', 'proposal'],
+      properties: { reply: { type: 'string', description: '지도자의 답변(한국어, 2~5문장)' }, mood: { type: 'string', enum: ['우호적', '중립', '경계', '불쾌함', '분노'] },
+        relDelta: { type: 'integer', description: '이 대화로 인한 대한 관계 변화 -8~8' }, proposal: { type: 'string', enum: ['none', 'fta', 'alliance', 'aid', 'ceasefire'] } } };
+    const conf = (s.world?.conflicts || []).filter(c => c.a === k || c.b === k).map(c => `${CONFLICT_TYPES[c.type].name}(${cname(c.a)}↔${cname(c.b)})`).join(', ') || '없음';
+    const d = dip(s, k);
+    const user = `당신은 정치 시뮬레이션 게임 속 가상의 외국 지도자를 연기합니다. 실존 인물이 아닙니다.
+나라: ${cname(k)} (${cinfo(k).sub || ''}) / 직함: ${L.title} / 이름: ${L.name} / 체제: ${IDEOLOGIES[L.gov].name}
+성향: ${L.traits.map(t => `${TRAITS[t].name}(${TRAITS[t].desc})`).join(', ')}
+진영: ${CAMPS[campOf(s, k)].name} / 한국과의 관계(0~100): ${relOf(s, k).toFixed(0)} / 조약: ${[d.alliance && '동맹', d.fta && 'FTA', d.sanction && '한국이 제재 중'].filter(Boolean).join(', ') || '없음'}
+진행 중인 분쟁: ${conf} / 세계 긴장도: ${s.world?.tension?.toFixed(0)}
+
+한국 상황:
+${stateSummary(s)}
+
+최근 대화:
+${history.slice(0, -1).map(m => `${m.role === 'me' ? '한국 대통령' : L.name}: ${m.text}`).join('\n') || '(없음)'}
+
+한국 대통령의 말: "${msg}"
+
+이 지도자의 성향과 자국 이익에 맞게, 외교적 어조로 답하세요. 성향과 맞지 않는 제안은 거절하고, 무례하거나 위협적인 말에는 불쾌감을 드러내세요.
+relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정수. proposal은 이 지도자가 실제로 응할 의향이 있는 협력(없으면 none).`;
+    const r = await call({ system: SYS(), user, schema, maxTokens: 2000 });
+    r.relDelta = clamp(Math.round(r.relDelta || 0), -8, 8);
+    return r;
   }
 
   async function test() {
@@ -274,5 +306,5 @@ ${stateSummary(s)}
     return r;
   }
 
-  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, resolveCrisis, briefing, advise, test };
+  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, test };
 })();

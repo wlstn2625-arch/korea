@@ -12,6 +12,24 @@ const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
 const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k + (s.pcapBonus || 0);
 
+// 게임 세계관(밸런스 철학). 보수: 시장·안보·법치·재정건전성 쪽 선택이 장기적으로 조금 더 보상받음
+const WORLDVIEWS = {
+  con: { name: '보수', desc: '자유시장·작은 정부·재정 건전성·강한 안보와 한미동맹·법치를 중시하는 세계관. 보수 성향 정책의 장기 효과가 조금 더 좋고 부작용 위험이 낮으며, 큰 정부·대규모 지출 정책은 부작용이 조금 더 큽니다.' },
+  neutral: { name: '중립', desc: '어느 쪽에도 보정 없이 정책 데이터 그대로 계산합니다.' },
+};
+const wv = s => s.worldview || 'con';
+function wvScale(s, opt, e) {
+  if (wv(s) !== 'con' || !opt || !opt.lean || opt.lean === 'N') return e;
+  const out = {};
+  for (const k in e) {
+    const good = k === 'infl' ? e[k] < 0 : e[k] * (STATS[k]?.good || 1) > 0;
+    out[k] = e[k] * (opt.lean === 'R' ? (good ? 1.2 : 0.85) : (good ? 0.9 : 1.15));
+  }
+  return out;
+}
+const wvRisk = (s, opt) => wv(s) !== 'con' ? 1 : opt?.lean === 'R' ? 0.85 : opt?.lean === 'L' ? 1.15 : 1;
+const WV_WEIGHT = { security: 1.15, safety: 1.15, fiscal: 1.15, debt: 1.15, gdp: 1.1, innovation: 1.1, justice: 1.05, welfare: 0.9, gini: 0.9 };
+
 // 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
 const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [] };
 function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
@@ -112,7 +130,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName, difficulty = 'normal') {
+function newGame(partyKey, presidentName, difficulty = 'normal', worldview = 'con') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }
@@ -132,7 +150,7 @@ function newGame(partyKey, presidentName, difficulty = 'normal') {
   const s = {
     v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
-    difficulty, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
+    difficulty, worldview, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
     autoAI: true, over: false, ending: null, userOptions: {},
   };
@@ -184,7 +202,7 @@ function valueOfEffects(s, e, rel, fDelta) {
   let total = 0; const parts = [];
   for (const k in (e || {})) {
     if (!STATS[k]) continue;
-    let val = e[k] * STATS[k].w * STATS[k].good * urgency(s, k);
+    let val = e[k] * STATS[k].w * STATS[k].good * urgency(s, k) * (wv(s) === 'con' ? (WV_WEIGHT[k] || 1) : 1);
     if (k === 'infl') { // 물가는 2% 근처가 최적
       const cur = s.stats.infl; val = (Math.abs(cur - 2) - Math.abs(cur + e[k] - 2)) * STATS[k].w * urgency(s, k);
     }
@@ -249,6 +267,7 @@ function normCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3
 function previewPolicy(s, p, opt, lobby = 0) {
   const old = currentOption(p, s);
   const d = diffEffects(opt, old);
+  d.e = wvScale(s, opt, d.e);
   const val = valueOfEffects(s, d.e, d.rel, d.f);
   const vote = voteModel(s, opt, lobby);
   const gains = [], losses = [];
@@ -257,7 +276,7 @@ function previewPolicy(s, p, opt, lobby = 0) {
     (part.val > 0 ? gains : losses).push(part);
   }
   gains.sort((a, b) => b.val - a.val); losses.sort((a, b) => a.val - b.val);
-  const risks = (opt.r || []).map(r => ({ tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4] }));
+  const risks = (opt.r || []).map(r => ({ tpl: r[0], title: r[1], desc: r[2], prob: clamp(r[3] * wvRisk(s, opt), 0, 0.95), sev: r[4] }));
   const riskCost = risks.reduce((a, r) => a + r.prob * r.sev * 4, 0);
   const net = val.total - riskCost;
   let verdict;
@@ -317,13 +336,14 @@ function finalVote(s, p, opt, old, lobby, cost, paid) {
 function applyPassed(s, p, opt, old) {
   const pid = p.id, oid = opt.id;
   const d = diffEffects(opt, old);
+  d.e = wvScale(s, opt, d.e);
   s.policies[pid] = oid;
   for (const k in d.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + d.f[k], 0, 100);
   const lag = Math.max(1, opt.lag || 4);
   s.pending = s.pending.filter(x => x.pid !== pid);
   s.pending.push({ pid, oid, src: p.custom ? p.name : `${p.name}: ${opt.label}`, e: d.e, rel: d.rel, left: lag, lag });
   for (const r of (opt.r || [])) {
-    s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
+    s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: clamp(r[3] * wvRisk(s, opt), 0, 0.95), sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
   }
 }
 
@@ -366,7 +386,7 @@ function expandSolution(s, c, sol, success = true) {
   for (const x in (sol.e || {})) e[x] = sol.e[x] * sevK * k;
   for (const x in (sol.rel || {})) {
     const key = x === '_target' ? c.relTarget : x;
-    if (key && RELATIONS[key]) rel[key] = (rel[key] || 0) + sol.rel[x] * k;
+    if (key && (RELATIONS[key] || s.rel[key] != null)) rel[key] = (rel[key] || 0) + sol.rel[x] * k;
   }
   for (const x in (sol.f || {})) {
     const v = sol.f[x] * (success ? 1 : -0.6);
@@ -440,7 +460,7 @@ function resolveCrisis(s, crisisId, solIndex, by = 'player', reasoning = '') {
     s.stats[k] = clamp(s.stats[k] + fx.e[k] * 0.6, STATS[k].min, STATS[k].max);
     s.mods[k] += fx.e[k] * 0.4;
   }
-  for (const k in fx.rel) { s.rel[k] = clamp(s.rel[k] + fx.rel[k] * 0.6, 0, 100); s.relMods[k] += fx.rel[k] * 0.4; }
+  for (const k in fx.rel) { s.rel[k] = clamp(s.rel[k] + fx.rel[k] * 0.6, 0, 100); s.relMods[k] = (s.relMods[k] || 0) + fx.rel[k] * 0.4; }
   for (const k in fx.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + fx.f[k], 0, 100);
   let rbText = '';
   if (success && sol.rollback && c.pid) {
@@ -561,6 +581,7 @@ function endTurn(s) {
   let target = 0; for (const k in FACTIONS) target += s.factions[k] * FACTIONS[k].pop;
   target += (st.gdp - 1.8) * 2.5 - (st.unemp - 2.8) * 3 - Math.max(0, st.infl - 2.5) * 2.5 + (st.happiness - 42) * 0.4;
   target -= Math.max(0, s.turn - 12) * 0.6; // 임기 말 레임덕
+  if (wv(s) === 'con') target += (st.security - 68) * 0.06 + (st.safety - 76) * 0.06 + Math.min(0, st.fiscal + 4) * 0.4;
   s.approval = clamp(s.approval + (target - s.approval) * 0.45 + gauss() * 1.2, 2, 95);
   s.pcap = clamp(s.pcap + pcapGain(s), 0, diff(s).cap);
 

@@ -110,7 +110,7 @@ const DIPLO_ACTIONS = [
     run: (s, k) => { dip(s, k).fta = true; s.mods.gdp += 0.08 * ecoK(k); relBump(s, k, 3, 5); s.factions.farm -= Math.round(6 * ecoK(k)); s.factions.biz += Math.round(5 * ecoK(k)); return `${cname(k)}과(와) FTA를 체결했습니다.`; } },
   { id: 'alliance', name: '안보 동맹', icon: '🛡️', pc: 40, desc: '안보 상승(상대 군사력 비례), 상대 진영 반발. 관계 75 이상.',
     can: (s, k) => dip(s, k).alliance ? '이미 동맹입니다.' : k === 'nk' ? '불가합니다.' : relOf(s, k) < 75 ? '관계 75 이상 필요.' : null,
-    cost: (s, k) => isCore(k) ? 40 : Math.round(15 + cinfo(k).mil * 0.3),
+    cost: (s, k) => Math.round((isCore(k) ? 40 : 15 + cinfo(k).mil * 0.3) * (dip(s, k).allyOffer >= s.turn ? 0.5 : 1)),
     run: (s, k) => {
       dip(s, k).alliance = true; s.mods.security += Math.max(1, Math.round(cinfo(k).mil / 20)); relBump(s, k, 3, 5);
       if (['us', 'jp', 'tw'].includes(k) || NATO.has(k)) s.relMods.cn -= isCore(k) ? 8 : 2;
@@ -155,6 +155,7 @@ function diploAction(s, aid, k, goal) {
   const a = DIPLO_ACTIONS.find(x => x.id === aid);
   if (!cinfo(k)) return { ok: false, msg: '알 수 없는 나라입니다.' };
   if (s.annexed[k]) return { ok: false, msg: '이미 합병된 지역입니다.' };
+  if (s.world?.owner?.[k]) return { ok: false, msg: `${cname(s.world.owner[k])}에 병합된 지역입니다.` };
   const why = a.can(s, k); if (why) return { ok: false, msg: why };
   const cost = diploCost(s, a, k);
   if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
@@ -175,7 +176,7 @@ function protectorsOf(k) {
   return [...out];
 }
 function warAllies(s, k, side, aggressor = 'kr') {
-  if (side === 'them') return protectorsOf(k).filter(c => cinfo(c) && !s.annexed[c] && !dip(s, c).alliance && relOf(s, c) < (PROTECT_TH[`${k}>${c}`] ?? (c === 'us' ? 90 : 85)));
+  if (side === 'them') return protectorsOf(k).filter(c => cinfo(c) && !s.annexed[c] && !s.world?.owner?.[c] && !hasTrait(s, c, 'isolationist') && !dip(s, c).alliance && relOf(s, c) < (PROTECT_TH[`${k}>${c}`] ?? (c === 'us' ? 90 : 85)));
   const prot = new Set(protectorsOf(k));
   return Object.keys(s.diplo).filter(c => c !== k && cinfo(c) && !cinfo(c).isBloc && dip(s, c).alliance && !s.annexed[c] && !prot.has(c)
     && (aggressor === 'them' || (k === 'nk' && c === 'us' && relOf(s, 'us') >= 70) || relOf(s, c) >= 85));
@@ -185,7 +186,7 @@ function warOdds(s, k) {
   const allies = w ? w.allies : warAllies(s, k, 'kr'), en = w ? w.enemyAllies : warAllies(s, k, 'them');
   const reach = cinfo(k).reach;
   const ours = milPower(s) * reach + allies.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
-  const theirs = cinfo(k).mil + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
+  const theirs = (typeof power === 'function' && s.world ? power(s, k) : cinfo(k).mil) + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   return { ours, theirs, edge: (ours - theirs) / (ours + theirs), reach, allies, en };
 }
 function nukeRisk(s) {
@@ -306,12 +307,12 @@ function worldTurn(s, report) {
   report.world = { events: [] };
   // 비핵심국 관계 변화 (EU 회원국은 EU 관계를 따라감)
   for (const k of Object.keys(s.rel)) {
-    if (isCore(k) || s.annexed[k] || !cinfo(k)) continue;
+    if (isCore(k) || s.annexed[k] || s.world?.owner?.[k] || !cinfo(k)) continue;
     const eq = baseRel(k) + (s.relMods[k] || 0) + (cinfo(k).eu ? (s.rel.eu - RELATIONS.eu.base) * 0.6 : 0) + (NATO.has(k) ? (s.rel.us - RELATIONS.us.base) * 0.2 : 0);
     s.rel[k] = clamp(s.rel[k] + (eq - s.rel[k]) * 0.2 + gauss() * 0.6, 0, 100);
   }
   // 북한의 기습 침공(관계 최악·우리 군사력 약할 때)
-  if (!s.war && !s.annexed.nk && s.rel.nk < 8 && milPower(s) < 58 && Math.random() < 0.04) report.world.events.push(startWar(s, 'nk', 'them', 'concession'));
+  if (!s.war && !s.annexed.nk && s.rel.nk < 8 && milPower(s) < 58 && (typeof leaderAgg !== 'function' || leaderAgg(s, 'nk') >= 45) && Math.random() < 0.015) report.world.events.push(startWar(s, 'nk', 'them', 'concession'));
   // 우호국의 FTA 제안 (핵심국 + 무작위 몇 나라)
   const cands = [...Object.keys(RELATIONS), ...Object.keys(s.rel).filter(k => !isCore(k)).sort(() => Math.random() - 0.5).slice(0, 12)];
   for (const k of cands) {

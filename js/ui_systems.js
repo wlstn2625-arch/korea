@@ -93,5 +93,7 @@ function reportExtras(report) {
   if (pol && (pol.left.length || pol.radical.length)) out.push(`<div class="verdict bad">${pol.left.length ? `연합 이탈: ${pol.left.map(esc).join(', ')}. ` : ''}${pol.radical.length ? `급진화 세력: ${pol.radical.map(esc).join(', ')}` : ''}</div>`);
   const w = report.world;
   if (w && (w.war || w.events.length)) out.push(`<div class="box" style="margin-top:8px"><h4>🌏 외교·안보</h4><ul>${[w.war, ...w.events].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`);
+  const wn = (report.worldNews || []).filter(n => n.type !== 'info' || /관세|침공|병합|휴전|G20|지원/.test(n.text)).slice(0, 8);
+  if (wn.length) out.push(`<div class="box" style="margin-top:8px"><h4>🌐 세계 뉴스</h4><ul>${wn.map(n => `<li>${esc(n.text)}</li>`).join('')}</ul></div>`);
   return out.join('');
 }

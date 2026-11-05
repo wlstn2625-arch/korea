@@ -5,6 +5,7 @@ let S = null;
 let activeCat = 'const';
 let selectedParty = 'lib';
 let selectedDiff = 'normal';
+let selectedWv = 'con';
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -44,13 +45,16 @@ function renderStart() {
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
     `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
+  $('wv-pick').innerHTML = Object.entries(WORLDVIEWS).map(([k, w]) =>
+    `<div class="party-opt ${k === selectedWv ? 'sel' : ''}" data-w="${k}"><b>${w.name}${k === 'con' ? ' (기본)' : ''}</b><span>${w.desc}</span></div>`).join('');
+  $('wv-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedWv = el.dataset.w; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
   const name = $('pres-name').value.trim() || '대통령';
-  S = newGame(selectedParty, name, selectedDiff);
+  S = newGame(selectedParty, name, selectedDiff, selectedWv);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
     <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
@@ -62,7 +66,8 @@ $('btn-start').onclick = () => {
       <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
       <li><b>🏛️ 국회·세력</b>: 법률·개헌은 여러 분기에 걸쳐 국회 심의를 거칩니다. 협상·신속처리로 밀어붙이고, 재계·노동계 등 이익집단을 국정 연합에 영입해 정당성을 높이세요.</li>
       <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. 전략 산업을 집중 육성할 수 있습니다.</li>
-      <li><b>🌏 외교·전쟁</b>: 정상회담·FTA·동맹·제재·최후통첩, 그리고 전쟁. 승리하면 배상·합병·통일까지 가능하지만, 주변국 개입과 핵 위험이 따릅니다.</li>
+      <li><b>🌏 외교·전쟁</b>: 세계지도 위 약 200개국. 나라마다 <b>지도자(가상 인물)</b>가 있고 성향대로 움직입니다. 관세 전쟁·사이버 공격·국경 분쟁·전쟁·내전이 실시간으로 일어나고, 중재·인도적 지원·무기 지원·제재·참전으로 개입할 수 있습니다. 지도자와 직접 대화도 할 수 있습니다.</li>
+      <li><b>🏛️ 대통령 권한</b>: 국회가 막으면 <b>긴급재정경제명령</b>(헌법 76조)이나 <b>국민투표</b>(72조)로 돌파할 수 있습니다. 대가는 따릅니다.</li>
       <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
       <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
     </ul></div>
@@ -72,6 +77,7 @@ $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
   migrateState(S);
+  ClaudeAI.setWorldview(S.worldview);
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
@@ -231,12 +237,25 @@ function openPreview(pid, oid, lobby = 0) {
     ${pv.risks.length ? `<div class="box" style="margin-top:10px"><h4>⚠️ 예상 부작용</h4>${pv.risks.map(r => `<div class="risk">${RISK_TEMPLATES[r.tpl].icon} <b>${esc(r.title)}</b> — 발생 확률 ${(r.prob * 100).toFixed(0)}%, 심각도 ${'●'.repeat(r.sev)}${'○'.repeat(3 - r.sev)}<br><span class="muted">${esc(r.desc)}</span></div>`).join('')}</div>` : ''}
     <div class="verdict ${pv.verdict.cls}"><b>AI 종합 판단</b> (점수 ${pv.net.toFixed(1)}): ${pv.verdict.text}</div>
     <div id="claude-advice"></div>
+    ${o0.lt === 'law' ? (() => {
+      const ce = canEmergency(S, p, o0), cr = canReferendum(S, p, o0), ro = referendumOdds(S, o0);
+      return `<div class="box powers"><h4>🏛️ 대통령 권한으로 국회 우회</h4>
+        <div class="pw"><div><b>⚡ 긴급재정경제명령</b> (헌법 76조) <span class="tag">⚡${emergencyCost(S, o0)}</span><div class="muted small">${esc(ce || '즉시 시행. 다음 분기 국회 승인 필요(승인 확률 약 ' + Math.round(clamp(voteModel(S, o0).prob + 0.15, 0.05, 0.97) * 100) + '%), 거부되면 효력 상실. 법조계·야권 반발, 지지율 -2.')}</div></div><button class="btn sm" id="btn-emerg" ${ce || S.pcap < emergencyCost(S, o0) ? 'disabled' : ''}>발동</button></div>
+        <div class="pw"><div><b>🗳️ 국민투표 부의</b> (헌법 72조) <span class="tag">⚡${referendumCost(S, o0)}</span><div class="muted small">${esc(cr || '국회 대신 국민에게 직접 묻습니다. 예상 찬성 ' + ro.sup.toFixed(0) + '% (가결 확률 ' + Math.round(ro.prob * 100) + '%). 부결되면 지지율 -4. 1년에 한 번.')}</div></div><button class="btn sm" id="btn-refer" ${cr || S.pcap < referendumCost(S, o0) ? 'disabled' : ''}>부의</button></div>
+      </div>`; })() : ''}
     <div class="modal-actions">
       ${ClaudeAI.enabled() ? `<button class="btn" id="btn-ask-claude">🤖 Claude 의견 듣기</button>` : ''}
       <button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary" id="btn-enact" ${S.pcap < pv.cost ? 'disabled' : ''}>${pv.vote.type === 'decree' ? '즉시 시행' : pv.vote.type === 'const' ? '개헌안 발의' : '법안 제출'}</button>
     </div>`);
   document.querySelectorAll('[data-lobby]').forEach(b => b.onclick = () => openPreview(pid, oid, +b.dataset.lobby));
+  const powerResult = (r, title) => {
+    if (!r.ok) return toast(esc(r.msg));
+    closeModal(); saveGame(S); renderAll();
+    openModal(`<h2>${r.passed ? '✅' : '❌'} ${title}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p><div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
+  };
+  $('btn-emerg') && ($('btn-emerg').onclick = () => powerResult(emergencyDecree(S, pid, oid), '긴급재정경제명령'));
+  $('btn-refer') && ($('btn-refer').onclick = () => powerResult(referendumPolicy(S, pid, oid), '국민투표'));
   $('btn-enact').onclick = () => {
     const tmp = o0.cur && !o0.lt ? Object.assign(o0, { lt: o.lt, lean: o.lean, pc: o.pc, lag: o.lag }) : o0;
     const r = enactPolicy(S, pid, tmp.id, lobby);
@@ -457,13 +476,14 @@ $('btn-settings').onclick = () => {
     <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
     <h3 class="sec">게임</h3>
+    ${S ? `<div class="settings-row"><label for="cfg-wv">게임 세계관</label><select id="cfg-wv">${Object.entries(WORLDVIEWS).map(([k, w]) => `<option value="${k}" ${k === S.worldview ? 'selected' : ''}>${w.name}</option>`).join('')}</select><div class="muted small">${esc(WORLDVIEWS[S.worldview || 'con'].desc)} 수치는 게임 밸런스이며 실제 정책 효과를 예측하지 않습니다.</div></div>` : ''}
     <div class="modal-actions" style="justify-content:flex-start">
       <button class="btn" id="cfg-theme">🌓 테마 전환</button>
       <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
     </div>
     <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
   const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
-  $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
+  $('cfg-save').onclick = () => { if (S && $('cfg-wv')) { S.worldview = $('cfg-wv').value; ClaudeAI.setWorldview(S.worldview); saveGame(S); } ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
   $('cfg-test').onclick = async () => {
     ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
     try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }

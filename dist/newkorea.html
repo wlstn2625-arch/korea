@@ -329,13 +329,43 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 .geo .eu-mark.sel circle { stroke: var(--accent); stroke-width: calc(var(--u) * 3px); }
 @media (max-width: 900px) { .geo { aspect-ratio: 1 / 1.05; } .map-tools input { min-width: 0; } }
 
+/* ---------- 지도자·세계 정세·대화 ---------- */
+.leader { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 22px; font-weight: 900; box-shadow: inset 0 -6px 12px rgba(0,0,0,.25); }
+.lmain { display: grid; gap: 4px; min-width: 0; }
+.lname { font-size: 16px; }
+.ltags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tag.trait { cursor: help; }
+.situation { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; }
+.sit-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sit-head h3 { font-size: 16px; }
+.tension { display: grid; grid-template-columns: auto 160px auto; gap: 8px; align-items: center; font-size: 13px; }
+.sit-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+.sit-grid .sec { margin: 10px 0 6px; }
+.conf { border: 1px solid var(--line); border-left: 4px solid var(--mid); border-radius: 9px; padding: 7px 10px; margin-bottom: 6px; background: var(--card2); }
+.conf.war { border-left-color: var(--bad); } .conf.civil { border-left-color: #8e2f2f; } .conf.trade { border-left-color: #d6b23a; }
+.conf .row-btns { margin-top: 5px; }
+.news { font-size: 12.5px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.news .t { color: var(--muted); font-size: 11px; margin-right: 5px; }
+.news.bad { color: var(--text); } .news.bad::before { content: '● '; color: var(--bad); }
+.news.good::before { content: '● '; color: var(--good); }
+.talk-log { height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card2); margin-bottom: 8px; }
+.msg { max-width: 85%; padding: 8px 11px; border-radius: 12px; font-size: 13.5px; display: grid; gap: 2px; }
+.msg.me { align-self: flex-end; background: var(--accent); color: #fff; }
+.msg.me .muted { color: rgba(255,255,255,.75); }
+.msg.them { align-self: flex-start; background: var(--card); border: 1px solid var(--line); }
+@media (max-width: 900px) { .sit-grid { grid-template-columns: 1fr; } .leader { grid-template-columns: auto 1fr; } .leader .btn { grid-column: 1 / -1; } .tension { grid-template-columns: auto 1fr auto; width: 100%; } }
+
+.powers { margin-top: 10px; display: grid; gap: 8px; }
+.powers .pw { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
     <div class="start-card">
       <div class="start-emblem">🇰🇷</div>
       <h1>새로운 대한민국</h1>
-      <p class="sub">당신은 제21대 대한민국 대통령입니다.<br>헌법·세제·국방·외교·교육·검경… 지금의 대한민국 그대로에서 시작해<br>하나씩 바꿔 당신만의 대한민국을 만드세요.</p>
+      <p class="sub">당신은 제21대 대한민국 대통령입니다.<br>헌법·세제·국방·외교·교육·검경, 그리고 세계 무대까지.<br>국가 안팎의 모든 권한을 쥐고 당신만의 대한민국을 만드세요.</p>
       <label class="field">대통령 이름
         <input id="pres-name" maxlength="12" placeholder="이름을 입력하세요" value="">
       </label>
@@ -344,6 +374,9 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
       </div>
       <div class="field">난이도
         <div id="diff-pick" class="party-pick diff-pick"></div>
+      </div>
+      <div class="field">게임 세계관
+        <div id="wv-pick" class="party-pick"></div>
       </div>
       <div class="start-actions">
         <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
@@ -2951,6 +2984,24 @@ const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
 const pcapGain = s => diff(s).base + (s.approval - 45) * diff(s).k + (s.pcapBonus || 0);
 
+// 게임 세계관(밸런스 철학). 보수: 시장·안보·법치·재정건전성 쪽 선택이 장기적으로 조금 더 보상받음
+const WORLDVIEWS = {
+  con: { name: '보수', desc: '자유시장·작은 정부·재정 건전성·강한 안보와 한미동맹·법치를 중시하는 세계관. 보수 성향 정책의 장기 효과가 조금 더 좋고 부작용 위험이 낮으며, 큰 정부·대규모 지출 정책은 부작용이 조금 더 큽니다.' },
+  neutral: { name: '중립', desc: '어느 쪽에도 보정 없이 정책 데이터 그대로 계산합니다.' },
+};
+const wv = s => s.worldview || 'con';
+function wvScale(s, opt, e) {
+  if (wv(s) !== 'con' || !opt || !opt.lean || opt.lean === 'N') return e;
+  const out = {};
+  for (const k in e) {
+    const good = k === 'infl' ? e[k] < 0 : e[k] * (STATS[k]?.good || 1) > 0;
+    out[k] = e[k] * (opt.lean === 'R' ? (good ? 1.2 : 0.85) : (good ? 0.9 : 1.15));
+  }
+  return out;
+}
+const wvRisk = (s, opt) => wv(s) !== 'con' ? 1 : opt?.lean === 'R' ? 0.85 : opt?.lean === 'L' ? 1.15 : 1;
+const WV_WEIGHT = { security: 1.15, safety: 1.15, fiscal: 1.15, debt: 1.15, gdp: 1.1, innovation: 1.1, justice: 1.05, welfare: 0.9, gini: 0.9 };
+
 // 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
 const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [] };
 function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
@@ -3051,7 +3102,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName, difficulty = 'normal') {
+function newGame(partyKey, presidentName, difficulty = 'normal', worldview = 'con') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }
@@ -3071,7 +3122,7 @@ function newGame(partyKey, presidentName, difficulty = 'normal') {
   const s = {
     v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
-    difficulty, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
+    difficulty, worldview, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
     autoAI: true, over: false, ending: null, userOptions: {},
   };
@@ -3123,7 +3174,7 @@ function valueOfEffects(s, e, rel, fDelta) {
   let total = 0; const parts = [];
   for (const k in (e || {})) {
     if (!STATS[k]) continue;
-    let val = e[k] * STATS[k].w * STATS[k].good * urgency(s, k);
+    let val = e[k] * STATS[k].w * STATS[k].good * urgency(s, k) * (wv(s) === 'con' ? (WV_WEIGHT[k] || 1) : 1);
     if (k === 'infl') { // 물가는 2% 근처가 최적
       const cur = s.stats.infl; val = (Math.abs(cur - 2) - Math.abs(cur + e[k] - 2)) * STATS[k].w * urgency(s, k);
     }
@@ -3188,6 +3239,7 @@ function normCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3
 function previewPolicy(s, p, opt, lobby = 0) {
   const old = currentOption(p, s);
   const d = diffEffects(opt, old);
+  d.e = wvScale(s, opt, d.e);
   const val = valueOfEffects(s, d.e, d.rel, d.f);
   const vote = voteModel(s, opt, lobby);
   const gains = [], losses = [];
@@ -3196,7 +3248,7 @@ function previewPolicy(s, p, opt, lobby = 0) {
     (part.val > 0 ? gains : losses).push(part);
   }
   gains.sort((a, b) => b.val - a.val); losses.sort((a, b) => a.val - b.val);
-  const risks = (opt.r || []).map(r => ({ tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4] }));
+  const risks = (opt.r || []).map(r => ({ tpl: r[0], title: r[1], desc: r[2], prob: clamp(r[3] * wvRisk(s, opt), 0, 0.95), sev: r[4] }));
   const riskCost = risks.reduce((a, r) => a + r.prob * r.sev * 4, 0);
   const net = val.total - riskCost;
   let verdict;
@@ -3256,13 +3308,14 @@ function finalVote(s, p, opt, old, lobby, cost, paid) {
 function applyPassed(s, p, opt, old) {
   const pid = p.id, oid = opt.id;
   const d = diffEffects(opt, old);
+  d.e = wvScale(s, opt, d.e);
   s.policies[pid] = oid;
   for (const k in d.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + d.f[k], 0, 100);
   const lag = Math.max(1, opt.lag || 4);
   s.pending = s.pending.filter(x => x.pid !== pid);
   s.pending.push({ pid, oid, src: p.custom ? p.name : `${p.name}: ${opt.label}`, e: d.e, rel: d.rel, left: lag, lag });
   for (const r of (opt.r || [])) {
-    s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: r[3], sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
+    s.latent.push({ pid, oid, prevOid: old.id, tpl: r[0], title: r[1], desc: r[2], prob: clamp(r[3] * wvRisk(s, opt), 0, 0.95), sev: r[4], relTarget: r[5], due: s.turn + Math.floor(rnd(0, Math.min(3, lag))), tries: 2 });
   }
 }
 
@@ -3305,7 +3358,7 @@ function expandSolution(s, c, sol, success = true) {
   for (const x in (sol.e || {})) e[x] = sol.e[x] * sevK * k;
   for (const x in (sol.rel || {})) {
     const key = x === '_target' ? c.relTarget : x;
-    if (key && RELATIONS[key]) rel[key] = (rel[key] || 0) + sol.rel[x] * k;
+    if (key && (RELATIONS[key] || s.rel[key] != null)) rel[key] = (rel[key] || 0) + sol.rel[x] * k;
   }
   for (const x in (sol.f || {})) {
     const v = sol.f[x] * (success ? 1 : -0.6);
@@ -3379,7 +3432,7 @@ function resolveCrisis(s, crisisId, solIndex, by = 'player', reasoning = '') {
     s.stats[k] = clamp(s.stats[k] + fx.e[k] * 0.6, STATS[k].min, STATS[k].max);
     s.mods[k] += fx.e[k] * 0.4;
   }
-  for (const k in fx.rel) { s.rel[k] = clamp(s.rel[k] + fx.rel[k] * 0.6, 0, 100); s.relMods[k] += fx.rel[k] * 0.4; }
+  for (const k in fx.rel) { s.rel[k] = clamp(s.rel[k] + fx.rel[k] * 0.6, 0, 100); s.relMods[k] = (s.relMods[k] || 0) + fx.rel[k] * 0.4; }
   for (const k in fx.f) if (s.factions[k] != null) s.factions[k] = clamp(s.factions[k] + fx.f[k], 0, 100);
   let rbText = '';
   if (success && sol.rollback && c.pid) {
@@ -3500,6 +3553,7 @@ function endTurn(s) {
   let target = 0; for (const k in FACTIONS) target += s.factions[k] * FACTIONS[k].pop;
   target += (st.gdp - 1.8) * 2.5 - (st.unemp - 2.8) * 3 - Math.max(0, st.infl - 2.5) * 2.5 + (st.happiness - 42) * 0.4;
   target -= Math.max(0, s.turn - 12) * 0.6; // 임기 말 레임덕
+  if (wv(s) === 'con') target += (st.security - 68) * 0.06 + (st.safety - 76) * 0.06 + Math.min(0, st.fiscal + 4) * 0.4;
   s.approval = clamp(s.approval + (target - s.approval) * 0.45 + gauss() * 1.2, 2, 95);
   s.pcap = clamp(s.pcap + pcapGain(s), 0, diff(s).cap);
 
@@ -3851,6 +3905,94 @@ HOOKS.events.push(radicalEvents);
 
 </script>
 <script>
+/* js/powers.js */
+/* =========================================================
+ *  대통령의 헌법상 권한
+ *  - 긴급재정경제명령(헌법 제76조): 재정·경제 분야 법률을 국회를 거치지 않고 즉시 시행.
+ *    다음 분기 국회 승인을 받지 못하면 효력을 잃음.
+ *  - 국민투표 부의(헌법 제72조): 중요 정책을 국회 대신 국민에게 직접 물음.
+ * ========================================================= */
+const EMERGENCY_CATS = new Set(['tax', 'econ', 'labor', 'welfare', 'house', 'health', 'env']);
+
+function canEmergency(s, p, opt) {
+  if (!opt || opt.lt !== 'law') return '법률 사항에만 쓸 수 있습니다.';
+  if (!EMERGENCY_CATS.has(p.cat)) return '긴급재정경제명령은 재정·경제 분야(세제·경제·노동·복지·부동산·의료·에너지)에만 쓸 수 있습니다.';
+  if ((s.emergency || []).length >= 2) return '국회 승인을 기다리는 긴급명령이 이미 2건 있습니다.';
+  return null;
+}
+function canReferendum(s, p, opt) {
+  if (!opt || opt.lt !== 'law') return opt?.lt === 'const' ? '헌법 개정은 국회 의결(2/3)을 생략할 수 없습니다.' : '법률 사항에만 쓸 수 있습니다.';
+  if ((s.referendumTurn ?? -99) >= s.turn - 3) return '국민투표는 1년(4분기)에 한 번만 부의할 수 있습니다.';
+  return null;
+}
+const emergencyCost = (s, opt) => Math.round(policyCost(s, opt) * 1.5);
+const referendumCost = (s, opt) => Math.round(policyCost(s, opt) * 1.3);
+function referendumOdds(s, opt) {
+  const sup = refendumSupport(s, opt) + (opt.lean === 'N' ? 3 : 0) + (wv(s) === 'con' && opt.lean === 'R' ? 2 : 0) + approvalDeltaFromFactions(opt.f || {}) * 0.5;
+  return { sup, prob: normCdf((sup - 50) / 5) };
+}
+
+function emergencyDecree(s, pid, oid) {
+  const p = policyById(pid, s), opt = optionOf(p, oid), old = currentOption(p, s);
+  const why = canEmergency(s, p, opt); if (why) return { ok: false, msg: why };
+  if (s.enactedThisTurn.includes(pid) || s.bills.some(b => b.pid === pid)) return { ok: false, msg: '이 분야는 이번 분기에 이미 손댔거나 국회 심의 중입니다.' };
+  const cost = emergencyCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  s.pcap -= cost; s.enactedThisTurn.push(pid);
+  applyPassed(s, p, opt, old);
+  s.approval = clamp(s.approval - 2, 0, 100);
+  s.factions.legal = clamp(s.factions.legal - 5, 0, 100);
+  const opp = s.ruling === 'R' ? 'lib' : 'con'; s.factions[opp] = clamp(s.factions[opp] - 4, 0, 100);
+  (s.emergency = s.emergency || []).push({ pid, oid, prevOid: old.id, turn: s.turn });
+  addLog(s, 'info', `⚡ [${p.name}] 긴급재정경제명령으로 '${opt.label}' 즉시 시행. 다음 분기 국회 승인이 필요합니다.`);
+  return { ok: true, passed: true, detail: '긴급재정경제명령 발동: 즉시 효력이 발생했습니다. 다음 분기에 국회 승인을 받지 못하면 효력을 잃습니다.' };
+}
+
+function referendumPolicy(s, pid, oid) {
+  const p = policyById(pid, s), opt = optionOf(p, oid), old = currentOption(p, s);
+  const why = canReferendum(s, p, opt); if (why) return { ok: false, msg: why };
+  if (s.enactedThisTurn.includes(pid) || s.bills.some(b => b.pid === pid)) return { ok: false, msg: '이 분야는 이번 분기에 이미 손댔거나 국회 심의 중입니다.' };
+  const cost = referendumCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  s.pcap -= cost; s.enactedThisTurn.push(pid); s.referendumTurn = s.turn;
+  const { sup } = referendumOdds(s, opt);
+  const result = clamp(sup + gauss() * 5, 5, 95);
+  if (result > 50) {
+    applyPassed(s, p, opt, old);
+    s.approval = clamp(s.approval + 2, 0, 100);
+    addLog(s, 'good', `🗳️ [${p.name}] 국민투표 가결 (찬성 ${result.toFixed(1)}%) → '${opt.label}' 시행.`);
+    return { ok: true, passed: true, detail: `국민투표 찬성 ${result.toFixed(1)}%로 가결되었습니다. 국민의 직접 위임을 받아 시행합니다.` };
+  }
+  s.approval = clamp(s.approval - 4, 0, 100);
+  addLog(s, 'bad', `🗳️ [${p.name}] 국민투표 부결 (찬성 ${result.toFixed(1)}%). 정치적 타격.`);
+  return { ok: true, passed: false, detail: `국민투표 찬성 ${result.toFixed(1)}%로 부결되었습니다. 지지율이 하락했습니다.` };
+}
+
+// 긴급명령의 국회 승인 (다음 분기)
+function emergencyTurn(s, report) {
+  if (!s.emergency?.length) return;
+  report.emergency = [];
+  for (const em of [...s.emergency]) {
+    if (em.turn >= s.turn) continue;
+    s.emergency = s.emergency.filter(x => x !== em);
+    const p = policyById(em.pid, s), opt = optionOf(p, em.oid), prev = optionOf(p, em.prevOid);
+    if (!p || !opt || s.policies[em.pid] !== em.oid) continue;
+    const prob = clamp(voteModel(s, opt).prob + 0.15, 0.05, 0.97);
+    if (Math.random() < prob) {
+      addLog(s, 'good', `🏛️ 국회가 긴급명령 '${opt.label}'을(를) 승인했습니다.`);
+      report.emergency.push(`국회 승인: ${p.name} — ${opt.label}`);
+    } else {
+      applyPassed(s, p, prev, opt);
+      s.approval = clamp(s.approval - 3, 0, 100);
+      addLog(s, 'bad', `🏛️ 국회가 긴급명령 '${opt.label}' 승인을 거부했습니다. 효력을 잃고 '${prev.label}'(으)로 돌아갑니다.`);
+      report.emergency.push(`국회 승인 거부: ${p.name} — ${opt.label} 효력 상실`);
+    }
+  }
+}
+
+HOOKS.migrate.push(s => { if (!s.emergency) s.emergency = []; if (!s.worldview) s.worldview = 'con'; });
+HOOKS.preMacro.push(emergencyTurn);
+
+</script>
+<script>
 /* js/economy.js */
 /* =========================================================
  *  산업·경제 시뮬레이션
@@ -4079,7 +4221,7 @@ const DIPLO_ACTIONS = [
     run: (s, k) => { dip(s, k).fta = true; s.mods.gdp += 0.08 * ecoK(k); relBump(s, k, 3, 5); s.factions.farm -= Math.round(6 * ecoK(k)); s.factions.biz += Math.round(5 * ecoK(k)); return `${cname(k)}과(와) FTA를 체결했습니다.`; } },
   { id: 'alliance', name: '안보 동맹', icon: '🛡️', pc: 40, desc: '안보 상승(상대 군사력 비례), 상대 진영 반발. 관계 75 이상.',
     can: (s, k) => dip(s, k).alliance ? '이미 동맹입니다.' : k === 'nk' ? '불가합니다.' : relOf(s, k) < 75 ? '관계 75 이상 필요.' : null,
-    cost: (s, k) => isCore(k) ? 40 : Math.round(15 + cinfo(k).mil * 0.3),
+    cost: (s, k) => Math.round((isCore(k) ? 40 : 15 + cinfo(k).mil * 0.3) * (dip(s, k).allyOffer >= s.turn ? 0.5 : 1)),
     run: (s, k) => {
       dip(s, k).alliance = true; s.mods.security += Math.max(1, Math.round(cinfo(k).mil / 20)); relBump(s, k, 3, 5);
       if (['us', 'jp', 'tw'].includes(k) || NATO.has(k)) s.relMods.cn -= isCore(k) ? 8 : 2;
@@ -4124,6 +4266,7 @@ function diploAction(s, aid, k, goal) {
   const a = DIPLO_ACTIONS.find(x => x.id === aid);
   if (!cinfo(k)) return { ok: false, msg: '알 수 없는 나라입니다.' };
   if (s.annexed[k]) return { ok: false, msg: '이미 합병된 지역입니다.' };
+  if (s.world?.owner?.[k]) return { ok: false, msg: `${cname(s.world.owner[k])}에 병합된 지역입니다.` };
   const why = a.can(s, k); if (why) return { ok: false, msg: why };
   const cost = diploCost(s, a, k);
   if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
@@ -4144,7 +4287,7 @@ function protectorsOf(k) {
   return [...out];
 }
 function warAllies(s, k, side, aggressor = 'kr') {
-  if (side === 'them') return protectorsOf(k).filter(c => cinfo(c) && !s.annexed[c] && !dip(s, c).alliance && relOf(s, c) < (PROTECT_TH[`${k}>${c}`] ?? (c === 'us' ? 90 : 85)));
+  if (side === 'them') return protectorsOf(k).filter(c => cinfo(c) && !s.annexed[c] && !s.world?.owner?.[c] && !hasTrait(s, c, 'isolationist') && !dip(s, c).alliance && relOf(s, c) < (PROTECT_TH[`${k}>${c}`] ?? (c === 'us' ? 90 : 85)));
   const prot = new Set(protectorsOf(k));
   return Object.keys(s.diplo).filter(c => c !== k && cinfo(c) && !cinfo(c).isBloc && dip(s, c).alliance && !s.annexed[c] && !prot.has(c)
     && (aggressor === 'them' || (k === 'nk' && c === 'us' && relOf(s, 'us') >= 70) || relOf(s, c) >= 85));
@@ -4154,7 +4297,7 @@ function warOdds(s, k) {
   const allies = w ? w.allies : warAllies(s, k, 'kr'), en = w ? w.enemyAllies : warAllies(s, k, 'them');
   const reach = cinfo(k).reach;
   const ours = milPower(s) * reach + allies.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
-  const theirs = cinfo(k).mil + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
+  const theirs = (typeof power === 'function' && s.world ? power(s, k) : cinfo(k).mil) + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   return { ours, theirs, edge: (ours - theirs) / (ours + theirs), reach, allies, en };
 }
 function nukeRisk(s) {
@@ -4275,12 +4418,12 @@ function worldTurn(s, report) {
   report.world = { events: [] };
   // 비핵심국 관계 변화 (EU 회원국은 EU 관계를 따라감)
   for (const k of Object.keys(s.rel)) {
-    if (isCore(k) || s.annexed[k] || !cinfo(k)) continue;
+    if (isCore(k) || s.annexed[k] || s.world?.owner?.[k] || !cinfo(k)) continue;
     const eq = baseRel(k) + (s.relMods[k] || 0) + (cinfo(k).eu ? (s.rel.eu - RELATIONS.eu.base) * 0.6 : 0) + (NATO.has(k) ? (s.rel.us - RELATIONS.us.base) * 0.2 : 0);
     s.rel[k] = clamp(s.rel[k] + (eq - s.rel[k]) * 0.2 + gauss() * 0.6, 0, 100);
   }
   // 북한의 기습 침공(관계 최악·우리 군사력 약할 때)
-  if (!s.war && !s.annexed.nk && s.rel.nk < 8 && milPower(s) < 58 && Math.random() < 0.04) report.world.events.push(startWar(s, 'nk', 'them', 'concession'));
+  if (!s.war && !s.annexed.nk && s.rel.nk < 8 && milPower(s) < 58 && (typeof leaderAgg !== 'function' || leaderAgg(s, 'nk') >= 45) && Math.random() < 0.015) report.world.events.push(startWar(s, 'nk', 'them', 'concession'));
   // 우호국의 FTA 제안 (핵심국 + 무작위 몇 나라)
   const cands = [...Object.keys(RELATIONS), ...Object.keys(s.rel).filter(k => !isCore(k)).sort(() => Math.random() - 0.5).slice(0, 12)];
   for (const k of cands) {
@@ -4338,6 +4481,509 @@ HOOKS.migrate.push(s => {
 });
 HOOKS.postMacro.push(worldTurn);
 HOOKS.events.push(worldEvents);
+
+</script>
+<script>
+/* js/leaders.js */
+/* =========================================================
+ *  각국 지도자 (가상 인물)
+ *  - 정치체제·직함·성향 특성을 갖고, 선거·승계·쿠데타로 바뀜
+ *  - 지도자 성향이 그 나라 AI의 공격성·대한(對韓) 관계·동맹 태도를 결정
+ *  - 실존 인물이 아닙니다. 이름은 각 문화권 이름에서 무작위로 조합합니다.
+ * ========================================================= */
+
+const IDEOLOGIES = {
+  dem:   { name: '민주주의', color: '#3e9b5f', agg: 8 },
+  comm:  { name: '공산주의', color: '#c23b3b', agg: 32 },
+  auth:  { name: '권위주의', color: '#d0812b', agg: 28 },
+  mon:   { name: '왕정',     color: '#7a4fb5', agg: 18 },
+  junta: { name: '군사정권', color: '#7b5a3a', agg: 40 },
+  theo:  { name: '신정',     color: '#2f6f4f', agg: 34 },
+};
+// 정치체제 (지정이 없으면 대륙별 기본값)
+const GOV = {
+  us: 'dem', jp: 'dem', tw: 'dem', cn: 'comm', nk: 'comm', ru: 'auth', vnm: 'comm', lao: 'comm', cub: 'comm',
+  sau: 'mon', are: 'mon', qat: 'mon', kwt: 'mon', bhr: 'mon', omn: 'mon', jor: 'mon', mar: 'mon', brn: 'mon', swz: 'mon', btn: 'mon',
+  irn: 'theo', afg: 'theo', mmr: 'junta', mli: 'junta', bfa: 'junta', ner: 'junta', gin: 'junta', sdn: 'junta', tcd: 'junta',
+  ind: 'dem', idn: 'dem', phl: 'dem', mng: 'dem', tha: 'dem', mys: 'dem', sgp: 'dem', lka: 'dem', npl: 'dem', bgd: 'dem', isr: 'dem', tur: 'auth',
+  blr: 'auth', kaz: 'auth', uzb: 'auth', tkm: 'auth', tjk: 'auth', aze: 'auth', syr: 'auth', egy: 'auth', dza: 'auth', ven: 'auth', nic: 'auth', khm: 'auth', pak: 'dem', irq: 'dem', geo: 'dem', arm: 'dem', ukr: 'dem', mda: 'dem',
+  zaf: 'dem', nga: 'dem', gha: 'dem', ken: 'dem', sen: 'dem', bwa: 'dem', nam: 'dem', eth: 'auth', eri: 'auth', rwa: 'auth', uga: 'auth', cmr: 'auth', ago: 'auth', zwe: 'auth', cog: 'auth', gnq: 'auth', tun: 'auth', lby: 'junta',
+};
+const REG_GOV = { Europe: 'dem', 'North America': 'dem', 'South America': 'dem', Oceania: 'dem', Asia: 'auth', Africa: 'auth' };
+const govOf = k => GOV[k] || REG_GOV[cinfo(k)?.reg] || 'auth';
+// 의원내각제 국가는 총리
+const PM = new Set(['jp', 'gbr', 'deu', 'ind', 'can', 'aus', 'nzl', 'ita', 'esp', 'nld', 'bel', 'swe', 'nor', 'dnk', 'fin', 'aut', 'hun', 'cze', 'svk', 'grc', 'prt', 'irl', 'isr', 'pak', 'bgd', 'tha', 'mys', 'sgp', 'npl', 'jam', 'est', 'lva', 'hrv', 'svn', 'alb', 'irq', 'arm', 'geo', 'mng', 'lux', 'isl', 'mlt']);
+function titleOf(k, gov) {
+  if (k === 'nk') return '국무위원장';
+  if (k === 'tw') return '총통';
+  if (gov === 'comm') return k === 'cn' ? '국가주석' : '총서기';
+  if (gov === 'mon') return ['gbr', 'jpn'].includes(k) ? '총리' : '국왕';
+  if (gov === 'theo') return '최고지도자';
+  if (gov === 'junta') return '군사위원회 의장';
+  return PM.has(k) ? '총리' : '대통령';
+}
+
+/* ---------------- 성향 특성 ---------------- */
+// agg: 공격성, rel: 대한 관계 보정, ally: 동맹 참전 의지, fta: FTA 비용 배율
+const TRAITS = {
+  aggressive:   { name: '호전적',   desc: '약한 이웃을 무력으로 압박합니다.', agg: 30 },
+  expansionist: { name: '팽창주의', desc: '영토 확장을 노립니다. 전쟁에 이기면 합병합니다.', agg: 20 },
+  pacifist:     { name: '평화주의', desc: '전쟁을 피하고 중재를 선호합니다.', agg: -30 },
+  cautious:     { name: '신중함',   desc: '모험을 피합니다.', agg: -12 },
+  nationalist:  { name: '민족주의', desc: '자국 우선. 외국에 대한 경계가 큽니다.', agg: 10, rel: -5 },
+  proUS:        { name: '친미',     desc: '미국 진영과 가깝습니다. 한미동맹이 유지되면 한국에 우호적입니다.', relFn: s => (dip(s, 'us').alliance ? 8 : -4) },
+  proCN:        { name: '친중',     desc: '중국 진영과 가깝습니다. 한국이 미국 편에 설수록 냉담합니다.', relFn: s => (dip(s, 'us').alliance ? -6 : 6) + (s.rel.cn - 46) * 0.1 },
+  pragmatic:    { name: '실용주의', desc: '이념보다 이익. FTA·협력에 적극적입니다.', rel: 4, fta: 0.7 },
+  isolationist: { name: '고립주의', desc: '남의 전쟁에 끼지 않습니다.', ally: -1, agg: -5 },
+  opportunist:  { name: '기회주의', desc: '이미 전쟁 중인 약한 나라를 노립니다.', agg: 12 },
+  koreaFriend:  { name: '지한파',   desc: '한국 문화와 경제를 높이 평가합니다.', rel: 10 },
+  hardliner:    { name: '강경파',   desc: '협상보다 압박. 무리한 요구를 하기도 합니다.', agg: 15, rel: -6 },
+};
+// 체제별로 잘 나오는 특성
+const TRAIT_POOL = {
+  dem: ['pragmatic', 'pragmatic', 'cautious', 'pacifist', 'nationalist', 'koreaFriend', 'proUS', 'isolationist'],
+  comm: ['nationalist', 'hardliner', 'cautious', 'proCN', 'aggressive', 'pragmatic'],
+  auth: ['nationalist', 'aggressive', 'opportunist', 'pragmatic', 'hardliner', 'cautious', 'proCN', 'expansionist'],
+  mon: ['pragmatic', 'cautious', 'proUS', 'koreaFriend', 'nationalist'],
+  junta: ['aggressive', 'hardliner', 'opportunist', 'nationalist', 'expansionist'],
+  theo: ['hardliner', 'nationalist', 'aggressive', 'isolationist'],
+};
+// 핵심국은 성향 일부를 고정 (지도자가 바뀌어도 국가 노선의 기본은 유지)
+const FIXED_TRAITS = { cn: ['nationalist'], ru: ['nationalist'], nk: ['hardliner'], us: [], jp: ['cautious'], tw: ['proUS'], isr: ['hardliner'], irn: ['hardliner'] };
+
+/* ---------------- 이름 (가상) ---------------- */
+const NAMES = {
+  zh: { sur: ['왕', '리', '장', '류', '천', '양', '자오', '저우', '쉬', '쑨', '마', '후'], given: ['지펑', '하이린', '웨이둥', '젠궈', '밍청', '수란', '중화', '리신', '창허', '원보', '쥔', '샤오핑'], eastern: true },
+  ja: { sur: ['사토', '스즈키', '다카하시', '다나카', '와타나베', '이토', '야마모토', '나카무라', '고바야시', '가토'], given: ['겐이치', '히로시', '다쿠야', '마사토', '유코', '나오키', '사토시', '아키라', '레이코', '고지'], eastern: true, space: true },
+  ko: { sur: ['김', '리', '박', '최', '정', '한', '조', '윤'], given: ['정철', '영남', '성호', '명수', '광혁', '은희', '철룡', '혁진'], eastern: true },
+  mn: { sur: ['바트', '오윤', '간', '체렌'], given: ['에르데네', '바야르', '수흐바타르', '돌고르', '나란', '테무진'] },
+  en: { sur: ['하트웰', '모리슨', '캘러핸', '브룩스', '웬트워스', '해리슨', '애시퍼드', '골드버그', '맥닐', '펠프스', '로던', '셰리든'], given: ['제임스', '캐서린', '로버트', '엘리너', '대니얼', '마거릿', '토머스', '헬렌', '윌리엄', '그레이스', '조너선', '앨리스'] },
+  es: { sur: ['가르시아', '로드리게스', '마르티네스', '페르난데스', '로페스', '모랄레스', '에레라', '바르가스', '멘도사', '카스티요'], given: ['카를로스', '루시아', '하비에르', '마리아', '안드레스', '이사벨', '디에고', '카밀라', '라파엘', '소피아'] },
+  pt: { sur: ['실바', '산투스', '올리베이라', '코스타', '페레이라', '알메이다', '카르발류'], given: ['주앙', '아나', '페드루', '베아트리스', '루이스', '마리아나', '하파엘'] },
+  fr: { sur: ['르블랑', '모로', '포르니에', '지라르', '랑베르', '보네', '뒤랑', '루소'], given: ['프랑수아', '카미유', '앙투안', '엘로디', '피에르', '마틸드', '로랑', '클레르'] },
+  de: { sur: ['베버', '슈미트', '호프만', '바그너', '베커', '슐츠', '피셔', '노이만'], given: ['프리드리히', '안겔리카', '마르쿠스', '자비네', '클라우스', '레나테', '토비아스', '우테'] },
+  it: { sur: ['로시', '페라리', '콜롬보', '리치', '마리노', '그레코', '브루노', '갈리'], given: ['마르코', '줄리아', '알레산드로', '키아라', '로렌초', '프란체스카', '조반니', '엘레나'] },
+  slav: { sur: ['볼코프', '노박', '코발렌코', '페트로프', '레베데프', '코작', '모로조프', '즈베레프'], given: ['드미트리', '올가', '세르게이', '나탈리야', '안드레이', '이리나', '미하일', '타티아나'] },
+  nord: { sur: ['안데르센', '린드크비스트', '한센', '스벤손', '요한센', '닐센', '빅룬드'], given: ['에리크', '잉리드', '라르스', '시그리드', '올라프', '아스트리드', '닐스'] },
+  ar: { sur: ['알하킴', '알라시드', '알만수르', '알파이살', '하다드', '나세르', '살레', '알자예드'], given: ['칼리드', '파티마', '오마르', '라일라', '유세프', '아미라', '하산', '타리크'] },
+  fa: { sur: ['호세이니', '라흐마니', '모하마디', '카리미', '자파리'], given: ['알리레자', '마흐무드', '레자', '파르비즈', '하미드'] },
+  tr: { sur: ['일디즈', '데미르', '샤힌', '아이든', '쾨세'], given: ['메흐메트', '아이셰', '무스타파', '엘리프', '케말'] },
+  he: { sur: ['레비', '코헨', '미즈라히', '페레츠', '비톤'], given: ['요나탄', '노아', '아비', '탈', '다비드'] },
+  in: { sur: ['샤르마', '파텔', '싱', '쿠마르', '굽타', '라오', '메논', '레디'], given: ['라제시', '프리야', '아르준', '아난야', '비크람', '카비타', '산자이', '미라'] },
+  sea: { sur: ['응우옌', '산토스', '위자야', '수완', '탄', '이스마일', '레', '림'], given: ['안', '마리아', '부디', '시리', '하이', '누르', '마닐라', '티엔'] },
+  tk: { sur: ['누르벡', '사파로프', '아이트마토프', '토카예프', '라히모프'], given: ['아스카르', '굴나라', '테무르', '디나라', '바흐티요르'] },
+  af: { sur: ['오콘쿼', '음베키', '케냐타', '디알로', '므왕기', '오비', '반다', '투레'], given: ['쿠와메', '아마라', '은도우', '자이납', '오바', '파투', '키마니', '음와리'] },
+};
+const CULTURE = { us: 'en', can: 'en', gbr: 'en', irl: 'en', aus: 'en', nzl: 'en', cn: 'zh', tw: 'zh', jp: 'ja', nk: 'ko', mng: 'mn', bra: 'pt', prt: 'pt', ago: 'pt', moz: 'pt',
+  fra: 'fr', bel: 'fr', lux: 'fr', che: 'de', deu: 'de', aut: 'de', nld: 'de', ita: 'it', esp: 'es', mex: 'es', irn: 'fa', afg: 'fa', tur: 'tr', aze: 'tr', isr: 'he', grc: 'it', cyp: 'it', mlt: 'it',
+  ind: 'in', pak: 'in', bgd: 'in', npl: 'in', lka: 'in', btn: 'in', phl: 'sea', isl: 'nord' };
+const SUB_CULTURE = { 'Northern Europe': 'nord', 'Eastern Europe': 'slav', 'Southern Europe': 'slav', 'Western Europe': 'de', 'Western Asia': 'ar', 'Northern Africa': 'ar', 'Southern Asia': 'in', 'Central Asia': 'tk', 'South-Eastern Asia': 'sea',
+  'Northern America': 'en', 'Central America': 'es', 'Caribbean': 'es', 'South America': 'es', 'Australia and New Zealand': 'en' };
+function cultureOf(k) { const m = typeof MAP_DATA !== 'undefined' && MAP_DATA.countries[k]; return CULTURE[k] || SUB_CULTURE[m?.sub] || (m?.reg === 'Africa' ? 'af' : m?.reg === 'Oceania' ? 'en' : 'en'); }
+
+// 결정적 난수 (나라·세대가 같으면 같은 지도자)
+function hashRnd(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; }; }
+
+function genLeader(s, k, gen, gov) {
+  const r = hashRnd(`${k}:${gen}:${s.seed || 0}`);
+  gov = gov || govOf(k);
+  const pool = NAMES[cultureOf(k)] || NAMES.en;
+  const sur = pool.sur[Math.floor(r() * pool.sur.length)], given = pool.given[Math.floor(r() * pool.given.length)];
+  const name = pool.eastern ? `${sur}${pool.space || given.length <= 1 ? ' ' : ''}${given}` : `${given} ${sur}`;
+  const traits = [...(FIXED_TRAITS[k] || [])];
+  const tp = TRAIT_POOL[gov];
+  const want = isCore(k) ? 3 : 2;
+  let guard = 0;
+  while (traits.length < want && guard++ < 30) {
+    const t = tp[Math.floor(r() * tp.length)];
+    if (traits.includes(t)) continue;
+    if ((t === 'pacifist' && traits.some(x => ['aggressive', 'expansionist', 'hardliner'].includes(x))) || (['aggressive', 'expansionist'].includes(t) && traits.includes('pacifist'))) continue;
+    if ((t === 'proUS' && traits.includes('proCN')) || (t === 'proCN' && traits.includes('proUS'))) continue;
+    traits.push(t);
+  }
+  const age = 48 + Math.floor(r() * 26);
+  return { name, gov, title: titleOf(k, gov), traits, gen, since: s.turn || 0, age, avatarHue: Math.floor(r() * 360) };
+}
+
+function leaderAgg(s, k) {
+  const L = s.leaders?.[k]; if (!L) return 20;
+  return clamp(IDEOLOGIES[L.gov].agg + L.traits.reduce((a, t) => a + (TRAITS[t].agg || 0), 0), 0, 100);
+}
+function leaderRelDelta(s, k, L) {
+  L = L || s.leaders?.[k]; if (!L) return 0;
+  return L.traits.reduce((a, t) => a + (TRAITS[t].rel || 0) + (TRAITS[t].relFn ? TRAITS[t].relFn(s) : 0), 0);
+}
+const hasTrait = (s, k, t) => !!s.leaders?.[k]?.traits.includes(t);
+
+// 지도자 교체: 관계 보정을 새 지도자 성향으로 갈아끼움
+function replaceLeader(s, k, reason, newGov) {
+  const old = s.leaders[k];
+  const L = genLeader(s, k, (old?.gen || 0) + 1, newGov || old?.gov);
+  const d = leaderRelDelta(s, k, L) - leaderRelDelta(s, k, old);
+  s.relMods[k] = (s.relMods[k] || 0) + d; s.rel[k] = clamp(relOf(s, k) + d * 0.5, 0, 100);
+  s.leaders[k] = L;
+  const txt = `${cflag(k)} ${cname(k)}: ${reason} — 새 ${L.title} ${L.name} 취임 (${L.traits.map(t => TRAITS[t].name).join('·')})`;
+  // 작은 나라의 평범한 정권 교체는 뉴스에서 생략
+  if (isCore(k) || cinfo(k).eco >= 40 || Math.abs(d) >= 5 || !/선거/.test(reason)) worldNews(s, txt, Math.abs(d) >= 5 ? (d > 0 ? 'good' : 'bad') : 'info');
+  return L;
+}
+
+/* ---------------- 지도자 교체 (분기마다) ---------------- */
+function leadersTurn(s) {
+  for (const k of Object.keys(s.leaders)) {
+    if (s.annexed[k] || s.world?.owner?.[k]) continue;
+    const L = s.leaders[k], years = (s.turn - L.since) / 4;
+    if (L.gov === 'dem') {
+      // 4~5년마다 선거: 현직 재선 가능성은 성향과 무관하게 45%
+      if (years >= 4 && Math.random() < 0.3) { if (Math.random() < 0.45) { L.since = s.turn; if (isCore(k) || cinfo(k).eco >= 40) worldNews(s, `${cflag(k)} ${cname(k)}: 선거에서 ${L.title} ${L.name} 재선`, 'info'); } else replaceLeader(s, k, '선거로 정권 교체'); }
+    } else if (L.gov === 'junta') {
+      if (Math.random() < 0.025) replaceLeader(s, k, '쿠데타', Math.random() < 0.3 ? 'dem' : 'junta');
+    } else {
+      if (Math.random() < 0.006 + Math.max(0, L.age + years - 75) * 0.003) replaceLeader(s, k, L.gov === 'mon' ? '왕위 계승' : '권력 승계');
+      else if (L.gov === 'auth' && Math.random() < 0.004) replaceLeader(s, k, '민주화 시위로 정권 붕괴', 'dem');
+    }
+  }
+}
+
+/* ---------------- 규칙 기반 지도자 대화 (Claude가 없을 때) ---------------- */
+function ruleLeaderTalk(s, k, msg) {
+  const L = s.leaders[k], r = relOf(s, k), tr = t => L.traits.includes(t);
+  const has = (...w) => w.some(x => msg.includes(x));
+  let d = 0, reply;
+  const warm = r >= 65, cold = r < 35;
+  if (has('위협', '전쟁', '침공', '각오', '경고', '제재')) {
+    d = tr('hardliner') || tr('nationalist') || tr('aggressive') ? -8 : -4;
+    reply = tr('aggressive') || tr('hardliner') ? `협박은 통하지 않소. ${cname(k)} 국민은 굴복하지 않을 것이오. 선을 넘으면 그 대가를 치르게 될 거요.` : '그런 말씀은 양국 관계에 도움이 되지 않습니다. 대화로 풀어 갔으면 합니다.';
+  } else if (has('FTA', '무역', '투자', '경제', '협력', '반도체')) {
+    d = tr('pragmatic') ? 6 : tr('isolationist') || tr('nationalist') ? 1 : 3;
+    reply = tr('pragmatic') ? '좋습니다. 이익이 되는 거래라면 언제든 환영입니다. 실무진에게 바로 협상을 지시하겠습니다.' : cold ? '경제 협력은 신뢰가 먼저입니다. 귀국의 태도부터 지켜보겠습니다.' : '경제 협력 제안은 검토해 보겠습니다. 구체적인 안을 보내 주십시오.';
+  } else if (has('동맹', '안보', '군사', '함께')) {
+    d = tr('isolationist') ? -1 : warm ? 5 : 1;
+    reply = tr('isolationist') ? '우리는 다른 나라의 분쟁에 휘말리고 싶지 않습니다. 이해해 주십시오.' : warm ? '귀국은 믿을 만한 친구입니다. 안보 협력을 한 단계 높이는 방안을 논의합시다.' : '안보 협력은 아직 이르다고 봅니다. 관계를 더 쌓아 갑시다.';
+  } else if (has('원조', '지원', '도움', '백신', '재건')) {
+    d = 4; reply = '귀국의 호의에 깊이 감사드립니다. 우리 국민도 이 마음을 잊지 않을 겁니다.';
+  } else if (has('평화', '대화', '화해', '친구', '우정', '존중')) {
+    d = tr('pacifist') ? 6 : tr('hardliner') ? 1 : 3;
+    reply = tr('hardliner') ? '말보다 행동을 보여 주시오. 그러면 우리도 응할 것이오.' : '평화와 상호 존중, 저도 같은 생각입니다. 양국의 미래를 위해 함께 노력합시다.';
+  } else {
+    d = warm ? 2 : cold ? -1 : 1;
+    reply = warm ? '언제나 반갑습니다, 대통령님. 우리 두 나라의 우정이 계속되길 바랍니다.' : cold ? '용건을 분명히 말씀해 주시겠습니까.' : '말씀 잘 들었습니다. 우리 정부도 신중히 검토하겠습니다.';
+  }
+  return { reply, relDelta: d, mood: d >= 4 ? '우호적' : d <= -4 ? '불쾌함' : '중립' };
+}
+
+HOOKS.migrate.push(s => {
+  if (!s.seed) s.seed = Math.floor(Math.random() * 1e6);
+  if (!s.leaders) {
+    s.leaders = {};
+    for (const k of allCountryKeys()) {
+      if (CORE_INFO[k]?.bloc) continue;
+      const L = genLeader(s, k, 1);
+      L.since = -Math.floor(Math.random() * 16); // 이미 재임 중인 기간
+      s.leaders[k] = L;
+      // 핵심국은 이미 관계 수치에 국가 노선이 반영돼 있으므로 지도자 성향 보정을 약하게
+      const d = leaderRelDelta(s, k, L) * (isCore(k) ? 0.4 : 1);
+      s.relMods[k] = (s.relMods[k] || 0) + d; s.rel[k] = clamp(relOf(s, k) + d * 0.6, 0, 100);
+    }
+  }
+});
+HOOKS.postTurn.push(leadersTurn);
+
+</script>
+<script>
+/* js/worldai.js */
+/* =========================================================
+ *  살아 있는 세계: 각국 AI (2020년대 국제정치)
+ *  - 지도자 성향에 따라 관세 전쟁·사이버 공격·국경 분쟁·전쟁·내전이 일어남
+ *  - 강대국은 직접 참전보다 무기 지원(대리전), 서방은 침략국에 제재
+ *  - 강제 병합은 드물고, 일어나면 세계 긴장도가 치솟고 국제 제재
+ *  - 대한민국은 중재·인도적 지원·무기 지원·제재 동참·참전으로 개입 가능
+ * ========================================================= */
+
+const CONFLICT_TYPES = {
+  trade:  { name: '관세 전쟁', icon: '💱' },
+  cyber:  { name: '사이버 공격', icon: '💻' },
+  border: { name: '국경 분쟁', icon: '🚧' },
+  war:    { name: '전쟁', icon: '💥' },
+  civil:  { name: '내전', icon: '🔥' },
+};
+// 현대 진영
+const CAMPS = {
+  west: { name: '미국 주도 동맹', color: '#3d7be0' },
+  east: { name: '중·러 축', color: '#d1494f' },
+  south: { name: '비동맹(글로벌 사우스)', color: '#b9a36a' },
+};
+const EAST_CAMP = new Set(['cn', 'ru', 'nk', 'irn', 'blr', 'syr', 'cub', 'ven', 'nic', 'kaz', 'kgz', 'tjk', 'uzb', 'lao', 'mmr', 'eri']);
+const WEST_CAMP_EXTRA = new Set(['jp', 'tw', 'aus', 'nzl', 'phl', 'isr', 'ukr', 'kor', 'sgp']);
+function campOf(s, k) {
+  if (k === 'kr') return dip(s, 'us').alliance ? 'west' : s.rel.cn > 70 ? 'east' : 'south';
+  if (s.world?.owner?.[k]) return campOf(s, s.world.owner[k]);
+  const L = s.leaders?.[k];
+  if (L?.traits.includes('proCN')) return 'east';
+  if (L?.traits.includes('proUS')) return 'west';
+  if (EAST_CAMP.has(k)) return 'east';
+  if (NATO.has(k) || EU_MEMBERS.has(k) || WEST_CAMP_EXTRA.has(k)) return 'west';
+  return 'south';
+}
+
+/* ---------------- 공통 ---------------- */
+function worldNews(s, text, type = 'info') {
+  s.world.news.unshift({ turn: s.turn, text, type });
+  if (s.world.news.length > 120) s.world.news.length = 120;
+  (s.world.turnNews = s.world.turnNews || []).push({ text, type });
+}
+const ownerOf = (s, k) => s.world?.owner?.[k] || null;
+const alive = (s, k) => !s.annexed[k] && !ownerOf(s, k) && !!s.leaders?.[k];
+function power(s, k) {
+  let p = cinfo(k).mil;
+  for (const [o, by] of Object.entries(s.world?.owner || {})) if (by === k) p += cinfo(o).mil * 0.4;
+  const civil = s.world?.conflicts.find(c => c.type === 'civil' && c.a === k);
+  return civil ? p * 0.6 : p;
+}
+let _neighbors = null;
+function neighborsOf(k) {
+  if (!_neighbors) {
+    _neighbors = {};
+    const ks = Object.keys(MAP_DATA.countries).filter(x => x !== 'kr');
+    for (const a of ks) _neighbors[a] = [];
+    for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
+      const A = MAP_DATA.countries[ks[i]], B = MAP_DATA.countries[ks[j]];
+      const lim = 900 + (Math.sqrt(A.a) + Math.sqrt(B.a)) * 55; // 큰 나라일수록 국경이 먼 곳까지
+      if (kmBetween(A.ll, B.ll) < lim) { _neighbors[ks[i]].push(ks[j]); _neighbors[ks[j]].push(ks[i]); }
+    }
+  }
+  return _neighbors[k] || [];
+}
+const inConflict = (s, k, type) => s.world.conflicts.some(c => (c.a === k || c.b === k) && (!type || c.type === type));
+const weightedPick = arr => { let r = Math.random() * arr.reduce((a, x) => a + x.w, 0); return arr.find(x => (r -= x.w) <= 0) || arr[0]; };
+
+/* ---------------- 분쟁 생성 ---------------- */
+function maybeStartConflicts(s, report) {
+  const W = s.world, T = W.tension / 100;
+  const keys = Object.keys(s.leaders).filter(k => alive(s, k));
+  // 1) 관세 전쟁: 경제 대국끼리, 진영이 다르고 민족주의·강경파 지도자
+  if (Math.random() < 0.18 + T * 0.12) {
+    const big = keys.filter(k => cinfo(k).eco >= 70);
+    const a = big[Math.floor(Math.random() * big.length)];
+    const cands = big.filter(b => b !== a && campOf(s, a) !== campOf(s, b) && !W.conflicts.some(c => c.type === 'trade' && [c.a, c.b].includes(a) && [c.a, c.b].includes(b)));
+    if (a && cands.length && (hasTrait(s, a, 'nationalist') || hasTrait(s, a, 'hardliner') || Math.random() < 0.3)) {
+      const b = cands[Math.floor(Math.random() * cands.length)];
+      addConflict(s, 'trade', a, b, `${cname(a)}이(가) ${cname(b)} 수입품에 고율 관세를 부과했습니다. 보복 관세가 이어집니다.`);
+    }
+  }
+  // 2) 사이버 공격: 권위·공산·신정 강경 지도자가 민주국가를
+  for (const a of keys) {
+    const L = s.leaders[a]; if (L.gov === 'dem' || !(L.traits.includes('hardliner') || L.traits.includes('aggressive'))) continue;
+    if (Math.random() < 0.008 + T * 0.01) {
+      const targets = keys.filter(b => b !== a && s.leaders[b].gov === 'dem' && campOf(s, b) !== campOf(s, a) && cinfo(b).eco >= 30);
+      if (Math.random() < 0.18 && campOf(s, a) !== campOf(s, 'kr') && relOf(s, a) < 45) { koreaCyber(s, a); continue; }
+      const b = targets[Math.floor(Math.random() * targets.length)];
+      if (b) addConflict(s, 'cyber', a, b, `${cname(a)} 연계 해커 조직이 ${cname(b)}의 전력망·금융망을 공격했습니다.`);
+    }
+  }
+  // 3) 국경 분쟁 → 전쟁: 공격적 지도자가 약한 이웃을
+  for (const a of keys) {
+    const agg = leaderAgg(s, a); if (agg < 45 || inConflict(s, a, 'war') || cinfo(a).mil < 15) continue;
+    if (Math.random() > (agg - 40) / 100 * (0.04 + T * 0.06)) continue;
+    const opp = hasTrait(s, a, 'opportunist');
+    const targets = neighborsOf(a).filter(b => alive(s, b) && b !== 'kr' && campOf(s, b) !== campOf(s, a) || (alive(s, b) && opp && inConflict(s, b)))
+      .filter(b => alive(s, b) && power(s, b) < power(s, a) * 0.9 && !(NUKES.has(b) && !NUKES.has(a)))
+      .map(b => ({ b, w: 1 + (s.leaders[b].gov !== s.leaders[a].gov ? 1 : 0) + (inConflict(s, b) ? 1 : 0) }));
+    if (!targets.length) continue;
+    const { b } = weightedPick(targets);
+    if (W.conflicts.some(c => [c.a, c.b].includes(a) && [c.a, c.b].includes(b) && c.type === 'border')) {
+      // 이미 국경 분쟁 중이면 전면전으로 비화
+      if (agg >= 55) startAiWar(s, a, b);
+    } else addConflict(s, 'border', a, b, `${cname(a)}과(와) ${cname(b)} 국경에서 무력 충돌이 발생했습니다.`);
+  }
+  // 4) 내전: 군사정권·권위주의, 무작위
+  for (const a of keys) {
+    const L = s.leaders[a]; if (!['junta', 'auth', 'theo'].includes(L.gov) || inConflict(s, a, 'civil')) continue;
+    if (Math.random() < (L.gov === 'junta' ? 0.008 : 0.0022) * (1 + T)) addConflict(s, 'civil', a, a, `${cname(a)}에서 반정부 무장 세력이 봉기해 내전으로 번졌습니다. 난민이 쏟아지고 있습니다.`);
+  }
+}
+function addConflict(s, type, a, b, text) {
+  const c = { id: uid(), type, a, b, score: 0, turns: 0, since: s.turn, supportA: [], supportB: [], krRole: null };
+  s.world.conflicts.push(c);
+  s.world.tension = clamp(s.world.tension + { trade: 3, cyber: 1, border: 3, war: 10, civil: 2 }[type], 0, 100);
+  worldNews(s, `${CONFLICT_TYPES[type].icon} ${text}`, type === 'trade' || type === 'cyber' ? 'info' : 'bad');
+  return c;
+}
+function startAiWar(s, a, b) {
+  const W = s.world;
+  W.conflicts = W.conflicts.filter(c => !(c.type === 'border' && [c.a, c.b].includes(a) && [c.a, c.b].includes(b)));
+  const c = addConflict(s, 'war', a, b, `${cname(a)}이(가) ${cname(b)}을(를) 전면 침공했습니다. ${s.leaders[a].title} ${s.leaders[a].name}: "역사적 영토를 되찾겠다."`);
+  // 대리전: 같은 진영 강대국이 무기 지원 (직접 참전은 하지 않음)
+  for (const p of ['us', 'cn', 'ru', 'gbr', 'fra', 'deu', 'tur', 'ind']) {
+    if (!alive(s, p) || p === a || p === b || hasTrait(s, p, 'isolationist')) continue;
+    if (campOf(s, p) === campOf(s, b) && campOf(s, p) !== campOf(s, a)) c.supportB.push(p);
+    else if (campOf(s, p) === campOf(s, a) && campOf(s, p) !== campOf(s, b) && Math.random() < 0.5) c.supportA.push(p);
+  }
+  if (c.supportB.length) worldNews(s, `🚚 ${c.supportB.map(cname).join('·')}이(가) ${cname(b)}에 무기를 지원하기로 했습니다.`);
+  if (campOf(s, b) === 'west' || campOf(s, a) === 'east') worldNews(s, `🚫 미국 주도 동맹이 ${cname(a)}에 대한 대규모 경제 제재를 발표했습니다.`);
+  // 우리 동맹국이 침공당하면 알림
+  if (dip(s, b).alliance) worldNews(s, `⚠️ 대한민국의 동맹국 ${cname(b)}이(가) 침공당했습니다. 참전 여부를 결정해야 합니다.`, 'bad');
+  return c;
+}
+
+/* ---------------- 분쟁 진행 ---------------- */
+function progressConflicts(s, report) {
+  const W = s.world;
+  for (const c of [...W.conflicts]) {
+    c.turns++;
+    if (c.type === 'trade') {
+      if (c.turns >= 4 && Math.random() < 0.3) endConflict(s, c, `💱 ${cname(c.a)}·${cname(c.b)} 관세 전쟁이 협상으로 일단락되었습니다.`);
+      continue;
+    }
+    if (c.type === 'cyber') { if (c.turns >= 1) endConflict(s, c, null); continue; }
+    if (c.type === 'border') {
+      // 공격적인 쪽이 강하면 전면전으로 비화
+      if (leaderAgg(s, c.a) >= 50 && power(s, c.a) > power(s, c.b) && Math.random() < 0.22 + s.world.tension / 400) { startAiWar(s, c.a, c.b); continue; }
+      if (c.turns >= 2 && Math.random() < 0.45) endConflict(s, c, `🚧 ${cname(c.a)}·${cname(c.b)} 국경 분쟁이 휴전으로 진정되었습니다.`);
+      continue;
+    }
+    if (c.type === 'civil') {
+      c.score += gauss() * 25;
+      if (Math.abs(c.score) >= 70 || c.turns >= 10) {
+        if (c.score <= -70) { replaceLeader(s, c.a, '내전 끝에 정권 붕괴', Math.random() < 0.4 ? 'dem' : 'junta'); endConflict(s, c, null); }
+        else endConflict(s, c, `🔥 ${cname(c.a)} 내전이 ${c.score >= 70 ? '정부군 승리' : '평화협정'}로 끝났습니다.`);
+      }
+      continue;
+    }
+    // 전쟁
+    const pa = power(s, c.a) + c.supportA.reduce((x, p) => x + cinfo(p).mil * 0.25, 0) + (c.krRole === 'armsA' ? 10 : 0);
+    const pb = power(s, c.b) + c.supportB.reduce((x, p) => x + cinfo(p).mil * 0.25, 0) + (c.krRole === 'armsB' ? 10 : 0);
+    c.score = clamp(c.score + (pa - pb) / (pa + pb) * 40 + gauss() * 14, -100, 100);
+    // 현대전: 장기화되면 휴전 압력
+    const ceasefire = c.turns >= 4 && Math.random() < 0.08 + (c.turns - 4) * 0.04 + (hasTrait(s, c.a, 'pacifist') ? 0.2 : 0);
+    if (c.score >= 100) {
+      if (hasTrait(s, c.a, 'expansionist') || Math.random() < 0.25) {
+        W.owner[c.b] = c.a; W.tension = clamp(W.tension + 15, 0, 100);
+        endConflict(s, c, `🚩 ${cname(c.a)}이(가) ${cname(c.b)}을(를) 강제 병합했다고 선언했습니다. 유엔 총회는 규탄 결의를 채택했습니다.`, 'bad');
+        for (const p of ['us', 'eu', 'jp']) if (campOf(s, c.a) !== 'west') relBump(s, p, 0, 0);
+      } else {
+        endConflict(s, c, `🏳️ ${cname(c.b)}이(가) 영토 일부를 내주는 조건으로 ${cname(c.a)}과(와) 휴전했습니다.`, 'bad');
+      }
+    } else if (c.score <= -100) {
+      endConflict(s, c, `🛡️ ${cname(c.b)}이(가) 침공을 격퇴했습니다. ${cname(c.a)}의 ${s.leaders[c.a].title} 리더십이 흔들립니다.`, 'good');
+      if (Math.random() < 0.5) replaceLeader(s, c.a, '패전 책임으로 실각');
+    } else if (ceasefire) {
+      endConflict(s, c, `🕊️ ${cname(c.a)}·${cname(c.b)} 전쟁이 국제 중재로 휴전에 들어갔습니다. (전선 ${c.score >= 0 ? cname(c.a) + ' 우세' : cname(c.b) + ' 우세'})`);
+    }
+  }
+}
+function endConflict(s, c, text, type = 'info') {
+  s.world.conflicts = s.world.conflicts.filter(x => x !== c);
+  if (text) worldNews(s, text, type);
+  s.world.tension = clamp(s.world.tension - { trade: 2, cyber: 0, border: 2, war: 5, civil: 1 }[c.type], 0, 100);
+}
+
+/* ---------------- 대한민국을 향한 AI 행동 ---------------- */
+function koreaCyber(s, a) {
+  worldNews(s, `💻 ${cname(a)} 연계 해커 조직이 한국 금융망·공공기관을 공격했습니다.`, 'bad');
+  s.world.pendingCrises.push({ tpl: 'security', title: `${cname(a)} 배후 대규모 사이버 공격`, desc: `${cname(a)}과(와) 연계된 해커 조직이 국내 은행·병원·공공기관 전산망을 마비시켰습니다.`, sev: 2, relTarget: a });
+}
+function aiTowardKorea(s) {
+  for (const k of Object.keys(s.leaders)) {
+    if (!alive(s, k)) continue;
+    const r = relOf(s, k), agg = leaderAgg(s, k), c = cinfo(k);
+    // 적대적이고 강하고 가까운 나라: 무력 도발 → 드물게 침공
+    if (r < 15 && agg >= 50 && c.km < 3000 && !s.war) {
+      if (Math.random() < 0.05) {
+        s.world.pendingCrises.push({ tpl: 'security', title: `${cname(k)}의 무력 시위`, desc: `${cname(k)}이(가) 우리 영해·영공 인근에서 대규모 군사훈련과 무력 시위를 벌였습니다.`, sev: 2, relTarget: k });
+        worldNews(s, `⚠️ ${cname(k)}이(가) 한국 인근에서 무력 시위`, 'bad');
+      } else if (power(s, k) > milPower(s) * 1.2 && Math.random() < 0.012 && k !== 'nk') {
+        worldNews(s, `💥 ${cname(k)}이(가) 대한민국에 선전포고했습니다!`, 'bad');
+        startWar(s, k, 'them', 'concession');
+      }
+    }
+    // 강경 지도자의 요구
+    if (r < 35 && hasTrait(s, k, 'hardliner') && Math.random() < 0.015) {
+      s.world.pendingCrises.push({ tpl: 'diplomacy', title: `${cname(k)} ${s.leaders[k].title}의 공개 요구`, desc: `${s.leaders[k].name} ${s.leaders[k].title}이(가) 한국에 무역 보복 철회와 사과를 공개적으로 요구했습니다. 거부하면 보복하겠다고 경고했습니다.`, sev: 1, relTarget: k });
+    }
+    // 우호적인 지도자의 제안
+    if (r >= 72 && !dip(s, k).alliance && hasTrait(s, k, 'koreaFriend') && Math.random() < 0.02) {
+      dip(s, k).allyOffer = s.turn + 2;
+      worldNews(s, `🤝 ${cname(k)}의 ${s.leaders[k].title} ${s.leaders[k].name}이(가) 한국과의 안보 협력 강화를 제안했습니다. (2분기 동안 동맹 비용 절반)`, 'good');
+    }
+  }
+}
+
+/* ---------------- 분쟁이 우리 경제에 주는 영향 ---------------- */
+function conflictSpillover(s) {
+  const W = s.world;
+  const mideast = W.conflicts.some(c => ['war', 'civil'].includes(c.type) && ['서아시아·중동', '북아프리카'].includes(cinfo(c.a)?.sub));
+  const usCnTrade = W.conflicts.some(c => c.type === 'trade' && ['us', 'cn'].includes(c.a) && ['us', 'cn'].includes(c.b));
+  const anyWar = W.conflicts.filter(c => c.type === 'war').length;
+  s.sectorShock = s.sectorShock || {};
+  if (mideast) { s.stats.infl += 0.12; s.sectorShock.heavy = (s.sectorShock.heavy || 0) - 0.5; }
+  if (usCnTrade) { s.sectorShock.semi = (s.sectorShock.semi || 0) - 0.8; s.sectorShock.auto = (s.sectorShock.auto || 0) - 0.4; }
+  if (anyWar) s.sectorShock.ship = (s.sectorShock.ship || 0) + 0.5 * anyWar; // 방산 수요
+  if (W.tension > 65) { s.stats.security -= 0.3; s.stats.gdp -= 0.05; s.factions.mil = clamp(s.factions.mil + 1, 0, 100); }
+  W.tension = clamp(W.tension + (35 - W.tension) * 0.12 + gauss() * 0.8, 0, 100); // 평시에는 기준선(35)으로 서서히 복귀
+}
+
+/* ---------------- 우리가 할 수 있는 개입 ---------------- */
+const INTERVENTIONS = [
+  { id: 'mediate', name: '중재', icon: '🕊️', pc: 20, desc: '양측과 관계 50 이상이면 성공 확률이 높습니다. 성공 시 휴전, 세계 긴장도 하락, 국제적 위상 상승.', types: ['war', 'border', 'trade', 'civil'] },
+  { id: 'aid', name: '인도적 지원', icon: '🏥', pc: 8, desc: '피해국 관계 +8, 지지율 소폭 상승, 재정 -0.1%p.', types: ['war', 'civil', 'border'] },
+  { id: 'armsB', name: '피침국 무기 지원', icon: '🚚', pc: 15, desc: '피침국 관계 +12, 침략국 관계 -20. 방산 수출 증가. 전황에 영향.', types: ['war'] },
+  { id: 'sanction', name: '침략국 제재 동참', icon: '🚫', pc: 10, desc: '침략국 관계 -15, 서방 관계 +4, 우리 경제 소폭 부담.', types: ['war'] },
+  { id: 'join', name: '참전', icon: '⚔️', pc: 30, desc: '피침국 편에서 직접 참전합니다. 동맹국이 침공당했으면 국제 반발이 없습니다.', types: ['war'] },
+];
+function intervene(s, cid, act) {
+  const c = s.world.conflicts.find(x => x.id === cid); if (!c) return { ok: false, msg: '이미 끝난 분쟁입니다.' };
+  const a = INTERVENTIONS.find(x => x.id === act);
+  if (s.pcap < a.pc) return { ok: false, msg: `정치자본 ⚡${a.pc}이 필요합니다.` };
+  if (c.krDone?.includes(act)) return { ok: false, msg: '이미 실행했습니다.' };
+  s.pcap -= a.pc; (c.krDone = c.krDone || []).push(act);
+  let msg;
+  if (act === 'mediate') {
+    const p = clamp(0.25 + (Math.min(relOf(s, c.a), relOf(s, c.b)) - 50) / 80 + (s.world.tension < 50 ? 0.1 : 0), 0.05, 0.85);
+    if (Math.random() < p) { endConflict(s, c, null); s.world.tension = clamp(s.world.tension - 6, 0, 100); relBump(s, c.a, 5, 3); if (c.b !== c.a) relBump(s, c.b, 5, 3); s.approval = clamp(s.approval + 2, 0, 100); s.scoreBonus = (s.scoreBonus || 0) + 1; msg = `🕊️ 대한민국의 중재로 ${cname(c.a)}${c.b !== c.a ? '·' + cname(c.b) : ''} ${CONFLICT_TYPES[c.type].name}이(가) 멈췄습니다!`; worldNews(s, msg, 'good'); }
+    else msg = `중재 시도가 실패했습니다. (성공 확률 ${Math.round(p * 100)}%)`;
+  } else if (act === 'aid') {
+    relBump(s, c.b, 8, 4); s.stats.fiscal -= 0.1; s.approval = clamp(s.approval + 0.5, 0, 100); s.factions.lib = clamp(s.factions.lib + 2, 0, 100); msg = `${cname(c.b)}에 긴급 인도적 지원을 보냈습니다.`;
+  } else if (act === 'armsB') {
+    c.krRole = 'armsB'; relBump(s, c.b, 12, 6); relBump(s, c.a, -20, -12); s.sectorShock = s.sectorShock || {}; s.sectorShock.ship = (s.sectorShock.ship || 0) + 3; s.factions.mil = clamp(s.factions.mil + 4, 0, 100); s.factions.lib = clamp(s.factions.lib - 3, 0, 100);
+    msg = `${cname(c.b)}에 무기를 지원했습니다. ${cname(c.a)}이(가) 강하게 반발합니다.`;
+  } else if (act === 'sanction') {
+    dip(s, c.a).sanction = true; relBump(s, c.a, -15, -10); relBump(s, 'us', 3, 2); relBump(s, 'eu', 3, 2); s.mods.gdp -= 0.02 * cinfo(c.a).eco / 50; msg = `${cname(c.a)}에 대한 국제 제재에 동참했습니다.`;
+  } else if (act === 'join') {
+    if (s.war) { s.pcap += a.pc; return { ok: false, msg: '이미 다른 전쟁 중입니다.' }; }
+    const ally = dip(s, c.b).alliance;
+    s.world.conflicts = s.world.conflicts.filter(x => x !== c);
+    startWar(s, c.a, ally ? 'them' : 'kr', 'concession');
+    s.war.allies = [...new Set([...s.war.allies, c.b, ...c.supportB])];
+    s.war.score = clamp(-c.score * 0.5, -60, 60);
+    msg = `${cname(c.b)} 편에서 ${cname(c.a)}과(와)의 전쟁에 참전했습니다.`;
+  }
+  addLog(s, 'info', `${a.icon} ${msg}`);
+  return { ok: true, msg };
+}
+
+/* ---------------- 분기 처리 ---------------- */
+function worldAiTurn(s, report) {
+  s.world.turnNews = [];
+  maybeStartConflicts(s, report);
+  progressConflicts(s, report);
+  aiTowardKorea(s);
+  conflictSpillover(s);
+  // 가끔 열리는 정상회의
+  if (s.turn % 4 === 3) worldNews(s, `🌐 G20 정상회의 개최 — 세계 긴장도 ${s.world.tension.toFixed(0)}, 진행 중인 분쟁 ${s.world.conflicts.filter(c => c.type !== 'cyber').length}건이 의제로 올랐습니다.`);
+  report.worldNews = s.world.turnNews;
+}
+function worldAiEvents(s, report, newCrises) {
+  for (const p of s.world.pendingCrises) newCrises.push(makeCrisis(s, p));
+  s.world.pendingCrises = [];
+}
+
+HOOKS.migrate.push(s => {
+  if (!s.world) s.world = { tension: 35, conflicts: [], owner: {}, news: [], pendingCrises: [] };
+  if (!s.world.pendingCrises) s.world.pendingCrises = [];
+});
+HOOKS.postMacro.push(worldAiTurn);
+HOOKS.events.push(worldAiEvents);
 
 </script>
 <script>
@@ -4406,11 +5052,15 @@ const ClaudeAI = (() => {
     return client;
   }
 
-  const SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
+  const BASE_SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
 - 모든 답변은 한국어로 작성합니다.
 - 실제 한국의 사례와 연구, 해외 사례를 근거로 들되 간결하게 씁니다.
 - 수치 효과는 게임 밸런스를 위해 현실적인 범위로 추정합니다(과장 금지).
-- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.`;
+`;
+  let worldview = 'con';
+  const SYS = () => BASE_SYSTEM + (worldview === 'con'
+    ? '\n- 국정 철학: 자유시장경제, 작은 정부와 재정 건전성, 강한 안보와 한미동맹, 법치와 질서, 공동체의 전통 가치를 중시하는 보수적 관점에서 판단하고 조언합니다. 다만 어떤 선택이든 이득과 손해·위험은 정직하게 모두 제시합니다.'
+    : '\n- 특정 정당이나 이념에 치우치지 않고 이득과 손해를 모두 제시합니다.');
 
   function stateSummary(s) {
     const t = turnLabel(s.turn);
@@ -4489,7 +5139,7 @@ ${stateSummary(s)}
 - risks: 현실적으로 예상되는 부작용 0~3개(prob 0~1, sev 1~3).
 참고용 기존 정책 데이터 예시:
 ${examples}`;
-    const a = await call({ system: SYSTEM, user, schema });
+    const a = await call({ system: SYS(), user, schema });
     a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
     a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
     a.r = (a.risks || []).slice(0, 3).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
@@ -4531,7 +5181,7 @@ ${stateSummary(s)}
 - rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25). lt: decree/law/const, lean: L/R/N, pc 10~80, lag 1~16.
 - risks: 현실적 부작용 0~2개(prob 0~1, sev 1~3).
 - 입력이 이 제도와 무관하거나 실현 불가능하면 label에 그 취지를 담고 효과를 작게 잡으세요.`;
-    const a = await call({ system: SYSTEM, user, schema });
+    const a = await call({ system: SYS(), user, schema });
     a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
     a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
     a.r = (a.risks || []).slice(0, 2).map(r => [r.tpl, r.title, r.desc, clamp(r.prob, 0, 1), clamp(Math.round(r.sev), 1, 3)]);
@@ -4567,7 +5217,7 @@ ${stateSummary(s)}
 ${opts}
 
 대통령을 대신해 가장 바람직한 해법을 판단하세요. 기존 해법이 모두 부적절하면 choice=-1로 하고 custom에 현실적인 새 해법을 설계하세요(e는 기존 해법과 비슷한 규모, ok는 0.3~0.9, pc는 5~30). choice가 0 이상이면 custom은 형식만 채우세요(0 값).`;
-    const r = await call({ system: SYSTEM, user, schema, maxTokens: 3000 });
+    const r = await call({ system: SYS(), user, schema, maxTokens: 3000 });
     let choice = Number.isInteger(r.choice) ? r.choice : 0;
     if (choice === -1 && r.custom && r.custom.label) {
       c.options.push({ label: '🤖 ' + r.custom.label, desc: r.custom.desc, e: clampObj(r.custom.e, k => statLim(k) / 3), f: clampObj(r.custom.f, () => 10), ok: clamp(r.custom.ok, 0.3, 0.9), pc: clamp(Math.round(r.custom.pc), 5, 30), claude: true });
@@ -4593,7 +5243,7 @@ ${report.elections.join(' ')}
 ${stateSummary(s)}
 
 형식: ① 총평(2문장) ② 이득과 손해(각 2~3개 불릿) ③ 다음 분기 권고(2~3개 구체적 정책 제안). 300자~500자. 마크다운 없이 줄바꿈과 •만 사용.`;
-    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+    return await call({ system: SYS(), user, maxTokens: 3000 });
   }
 
   /* ---- 4) 정책 자문 ---- */
@@ -4610,7 +5260,35 @@ ${stateSummary(s)}
 ${stateSummary(s)}
 
 실제 한국과 해외 사례를 근거로 ① 핵심 이득 ② 핵심 손해·위험 ③ 성공 조건/보완책 ④ 추진 여부 권고(추진/보완 후 추진/보류)를 400자 내외로 제시하세요. 마크다운 없이 줄바꿈과 •만 사용.`;
-    return await call({ system: SYSTEM, user, maxTokens: 3000 });
+    return await call({ system: SYS(), user, maxTokens: 3000 });
+  }
+
+  /* ---- 5) 외국 지도자 역할극 ---- */
+  async function leaderTalk(s, k, L, history, msg) {
+    const schema = { type: 'object', additionalProperties: false, required: ['reply', 'mood', 'relDelta', 'proposal'],
+      properties: { reply: { type: 'string', description: '지도자의 답변(한국어, 2~5문장)' }, mood: { type: 'string', enum: ['우호적', '중립', '경계', '불쾌함', '분노'] },
+        relDelta: { type: 'integer', description: '이 대화로 인한 대한 관계 변화 -8~8' }, proposal: { type: 'string', enum: ['none', 'fta', 'alliance', 'aid', 'ceasefire'] } } };
+    const conf = (s.world?.conflicts || []).filter(c => c.a === k || c.b === k).map(c => `${CONFLICT_TYPES[c.type].name}(${cname(c.a)}↔${cname(c.b)})`).join(', ') || '없음';
+    const d = dip(s, k);
+    const user = `당신은 정치 시뮬레이션 게임 속 가상의 외국 지도자를 연기합니다. 실존 인물이 아닙니다.
+나라: ${cname(k)} (${cinfo(k).sub || ''}) / 직함: ${L.title} / 이름: ${L.name} / 체제: ${IDEOLOGIES[L.gov].name}
+성향: ${L.traits.map(t => `${TRAITS[t].name}(${TRAITS[t].desc})`).join(', ')}
+진영: ${CAMPS[campOf(s, k)].name} / 한국과의 관계(0~100): ${relOf(s, k).toFixed(0)} / 조약: ${[d.alliance && '동맹', d.fta && 'FTA', d.sanction && '한국이 제재 중'].filter(Boolean).join(', ') || '없음'}
+진행 중인 분쟁: ${conf} / 세계 긴장도: ${s.world?.tension?.toFixed(0)}
+
+한국 상황:
+${stateSummary(s)}
+
+최근 대화:
+${history.slice(0, -1).map(m => `${m.role === 'me' ? '한국 대통령' : L.name}: ${m.text}`).join('\n') || '(없음)'}
+
+한국 대통령의 말: "${msg}"
+
+이 지도자의 성향과 자국 이익에 맞게, 외교적 어조로 답하세요. 성향과 맞지 않는 제안은 거절하고, 무례하거나 위협적인 말에는 불쾌감을 드러내세요.
+relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정수. proposal은 이 지도자가 실제로 응할 의향이 있는 협력(없으면 none).`;
+    const r = await call({ system: SYS(), user, schema, maxTokens: 2000 });
+    r.relDelta = clamp(Math.round(r.relDelta || 0), -8, 8);
+    return r;
   }
 
   async function test() {
@@ -4618,7 +5296,7 @@ ${stateSummary(s)}
     return r;
   }
 
-  return { MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, resolveCrisis, briefing, advise, test };
+  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, test };
 })();
 
 </script>
@@ -4631,6 +5309,7 @@ let S = null;
 let activeCat = 'const';
 let selectedParty = 'lib';
 let selectedDiff = 'normal';
+let selectedWv = 'con';
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -4670,13 +5349,16 @@ function renderStart() {
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
     `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
+  $('wv-pick').innerHTML = Object.entries(WORLDVIEWS).map(([k, w]) =>
+    `<div class="party-opt ${k === selectedWv ? 'sel' : ''}" data-w="${k}"><b>${w.name}${k === 'con' ? ' (기본)' : ''}</b><span>${w.desc}</span></div>`).join('');
+  $('wv-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedWv = el.dataset.w; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
   const name = $('pres-name').value.trim() || '대통령';
-  S = newGame(selectedParty, name, selectedDiff);
+  S = newGame(selectedParty, name, selectedDiff, selectedWv);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
     <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
@@ -4688,7 +5370,8 @@ $('btn-start').onclick = () => {
       <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
       <li><b>🏛️ 국회·세력</b>: 법률·개헌은 여러 분기에 걸쳐 국회 심의를 거칩니다. 협상·신속처리로 밀어붙이고, 재계·노동계 등 이익집단을 국정 연합에 영입해 정당성을 높이세요.</li>
       <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. 전략 산업을 집중 육성할 수 있습니다.</li>
-      <li><b>🌏 외교·전쟁</b>: 정상회담·FTA·동맹·제재·최후통첩, 그리고 전쟁. 승리하면 배상·합병·통일까지 가능하지만, 주변국 개입과 핵 위험이 따릅니다.</li>
+      <li><b>🌏 외교·전쟁</b>: 세계지도 위 약 200개국. 나라마다 <b>지도자(가상 인물)</b>가 있고 성향대로 움직입니다. 관세 전쟁·사이버 공격·국경 분쟁·전쟁·내전이 실시간으로 일어나고, 중재·인도적 지원·무기 지원·제재·참전으로 개입할 수 있습니다. 지도자와 직접 대화도 할 수 있습니다.</li>
+      <li><b>🏛️ 대통령 권한</b>: 국회가 막으면 <b>긴급재정경제명령</b>(헌법 76조)이나 <b>국민투표</b>(72조)로 돌파할 수 있습니다. 대가는 따릅니다.</li>
       <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
       <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
     </ul></div>
@@ -4698,6 +5381,7 @@ $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
   migrateState(S);
+  ClaudeAI.setWorldview(S.worldview);
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
@@ -4857,12 +5541,25 @@ function openPreview(pid, oid, lobby = 0) {
     ${pv.risks.length ? `<div class="box" style="margin-top:10px"><h4>⚠️ 예상 부작용</h4>${pv.risks.map(r => `<div class="risk">${RISK_TEMPLATES[r.tpl].icon} <b>${esc(r.title)}</b> — 발생 확률 ${(r.prob * 100).toFixed(0)}%, 심각도 ${'●'.repeat(r.sev)}${'○'.repeat(3 - r.sev)}<br><span class="muted">${esc(r.desc)}</span></div>`).join('')}</div>` : ''}
     <div class="verdict ${pv.verdict.cls}"><b>AI 종합 판단</b> (점수 ${pv.net.toFixed(1)}): ${pv.verdict.text}</div>
     <div id="claude-advice"></div>
+    ${o0.lt === 'law' ? (() => {
+      const ce = canEmergency(S, p, o0), cr = canReferendum(S, p, o0), ro = referendumOdds(S, o0);
+      return `<div class="box powers"><h4>🏛️ 대통령 권한으로 국회 우회</h4>
+        <div class="pw"><div><b>⚡ 긴급재정경제명령</b> (헌법 76조) <span class="tag">⚡${emergencyCost(S, o0)}</span><div class="muted small">${esc(ce || '즉시 시행. 다음 분기 국회 승인 필요(승인 확률 약 ' + Math.round(clamp(voteModel(S, o0).prob + 0.15, 0.05, 0.97) * 100) + '%), 거부되면 효력 상실. 법조계·야권 반발, 지지율 -2.')}</div></div><button class="btn sm" id="btn-emerg" ${ce || S.pcap < emergencyCost(S, o0) ? 'disabled' : ''}>발동</button></div>
+        <div class="pw"><div><b>🗳️ 국민투표 부의</b> (헌법 72조) <span class="tag">⚡${referendumCost(S, o0)}</span><div class="muted small">${esc(cr || '국회 대신 국민에게 직접 묻습니다. 예상 찬성 ' + ro.sup.toFixed(0) + '% (가결 확률 ' + Math.round(ro.prob * 100) + '%). 부결되면 지지율 -4. 1년에 한 번.')}</div></div><button class="btn sm" id="btn-refer" ${cr || S.pcap < referendumCost(S, o0) ? 'disabled' : ''}>부의</button></div>
+      </div>`; })() : ''}
     <div class="modal-actions">
       ${ClaudeAI.enabled() ? `<button class="btn" id="btn-ask-claude">🤖 Claude 의견 듣기</button>` : ''}
       <button class="btn" onclick="closeModal()">취소</button>
       <button class="btn primary" id="btn-enact" ${S.pcap < pv.cost ? 'disabled' : ''}>${pv.vote.type === 'decree' ? '즉시 시행' : pv.vote.type === 'const' ? '개헌안 발의' : '법안 제출'}</button>
     </div>`);
   document.querySelectorAll('[data-lobby]').forEach(b => b.onclick = () => openPreview(pid, oid, +b.dataset.lobby));
+  const powerResult = (r, title) => {
+    if (!r.ok) return toast(esc(r.msg));
+    closeModal(); saveGame(S); renderAll();
+    openModal(`<h2>${r.passed ? '✅' : '❌'} ${title}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p><div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
+  };
+  $('btn-emerg') && ($('btn-emerg').onclick = () => powerResult(emergencyDecree(S, pid, oid), '긴급재정경제명령'));
+  $('btn-refer') && ($('btn-refer').onclick = () => powerResult(referendumPolicy(S, pid, oid), '국민투표'));
   $('btn-enact').onclick = () => {
     const tmp = o0.cur && !o0.lt ? Object.assign(o0, { lt: o.lt, lean: o.lean, pc: o.pc, lag: o.lag }) : o0;
     const r = enactPolicy(S, pid, tmp.id, lobby);
@@ -5083,13 +5780,14 @@ $('btn-settings').onclick = () => {
     <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
     <h3 class="sec">게임</h3>
+    ${S ? `<div class="settings-row"><label for="cfg-wv">게임 세계관</label><select id="cfg-wv">${Object.entries(WORLDVIEWS).map(([k, w]) => `<option value="${k}" ${k === S.worldview ? 'selected' : ''}>${w.name}</option>`).join('')}</select><div class="muted small">${esc(WORLDVIEWS[S.worldview || 'con'].desc)} 수치는 게임 밸런스이며 실제 정책 효과를 예측하지 않습니다.</div></div>` : ''}
     <div class="modal-actions" style="justify-content:flex-start">
       <button class="btn" id="cfg-theme">🌓 테마 전환</button>
       <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
     </div>
     <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
   const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
-  $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
+  $('cfg-save').onclick = () => { if (S && $('cfg-wv')) { S.worldview = $('cfg-wv').value; ClaudeAI.setWorldview(S.worldview); saveGame(S); } ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
   $('cfg-test').onclick = async () => {
     ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
     try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }
@@ -5209,6 +5907,8 @@ function reportExtras(report) {
   if (pol && (pol.left.length || pol.radical.length)) out.push(`<div class="verdict bad">${pol.left.length ? `연합 이탈: ${pol.left.map(esc).join(', ')}. ` : ''}${pol.radical.length ? `급진화 세력: ${pol.radical.map(esc).join(', ')}` : ''}</div>`);
   const w = report.world;
   if (w && (w.war || w.events.length)) out.push(`<div class="box" style="margin-top:8px"><h4>🌏 외교·안보</h4><ul>${[w.war, ...w.events].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`);
+  const wn = (report.worldNews || []).filter(n => n.type !== 'info' || /관세|침공|병합|휴전|G20|지원/.test(n.text)).slice(0, 8);
+  if (wn.length) out.push(`<div class="box" style="margin-top:8px"><h4>🌐 세계 뉴스</h4><ul>${wn.map(n => `<li>${esc(n.text)}</li>`).join('')}</ul></div>`);
   return out.join('');
 }
 
@@ -5223,8 +5923,14 @@ let mapView = null;          // 현재 보이는 영역 {x, y, w, h} (지도 좌
 let mapBuilt = null;         // 만들어진 지도 SVG (다시 그리지 않고 색만 바꿈)
 
 const relHue = v => Math.round(clamp(v, 0, 100) * 1.25);
+let mapMode = 'rel';          // rel | camp | ideo | conflict
+const CONFLICT_COLOR = { war: '#c4343b', border: '#e0812c', civil: '#8e2f2f', trade: '#d6b23a', cyber: '#8a5cc7' };
 function landFill(k) {
   if (k === 'kr' || S.annexed[k]) return 'var(--kr-fill)';
+  const own = S.world?.owner?.[k]; if (own) return landFill(own);
+  if (mapMode === 'camp') return CAMPS[campOf(S, k)].color;
+  if (mapMode === 'ideo') { const L = S.leaders?.[k]; return L ? IDEOLOGIES[L.gov].color : 'var(--land-neutral)'; }
+  if (mapMode === 'conflict') { const c = S.world?.conflicts.find(x => x.a === k || x.b === k); return c ? CONFLICT_COLOR[c.type] : 'var(--land-neutral)'; }
   if (S.war && (S.war.k === k || S.war.enemyAllies.includes(k))) return 'var(--enemy-fill)';
   if (S.war && S.war.allies.includes(k)) return 'var(--ally-fill)';
   return `hsl(${relHue(relOf(S, k))} var(--land-s) var(--land-l))`;
@@ -5246,6 +5952,7 @@ function buildGeoMap(container) {
       <input id="map-search" list="map-countries" placeholder="🔍 나라 검색 (예: 독일, 브라질)" autocomplete="off">
       <datalist id="map-countries">${allCountryKeys().map(k => `<option value="${esc(cname(k))}">`).join('')}</datalist>
       <div class="map-btns"><button class="btn sm" data-z="in" aria-label="확대">＋</button><button class="btn sm" data-z="out" aria-label="축소">－</button><button class="btn sm" data-z="asia">🇰🇷 동아시아</button><button class="btn sm" data-z="world">🌍 세계</button></div>
+      <div class="map-btns mode-btns">${[['rel', '관계'], ['camp', '진영'], ['ideo', '이념'], ['conflict', '분쟁']].map(([m, n]) => `<button class="btn sm ${m === mapMode ? 'primary' : ''}" data-mode="${m}">${n}</button>`).join('')}</div>
     </div>
     <div class="quick">${QUICK.map(k => `<button class="chip" data-q="${k}">${cflag(k)} ${esc(cname(k))}</button>`).join('')}</div>
     <svg id="geo" class="geo" viewBox="0 0 ${M.w} ${M.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="세계 외교 지도">
@@ -5258,7 +5965,7 @@ function buildGeoMap(container) {
       <g class="g-front"></g><g class="g-city">${cities}</g><g class="g-lbl">${labels}</g>
       <g class="eu-mark" data-c="eu"><circle cx="${bx}" cy="${by}"></circle><text x="${bx}" y="${by}" dx="0.7em" dy="0.35em">🇪🇺 EU</text></g>
     </svg>
-    <div class="map-legend"><span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth</span></div>`;
+    <div class="map-legend" id="map-legend"><span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth</span></div>`;
   const svg = container.querySelector('#geo');
   mapBuilt = { svg, land: [...svg.querySelectorAll('.land[data-c]')], prov: [...svg.querySelectorAll('.prov')], lbl: [...svg.querySelectorAll('.clbl')], front: svg.querySelector('.g-front') };
   bindMapInteraction(container, svg);
@@ -5334,6 +6041,11 @@ function bindMapInteraction(container, svg) {
     else if (z === 'out') zoomAt(svg, 1.6, mapView.x + mapView.w / 2, mapView.y + mapView.h / 2);
     else { mapView = z === 'asia' ? viewAsia() : viewWorld(); applyView(svg); }
   });
+  container.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
+    mapMode = b.dataset.mode;
+    container.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('primary', x.dataset.mode === mapMode));
+    updateMap();
+  });
   container.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { selCountry = b.dataset.q; zoomTo(selCountry); updateMap(); renderCountryPanel(); });
   const search = container.querySelector('#map-search');
   search.addEventListener('change', () => {
@@ -5365,6 +6077,12 @@ function updateMap() {
     t.textContent = k === 'kr' ? '대한민국' : `${S.war && (S.war.k === k || S.war.enemyAllies.includes(k)) ? '⚔️' : ''}${cname(k)}${S.annexed[k] ? ' (편입)' : ''}`;
   }
   mapBuilt.svg.querySelector('.eu-mark').classList.toggle('sel', selCountry === 'eu');
+  const lg = $('map-legend');
+  if (lg) lg.innerHTML = (mapMode === 'camp' ? Object.values(CAMPS).map(c => `<span><i style="background:${c.color}"></i>${c.name}</span>`).join('')
+    : mapMode === 'ideo' ? Object.values(IDEOLOGIES).map(c => `<span><i style="background:${c.color}"></i>${c.name}</span>`).join('')
+    : mapMode === 'conflict' ? Object.entries(CONFLICT_TYPES).map(([t, c]) => `<span><i style="background:${CONFLICT_COLOR[t]}"></i>${c.name}</span>`).join('')
+    : `<span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span>`)
+    + `<span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth · 지도자는 가상 인물</span>`;
   // 전쟁 중이면 서울과 상대 수도를 잇는 전선 화살표
   let front = '';
   if (S.war) {
@@ -5380,11 +6098,11 @@ function renderWorld() {
   const el = $('tab-world'); if (!el) return;
   if (typeof MAP_DATA === 'undefined') { el.innerHTML = '<div class="empty">지도 데이터를 불러오지 못했습니다.</div>'; return; }
   if (!el.querySelector('#geo')) {
-    el.innerHTML = `<div id="war-slot"></div><div class="map" id="map-wrap"></div><div id="cpanel-slot"></div>`;
+    el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div class="map" id="map-wrap"></div><div id="cpanel-slot"></div>`;
     buildGeoMap($('map-wrap'));
   }
   if (!mapView && mapBuilt.svg.clientWidth) mapView = viewAsia();
-  renderWarPanel(); updateMap(); renderCountryPanel();
+  renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }
 
 function renderWarPanel() {
@@ -5405,7 +6123,25 @@ function renderCountryPanel() {
   const slot = $('cpanel-slot'); if (!slot) return;
   const k = selCountry, c = cinfo(k); if (!c) return;
   const d = dip(S, k), r = relOf(S, k);
-  const odds = !c.isBloc && !S.annexed[k] ? (() => {
+  const owner = S.world?.owner?.[k];
+  const L = S.leaders?.[k];
+  const leaderCard = L && !owner && !S.annexed[k] ? (() => {
+    const yrs = Math.max(0, (S.turn - L.since) / 4);
+    const att = leaderRelDelta(S, k);
+    const agg = leaderAgg(S, k);
+    return `<div class="leader">
+      <div class="avatar" style="background:hsl(${L.avatarHue} 45% 42%)">${esc(L.name.replace(/\s/g, '').slice(0, 1))}</div>
+      <div class="lmain">
+        <div><b class="lname">${esc(L.name)}</b> <span class="muted">${esc(L.title)} · 재임 ${yrs.toFixed(1)}년</span></div>
+        <div class="ltags"><span class="tag" style="color:${IDEOLOGIES[L.gov].color};border-color:${IDEOLOGIES[L.gov].color}">${IDEOLOGIES[L.gov].name}</span><span class="tag">${CAMPS[campOf(S, k)].name}</span>${L.traits.map(t => `<span class="tag trait" title="${esc(TRAITS[t].desc)}">${TRAITS[t].name}</span>`).join('')}</div>
+        <div class="muted small">대한 태도 ${att >= 4 ? '<b class="good-t">우호적</b>' : att <= -4 ? '<b class="bad-t">냉담</b>' : '중립'} · 대외 공격성 ${agg >= 55 ? '<b class="bad-t">높음</b>' : agg >= 35 ? '보통' : '낮음'} (${agg})</div>
+      </div>
+      <button class="btn sm primary" id="btn-talk">🗣️ 대화하기</button>
+    </div>`;
+  })() : owner ? `<div class="verdict bad">${cflag(owner)} ${esc(cname(owner))}에 강제 병합된 지역입니다. <button class="btn sm" id="btn-owner">${esc(cname(owner))} 보기</button></div>` : '';
+  const conflicts = (S.world?.conflicts || []).filter(x => x.a === k || x.b === k);
+  const confHtml = conflicts.length ? `<div class="box"><h4>진행 중인 분쟁</h4>${conflicts.map(x => `<div>${CONFLICT_TYPES[x.type].icon} ${CONFLICT_TYPES[x.type].name}: ${esc(cname(x.a))}${x.b !== x.a ? ' ↔ ' + esc(cname(x.b)) : ''} (${x.turns}분기째)</div>`).join('')}</div>` : '';
+  const odds = !c.isBloc && !S.annexed[k] && !owner ? (() => {
     const o = warOdds(S, k);
     return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>우리 편: ${['대한민국', ...o.allies.map(cname)].join(', ')} (전력 ${o.ours.toFixed(0)}${o.reach < 1 ? `, 원거리 투사 ${Math.round(o.reach * 100)}%` : ''})<br>상대 편: ${[c.name, ...o.en.map(cname)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
       판정: <b style="color:${o.edge > 0.15 ? 'var(--good)' : o.edge > -0.05 ? 'var(--mid)' : 'var(--bad)'}">${o.edge > 0.25 ? '압도적 우세' : o.edge > 0.1 ? '우세' : o.edge > -0.05 ? '팽팽함' : o.edge > -0.2 ? '열세' : '절대 열세'}</b>${(c.nukes || o.en.some(x => cinfo(x).nukes)) ? ' · ☢️ 상대 진영 핵보유: 몰리면 핵 사용 위험' : ''}${!c.annex ? ' · 핵보유국이라 합병은 불가(배상만 가능)' : ''}</div>`;
@@ -5420,9 +6156,12 @@ function renderCountryPanel() {
     <div class="muted small">${[c.note, c.sub || c.reg, !c.isBloc ? `인구 ${fmtPop(c.pop)}` : '', !c.isBloc && c.gdp ? `GDP ${fmtGdp(c.gdp)}` : '', `서울에서 ${Math.round(c.km).toLocaleString('ko-KR')}km`].filter(Boolean).map(esc).join(' · ')}</div>
     <div class="cfacts"><span>관계 <b style="color:hsl(${relHue(r)} 60% 45%)">${r.toFixed(0)}</b></span><span>군사력 <b>${c.mil}</b></span><span>경제 규모 <b>${c.eco}</b></span><span>${c.nukes ? '☢️ 핵보유' : '비핵'}</span>${c.bloc ? `<span>블록 <b>${c.bloc === 'NATO' ? 'NATO' : { csto: '러시아 안보동맹', cnPartner: '중국 우방', usPartner: '미국 우방', ruPartner: '러시아 우방' }[c.bloc]}</b></span>` : ''}</div>
     <div class="cfacts">${d.alliance ? '<span class="tag cur">동맹</span>' : ''}${d.fta ? '<span class="tag">FTA</span>' : ''}${d.sanction ? '<span class="tag const">제재 중</span>' : ''}${d.casusBelli >= S.turn ? '<span class="tag const">전쟁 명분</span>' : ''}${d.offer >= S.turn ? '<span class="tag new">FTA 제안 받음</span>' : ''}${c.eu ? '<span class="tag">EU 회원국</span>' : ''}${!c.core && !c.isBloc ? '<span class="muted small">핵심국이 아닌 나라는 국가 지표에 주는 영향이 경제 규모에 비례합니다.</span>' : ''}</div>
+    ${leaderCard}${confHtml}
     ${odds}
     <h4 class="sec">외교 행동</h4><div class="dacts">${actions}</div>
   </div>`;
+  $('btn-talk') && ($('btn-talk').onclick = () => openTalk(k));
+  $('btn-owner') && ($('btn-owner').onclick = () => { selCountry = owner; zoomTo(owner); updateMap(); renderCountryPanel(); });
   slot.querySelectorAll('[data-dact]').forEach(b => b.onclick = () => {
     if (b.dataset.dact === 'war') return confirmWar(k);
     act(diploAction)(S, b.dataset.dact, k);
@@ -5438,6 +6177,77 @@ function confirmWar(k) {
     ${goals.map(g => `<button class="btn ${g === 'concession' ? '' : 'danger'}" data-goal="${g}" style="margin:4px">${GOAL_NAMES[g]}${g === 'concession' ? ' (배상금·경제 이권)' : g === 'unify' ? ' (승리 시 한반도 통일)' : ' (승리 시 영토 편입)'}</button>`).join('')}
     <div class="modal-actions"><button class="btn" onclick="closeModal()">취소</button></div>`);
   document.querySelectorAll('[data-goal]').forEach(b => b.onclick = () => { closeModal(); act(diploAction)(S, 'war', k, b.dataset.goal); });
+}
+
+/* ---------------- 세계 정세 패널 ---------------- */
+let showAllNews = false;
+function renderSituation() {
+  const slot = $('situation-slot'); if (!slot || !S.world) return;
+  const W = S.world, T = W.tension;
+  const tc = T >= 70 ? 'var(--bad)' : T >= 50 ? 'var(--mid)' : 'var(--good)';
+  const list = W.conflicts.filter(c => c.type !== 'cyber').map(c => {
+    const acts = INTERVENTIONS.filter(a => a.types.includes(c.type)).map(a => `<button class="btn sm ${a.id === 'join' ? 'danger' : ''}" data-iv="${a.id}" data-cid="${c.id}" ${c.krDone?.includes(a.id) ? 'disabled' : ''} title="${esc(a.desc)}">${a.icon} ${a.name} ⚡${a.pc}</button>`).join('');
+    const ally = c.type === 'war' && dip(S, c.b).alliance;
+    return `<div class="conf ${c.type}">
+      <div class="conf-top"><b>${CONFLICT_TYPES[c.type].icon} ${CONFLICT_TYPES[c.type].name}</b> ${cflag(c.a)} ${esc(cname(c.a))}${c.b !== c.a ? ` ↔ ${cflag(c.b)} ${esc(cname(c.b))}` : ''} <span class="muted small">${c.turns}분기째${c.type === 'war' ? ` · 전황 ${c.score >= 0 ? cname(c.a) : cname(c.b)} 우세(${Math.abs(c.score).toFixed(0)})` : ''}${c.supportB.length ? ` · ${c.supportB.map(cname).join('·')} 무기 지원` : ''}</span>${ally ? ' <span class="tag const">우리 동맹국 피침</span>' : ''}</div>
+      <div class="row-btns">${acts}<button class="btn sm ghost" data-goto="${c.b !== c.a ? c.b : c.a}">🗺️ 보기</button></div></div>`;
+  }).join('') || '<div class="muted small">현재 큰 분쟁이 없습니다.</div>';
+  const news = W.news.slice(0, showAllNews ? 40 : 6).map(n => { const t = turnLabel(n.turn); return `<div class="news ${n.type}"><span class="t">${t.year}.${t.q}Q</span>${esc(n.text)}</div>`; }).join('');
+  slot.innerHTML = `<div class="situation">
+    <div class="sit-head"><h3>🌐 세계 정세</h3><div class="tension"><span>세계 긴장도</span><div class="bar"><i style="width:${T}%;background:${tc}"></i></div><b style="color:${tc}">${T.toFixed(0)}</b></div></div>
+    <div class="sit-grid"><div><h4 class="sec">진행 중인 분쟁 (${W.conflicts.filter(c => c.type !== 'cyber').length})</h4>${list}</div>
+    <div><h4 class="sec">세계 뉴스</h4>${news || '<div class="muted small">아직 소식이 없습니다. 분기를 진행하세요.</div>'}${W.news.length > 6 ? `<button class="btn sm ghost" id="btn-news">${showAllNews ? '접기' : '더 보기'}</button>` : ''}</div></div>
+  </div>`;
+  slot.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => act(intervene)(S, b.dataset.cid, b.dataset.iv));
+  slot.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => { selCountry = b.dataset.goto; zoomTo(selCountry); updateMap(); renderCountryPanel(); });
+  $('btn-news') && ($('btn-news').onclick = () => { showAllNews = !showAllNews; renderSituation(); });
+}
+
+/* ---------------- 지도자와 대화 ---------------- */
+const TALK_LIMIT = 3;
+function talkLeft(k) { S.talkUsed = S.talkUsed || {}; return TALK_LIMIT - (S.talkUsed[`${k}@${S.turn}`] || 0); }
+function openTalk(k) {
+  const L = S.leaders[k]; S.talks = S.talks || {}; const hist = S.talks[k] = S.talks[k] || [];
+  const render = () => {
+    $('talk-log').innerHTML = hist.map(m => `<div class="msg ${m.role}">${m.role === 'them' ? `<b>${esc(L.name)}</b>` : '<b>나</b>'}<div>${esc(m.text)}</div>${m.note ? `<div class="muted small">${esc(m.note)}</div>` : ''}</div>`).join('') || `<div class="muted small">${esc(L.title)} ${esc(L.name)}에게 하고 싶은 말을 적어 보세요. 제안·설득·경고 무엇이든 됩니다. 말에 따라 관계가 달라집니다.</div>`;
+    $('talk-log').scrollTop = 1e6;
+    $('talk-left').textContent = `이번 분기 남은 대화 ${talkLeft(k)}회`;
+  };
+  openModal(`<h2>🗣️ ${cflag(k)} ${esc(L.title)} ${esc(L.name)}</h2>
+    <p class="lead">${IDEOLOGIES[L.gov].name} · ${L.traits.map(t => TRAITS[t].name).join('·')} · 현재 관계 ${relOf(S, k).toFixed(0)} · ${ClaudeAI.enabled() ? 'Claude가 이 지도자를 연기합니다' : '내장 대화 AI'} <span class="muted small">(가상 인물)</span></p>
+    <div id="talk-log" class="talk-log"></div>
+    <div class="custom-row"><input id="talk-input" maxlength="300" placeholder="예) 반도체 공급망 협력을 제안합니다 / 국경 도발을 멈추십시오"><button class="btn primary" id="talk-send">보내기</button></div>
+    <div class="muted small" id="talk-left"></div>
+    <div id="talk-deal"></div>`);
+  render();
+  const send = async () => {
+    const msg = $('talk-input').value.trim(); if (!msg) return;
+    if (talkLeft(k) <= 0) return toast('이번 분기에는 더 대화할 수 없습니다. 다음 분기에 다시 시도하세요.');
+    $('talk-send').disabled = true; $('talk-input').value = '';
+    hist.push({ role: 'me', text: msg }); render();
+    $('talk-log').insertAdjacentHTML('beforeend', '<div class="msg them" id="talk-wait"><span class="spinner"></span>생각하는 중…</div>');
+    let r = null;
+    try { if (ClaudeAI.enabled()) r = await ClaudeAI.leaderTalk(S, k, L, hist.slice(-8), msg); }
+    catch (e) { toast('Claude 응답 실패 → 내장 대화 AI로 대체: ' + esc(e.message), 4000); }
+    if (!r) r = ruleLeaderTalk(S, k, msg);
+    const d = clamp(Math.round(r.relDelta || 0), -8, 8);
+    relBump(S, k, d, d * 0.5);
+    S.talkUsed[`${k}@${S.turn}`] = (S.talkUsed[`${k}@${S.turn}`] || 0) + 1;
+    hist.push({ role: 'them', text: r.reply, note: `관계 ${d >= 0 ? '+' : ''}${d} · ${r.mood || ''}` });
+    if (hist.length > 30) hist.splice(0, hist.length - 30);
+    addLog(S, d >= 0 ? 'info' : 'bad', `🗣️ ${cname(k)} ${L.title} ${L.name}과(와) 대화 (관계 ${d >= 0 ? '+' : ''}${d})`);
+    saveGame(S); render(); $('talk-send').disabled = false;
+    const prop = r.proposal;
+    if (prop && prop !== 'none') {
+      const map = { fta: 'fta', alliance: 'alliance', aid: 'aid' };
+      const aid = map[prop];
+      $('talk-deal').innerHTML = aid ? `<div class="verdict good">${esc(L.name)}이(가) ${prop === 'fta' ? 'FTA 협상' : prop === 'alliance' ? '안보 동맹' : '원조'}에 긍정적입니다. <button class="btn sm primary" id="talk-do">${DIPLO_ACTIONS.find(a => a.id === aid).icon} 바로 추진</button></div>` : prop === 'ceasefire' ? `<div class="verdict">${esc(L.name)}이(가) 휴전 논의에 열려 있다고 말했습니다. 세계 정세의 '중재'를 시도해 보세요.</div>` : '';
+      $('talk-do') && ($('talk-do').onclick = () => { const res = act(diploAction)(S, aid, k); if (res?.ok) $('talk-deal').innerHTML = ''; });
+    }
+    renderSystemsTabs();
+  };
+  $('talk-send').onclick = send;
+  $('talk-input').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 }
 
 </script>
