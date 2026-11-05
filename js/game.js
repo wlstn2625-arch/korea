@@ -53,6 +53,7 @@ function afterQuarter(report, recs, newCrises) {
   if (report.presElection) blocking.push(() => openPresidentialCard());
   if (report.imf) blocking.push(() => openImfCard());
   if (S.nukePending) blocking.push(() => openNukeCard());
+  if (S.peacePending) blocking.push(() => openPeaceCard());
   if (report.elections?.length) blocking.push(() => openElectionCard(report));
   for (const id of (report.domEvents || [])) blocking.push(() => openDomEventCard(id));
   for (const p of (S.world?.proposals || []).filter(p => p.turn === report.turn)) blocking.push(() => openProposalCard(p.id));

@@ -63,6 +63,7 @@
         <button data-tab="policy"><span>📜</span>정책</button>
         <button data-tab="politics"><span>🏛️</span>국회·세력<i id="bill-badge" class="badge info hidden">0</i></button>
         <button data-tab="economy"><span>🏭</span>경제</button>
+        <button data-tab="defense"><span>🪖</span>국방·영토<i id="terr-badge" class="badge info hidden">0</i></button>
         <button data-tab="world"><span>🌏</span>외교<i id="war-badge" class="badge hidden">전쟁</i></button>
         <button data-tab="crisis"><span>🚨</span>위기<i id="crisis-badge" class="badge hidden">0</i></button>
         <button data-tab="report"><span>🗞️</span>보고서</button>
@@ -102,6 +103,7 @@
           <div id="tab-politics" class="tab"></div>
           <div id="tab-economy" class="tab"></div>
           <div id="tab-world" class="tab"></div>
+          <div id="tab-defense" class="tab"></div>
           <div id="tab-report" class="tab"><div id="report-body"></div></div>
           <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
           <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
@@ -136,6 +138,8 @@
   <script src="js/economy.js"></script>
   <script src="js/world.js"></script>
   <script src="js/military.js"></script>
+  <script src="js/arsenal.js"></script>
+  <script src="js/territory.js"></script>
   <script src="js/leaders.js"></script>
   <script src="js/worldai.js"></script>
   <script src="js/treaty.js"></script>
@@ -146,5 +150,6 @@
   <script src="js/game.js"></script>
   <script src="js/ui_domestic.js"></script>
   <script src="js/advisor.js"></script>
+  <script src="js/ui_defense.js"></script>
 </body>
 </html>

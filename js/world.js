@@ -88,11 +88,12 @@ function milPower(s) {
   m += { up35: 6, up5: 12, down2: -5 }[p.def_budget] || 0;
   m += { volunteer: -4, both: 4, m24: 3 }[p.conscript] || 0;
   m += { armed: 15, latent: 3 }[p.nuke] || 0;
-  if (s.annexed?.nk) m += 8;
-  m += Object.keys(s.annexed || {}).filter(k => k !== 'nk').reduce((a, k) => a + cinfo(k).mil * 0.15, 0);
+  if (typeof terrForces === 'function') m += terrForces(s).mil;
+  else { if (s.annexed?.nk) m += 8; m += Object.keys(s.annexed || {}).filter(k => k !== 'nk').reduce((a, k) => a + cinfo(k).mil * 0.15, 0); }
+  if (typeof techBonus === 'function') m += techBonus(s).mil;
   return clamp(m, 5, 140);
 }
-const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' : cinfo(k).nukes;
+const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' || !!s.tech?.done?.includes('s5') : cinfo(k).nukes;
 
 /* ---------------- 외교 행동 ---------------- */
 const ecoK = k => clamp(cinfo(k).eco / 60, 0.1, 1.4);
@@ -194,7 +195,7 @@ function nukeRisk(s) {
   const enemyNuke = hasNukes(s, w.k) || w.enemyAllies.some(c => cinfo(c).nukes);
   if (!enemyNuke || w.score < 40) return 0;
   const deter = hasNukes(s, 'kr') || w.allies.includes('us');
-  return clamp((deter ? 0.02 : 0.06) + (w.score - 40) / (deter ? 1500 : 500), 0, 0.3);
+  return (typeof techBonus === 'function' ? techBonus(s).nuke : 1) * clamp((deter ? 0.02 : 0.06) + (w.score - 40) / (deter ? 1500 : 500), 0, 0.3);
 }
 
 const GOAL_NAMES = { annex: '합병', unify: '흡수통일', concession: '배상·이권 획득' };
@@ -246,7 +247,8 @@ function warAction(s, act) {
 function endWar(s, outcome) {
   const w = s.war; const k = w.k; s.war = null;
   const name = cname(k);
-  if (outcome === 'victory') { if (w.goal === 'concession') endWar2Concession(s, k); else annex(s, k, false); }
+  if (outcome === 'victory' && s.uiPeace && typeof applyPeace === 'function') { s.peacePending = { k, goal: w.goal }; addLog(s, 'good', `🏳️ ${name}이(가) 항복했습니다. 강화 조건을 정하세요.`); }
+  else if (outcome === 'victory') { if (w.goal === 'concession') endWar2Concession(s, k); else annex(s, k, false); }
   else if (outcome === 'concession') endWar2Concession(s, k);
   else if (outcome === 'white') { addLog(s, 'info', `🏳️ ${name}과(와) 휴전했습니다. 영토 변화는 없습니다.`); relBump(s, k, 10, 15); }
   else if (outcome === 'concede') { s.stats.fiscal -= 1.5; s.mods.fiscal -= 0.3; s.approval = clamp(s.approval - 10, 0, 100); s.stats.security -= 5; addLog(s, 'bad', `📉 ${name}에 배상금을 지불하는 조건으로 강화했습니다.`); relBump(s, k, 10, 15); }
@@ -262,6 +264,7 @@ function endWar2Concession(s, k) {
 // 합병·통일
 function annex(s, k, peaceful) {
   s.annexed[k] = true; dip(s, k).sanction = false;
+  if (typeof createTerritory === 'function' && !s.terr?.[k]) createTerritory(s, k, k === 'nk' ? 'integrate' : 'direct', peaceful);
   if (k === 'nk') {
     s.stats.debt += peaceful ? 14 : 22; s.mods.gdp += 0.35; s.mods.tfr += 0.08; s.mods.security += 12; s.mods.gini += 0.015;
     s.stats.happiness -= peaceful ? 1 : 5; s.relMods.cn -= peaceful ? 5 : 18; s.relMods.ru -= peaceful ? 2 : 10;
@@ -333,7 +336,7 @@ function worldTurn(s, report) {
     if (relOf(s, k) >= 68 && Math.random() < 0.06) { d.offer = s.turn + 2; const t = `📨 ${cname(k)}이(가) FTA 체결을 제안했습니다. (2분기 동안 비용 ${won(10)})`; addLog(s, 'info', t); report.world.events.push(t); }
   }
   for (const k of Object.keys(s.diplo)) if (s.diplo[k].sanction && !s.annexed[k]) s.rel[k] = clamp(relOf(s, k) - 2, 0, 100);
-  for (const k in (s.occupied || {})) { s.stats.safety -= 0.5 + 0.5 * ecoK(k); s.stats.fiscal -= 0.1; }
+  for (const k in (s.occupied || {})) if (!s.terr?.[k]) { s.stats.safety -= 0.5 + 0.5 * ecoK(k); s.stats.fiscal -= 0.1; }
 
   const w = s.war; if (!w) return;
   if (w.theater) return theaterTurn(s, w, report);
@@ -396,7 +399,7 @@ function worldEvents(s, report, newCrises) {
     const c = newCrises[i];
     if ((s.annexed.nk && (c.relTarget === 'nk' || /북한|NLL/.test(c.title))) || (c.relTarget && s.annexed[c.relTarget])) newCrises.splice(i, 1);
   }
-  for (const k in (s.occupied || {})) if (Math.random() < 0.2) newCrises.push(makeCrisis(s, { tpl: 'security', title: `${cname(k)} 점령지 저항 운동`, desc: `합병된 ${cname(k)} 지역에서 무장 저항과 대규모 시위가 이어지고 있습니다.`, sev: 2 }));
+  for (const k in (s.occupied || {})) if (!s.terr?.[k] && Math.random() < 0.2) newCrises.push(makeCrisis(s, { tpl: 'security', title: `${cname(k)} 점령지 저항 운동`, desc: `합병된 ${cname(k)} 지역에서 무장 저항과 대규모 시위가 이어지고 있습니다.`, sev: 2 }));
 }
 
 HOOKS.migrate.push(s => {

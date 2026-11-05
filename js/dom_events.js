@@ -220,6 +220,6 @@ DOM_EVENTS.popularity.w = 1;
 const EVENT_COOLDOWN = 12;
 function domEventWeight(s, key, e) {
   const seen = s.dom.seen?.[key];
-  if (seen != null && s.turn - seen < EVENT_COOLDOWN) return 0;
+  if (seen != null && s.turn - seen < (key === 'terrRevolt' ? 3 : EVENT_COOLDOWN)) return 0;
   return e.w * (seen == null ? 1.3 : 1);
 }

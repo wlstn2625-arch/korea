@@ -11,6 +11,7 @@ const CONFLICT_COLOR = { war: '#c4343b', border: '#e0812c', civil: '#8e2f2f', tr
 function landFill(k) {
   if (k === 'kr' || S.annexed[k]) return 'var(--kr-fill)';
   const own = S.world?.owner?.[k]; if (own) return landFill(own);
+  if (S.terr?.[k]?.rule === 'puppet') return 'var(--puppet-fill, #8a6fd1)';
   if (mapMode === 'camp') return CAMPS[campOf(S, k)].color;
   if (mapMode === 'ideo') { const L = S.leaders?.[k]; return L ? IDEOLOGIES[L.gov].color : 'var(--land-neutral)'; }
   if (mapMode === 'conflict') { const c = S.world?.conflicts.find(x => x.a === k || x.b === k); return c ? CONFLICT_COLOR[c.type] : 'var(--land-neutral)'; }

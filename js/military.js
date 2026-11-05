@@ -21,8 +21,10 @@ function ourForces(s) {
   const ship = (s.buildings?.ship || 0);
   const air = AIR.kr + ({ up35: 10, up5: 25, down2: -8 }[p.def_budget] || 0) + (s.stats.innovation - 72) * 0.4;
   const navy = NAVY.kr + ({ up35: 8, up5: 20, down2: -6 }[p.def_budget] || 0) + ship * 5;
-  if (s.annexed?.nk) divs += 10;
-  return { divs: Math.max(8, divs), quality: QUALITY.kr + (s.stats.innovation - 72) * 0.004, air, navy };
+  const tb = typeof techBonus === 'function' ? techBonus(s) : { divs: 0, quality: 0, air: 0, navy: 0 };
+  const tr = typeof terrForces === 'function' ? terrForces(s) : { divs: s.annexed?.nk ? 10 : 0, air: 0, navy: 0 };
+  divs += tb.divs + tr.divs;
+  return { divs: Math.max(8, divs), quality: QUALITY.kr + (s.stats.innovation - 72) * 0.004 + tb.quality, air: air + tb.air + tr.air, navy: navy + tb.navy + tr.navy };
 }
 function foreignForces(k) {
   const c = cinfo(k);
@@ -34,7 +36,8 @@ function sideForces(s, side) {
   const w = s.war, T = w.theater;
   const base = side === 'kr' ? ourForces(s) : foreignForces(w.k);
   const helpers = (side === 'kr' ? w.allies : w.enemyAllies).filter(a => cinfo(a));
-  let divs = base.divs * (side === 'kr' && T.mobilized ? 1.25 : 1), q = base.quality * divs, air = base.air, navy = base.navy;
+  const tb = typeof techBonus === 'function' ? techBonus(s) : { mobilize: 0, enemyAir: 1 };
+  let divs = base.divs * (side === 'kr' && T.mobilized ? 1.25 + tb.mobilize : 1), q = base.quality * divs, air = base.air * (side === 'kr' ? 1 : tb.enemyAir), navy = base.navy;
   for (const a of helpers) { const f = expedition(a, foreignForces(a)); divs += f.divs; q += f.quality * f.divs; air += f.air; navy += f.navy; }
   const st = T[side];
   return { divs: divs * (st.mp / 100), rawDivs: divs, quality: q / Math.max(1, divs), air: air * (st.airLeft / 100), navy: navy * (st.navyLeft / 100), equip: st.equip, org: st.org, helpers };
@@ -100,7 +103,7 @@ function warLog(s, text, type = 'info') {
 function warDay(s) {
   const w = s.war, T = w?.theater; if (!T || !w) return;
   T.days++; T.daysThisQ++;
-  const sup = supremacy(s), A = sup.a, B = sup.b;
+  const sup = supremacy(s), A = sup.a, B = sup.b, TB = typeof techBonus === 'function' ? techBonus(s) : { cas: 1, org: 0, equip: 0 };
   const edges = frontEdges(T);
   const byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
   // 적 AI 태세
@@ -125,7 +128,7 @@ function warDay(s) {
       // 사상자 (명)
       if (e.active) {
         const fight = (atkK + atkE) * share;
-        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8)), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
+        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
         T.kr.cas += krC; T.en.cas += enC; dayKr += krC; dayEn += enC;
       }
       if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); break; }
@@ -136,8 +139,8 @@ function warDay(s) {
   // 조직력·장비·병력
   for (const side of ['kr', 'en']) {
     const st = T[side];
-    st.org = clamp(st.org + STANCES[st.stance].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6, 15, 100);
-    const prod = side === 'kr' ? 0.004 + (s.buildings?.ship || 0) * 0.001 + (s.policies.def_budget === 'up5' ? 0.003 : s.policies.def_budget === 'up35' ? 0.0015 : 0) : 0.004 * (T.blockade > 0 ? 0.4 : 1);
+    st.org = clamp(st.org + STANCES[st.stance].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6 + (side === 'kr' ? TB.org : 0), 15, 100);
+    const prod = side === 'kr' ? 0.004 + TB.equip + (s.buildings?.ship || 0) * 0.001 + (s.policies.def_budget === 'up5' ? 0.003 : s.policies.def_budget === 'up35' ? 0.0015 : 0) : 0.004 * (T.blockade > 0 ? 0.4 : 1);
     st.equip = clamp(st.equip - (edges.length && st.stance !== 'hold' ? 0.006 : 0.002) + prod, 0.15, 1);
     st.mp = clamp(st.mp - (side === 'kr' ? T.dayKr : T.dayEn) / 4000 + 0.05, 25, 100);
   }
@@ -169,14 +172,17 @@ const OPS = [
     can: s => supremacy(s).air < 0.5 ? '제공권이 50% 미만입니다.' : null,
     run: s => { const T = s.war.theater; T.en.equip = clamp(T.en.equip - 0.12, 0.15, 1); T.en.org -= 10; T.kr.airLeft = clamp(T.kr.airLeft - 4, 20, 100); return '전략 폭격으로 적 군수 시설을 타격했습니다.'; } },
   { id: 'missile', name: '미사일 정밀 타격', icon: '🚀', cost: 20, cd: 20, desc: '적 지휘부·포병 진지를 정밀 타격. 적 조직력 -18, 장비 -5%.',
-    run: s => { const T = s.war.theater; T.en.org = clamp(T.en.org - 18, 5, 100); T.en.equip = clamp(T.en.equip - 0.05, 0.15, 1); T.en.airLeft = clamp(T.en.airLeft - 6, 10, 100); return '현무 미사일이 적 지휘부를 타격했습니다.'; } },
+    run: s => { const T = s.war.theater, m = typeof techBonus === 'function' ? techBonus(s).missile : 1; T.en.org = clamp(T.en.org - 18 * m, 5, 100); T.en.equip = clamp(T.en.equip - 0.05 * m, 0.15, 1); T.en.airLeft = clamp(T.en.airLeft - 6 * m, 10, 100); return `${m >= 1.8 ? '극초음속 미사일' : '현무 미사일'}이 적 지휘부를 타격했습니다.${m > 1 ? ` (위력 ×${m.toFixed(1)})` : ''}`; } },
+  { id: 'cyber', name: '사이버 공격', icon: '💻', cost: 12, cd: 25, desc: '적 지휘통신망·전력망을 마비시킵니다. 적 조직력 -12, 장비 -4%. 사이버사령부 확장 필요.',
+    can: s => typeof techDone === 'function' && techDone(s, 'c1') ? null : '사이버사령부 확장을 먼저 개발하세요.',
+    run: s => { const T = s.war.theater; T.en.org = clamp(T.en.org - 12, 5, 100); T.en.equip = clamp(T.en.equip - 0.04, 0.15, 1); return '사이버사령부가 적 지휘통신망을 마비시켰습니다.'; } },
   { id: 'landing', name: '상륙 작전', icon: '⚓', cost: 30, cd: 45, desc: '적 해안에 상륙해 교두보를 만듭니다. 제해권이 높을수록 성공률↑. 바다 건너 전쟁에서는 필수.',
     run: s => { const T = s.war.theater, sup = supremacy(s);
       const targets = T.provs.filter(p => p.home === s.war.k && p.owner !== 'kr');
       const kc = MAP_DATA.countries.kr.c, dd = p => (p.c[0] - kc[0]) ** 2 + (p.c[1] - kc[1]) ** 2;
       const target = T.provs.find(p => p.virtual && p.home === s.war.k && p.owner !== 'kr') || targets.sort((a, b) => dd(a) - dd(b))[0];
       if (!target) return '상륙할 곳이 없습니다.';
-      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0), 0.05, 0.92);
+      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0) + (typeof techBonus === 'function' ? techBonus(s).landing : 0), 0.05, 0.95);
       if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id); warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
       T.kr.mp = clamp(T.kr.mp - 4, 30, 100); T.kr.navyLeft = clamp(T.kr.navyLeft - 10, 10, 100); warLog(s, `${target.n} 상륙 실패. 큰 피해를 입었습니다.`, 'bad'); return `상륙이 실패했습니다. (성공률 ${Math.round(p * 100)}%)`; } },
   { id: 'blockade', name: '해상 봉쇄', icon: '🚢', cost: 10, cd: 60, desc: '적 항구를 봉쇄해 60일간 적 장비 보충을 크게 줄입니다. 제해권 40% 이상.',

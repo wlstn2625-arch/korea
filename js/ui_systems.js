@@ -5,6 +5,7 @@
 function renderSystemsTabs() {
   if (!S) return;
   renderPolitics(); renderEconomy(); renderWorld();
+  if (typeof renderDefense === 'function') renderDefense();
   if (typeof renderWarHud === 'function') renderWarHud();
   const wb = $('war-badge'); if (wb) wb.classList.toggle('hidden', !S.war);
   const bb = $('bill-badge'); if (bb) { bb.textContent = S.bills.length; bb.classList.toggle('hidden', !S.bills.length); }
@@ -85,7 +86,8 @@ function renderEconomy() {
         ${row('🧾 세수', B.tax, `세율 수준 ${Math.round(taxLevel(S) * 100)}% · 성장률 연동`)}
         ${row('🚢 무역 이익', B.trade, `FTA ${ftaN}개국`)}
         ${row('🏭 산업 수익', B.industry, `시설 ${Object.values(S.buildings).reduce((a, b) => a + b, 0)}단계`)}
-        ${B.annexed ? row('🚩 편입 지역', B.annexed) : ''}
+        ${B.annexed ? row('🚩 점령지 수익', B.annexed, '점령지 통치 화면에서 조정') : ''}
+        ${B.defense ? row('🏭 방산 수출', B.defense) : ''}
         ${row('🏛️ 국정 효율', B.admin, '지지율·국정 연합')}
         ${row('🏦 국채 이자', B.interest, `채무비율 ${S.stats.debt.toFixed(1)}%`)}
         ${B.war ? row('⚔️ 전쟁 비용', B.war) : ''}${B.imf ? row('🆘 IMF 상환', B.imf) : ''}

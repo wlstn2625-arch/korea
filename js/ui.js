@@ -71,6 +71,7 @@ $('btn-continue').onclick = () => { S = loadGame(); if (S) enterGame(); };
 
 function enterGame() {
   migrateState(S);
+  S.uiPeace = true; // 전쟁에 이기면 강화 조건을 직접 고름
   ClaudeAI.setWorldview(S.worldview);
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
@@ -84,7 +85,7 @@ function enterGame() {
 
 /* ---------------- 탭 ---------------- */
 $('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab, true));
-const PANEL_TITLES = { status: '📊 국정 현황', policy: '📜 정책 결정', politics: '🏛️ 국회·세력', economy: '🏭 산업 경제', world: '🌏 외교·세계 정세', crisis: '🚨 위기 대응', report: '🗞️ 국정 보고서', trend: '📈 지표 추이', log: '🗂️ 국정 기록' };
+const PANEL_TITLES = { status: '📊 국정 현황', policy: '📜 정책 결정', politics: '🏛️ 국회·세력', economy: '🏭 산업 경제', world: '🌏 외교·세계 정세', defense: '🪖 국방·영토', crisis: '🚨 위기 대응', report: '🗞️ 국정 보고서', trend: '📈 지표 추이', log: '🗂️ 국정 기록' };
 let openPanelName = null;
 // 지도 위에 패널을 엽니다. 같은 버튼을 다시 누르면 닫힘
 function showTab(name, toggle = false) {
@@ -97,6 +98,7 @@ function showTab(name, toggle = false) {
   $('panel-wrap').querySelector('.panel-body').scrollTop = 0;
   if (name === 'trend') renderTrend();
   if (name === 'world' && typeof renderWorld === 'function') renderWorld();
+  if (name === 'defense' && typeof renderDefense === 'function') renderDefense();
 }
 function closePanel() {
   openPanelName = null;

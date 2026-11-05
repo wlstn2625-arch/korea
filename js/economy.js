@@ -121,13 +121,14 @@ function budgetIncome(s) {
   let industry = 0;
   for (const x of SECTORS) industry += x.share * ((s.sectors?.[x.id]?.idx || 100) / 100) * 0.05;
   industry = (industry + Object.values(s.buildings || {}).reduce((a, b) => a + b, 0) * 1.2) * mul;
-  const annexed = Object.keys(s.annexed || {}).reduce((a, k) => a + (typeof cinfo === 'function' ? cinfo(k).eco * 0.06 : 0), 0) * mul;
+  const annexed = typeof terrIncome === 'function' ? terrIncome(s) : Object.keys(s.annexed || {}).reduce((a, k) => a + (typeof cinfo === 'function' ? cinfo(k).eco * 0.06 : 0), 0) * mul;
+  const defense = typeof techBonus === 'function' ? techBonus(s).income * mul : 0;
   const interest = -Math.max(0, s.stats.debt - 40) * 0.09;
   const admin = (s.approval - 45) * 0.12 + (s.pcapBonus || 0) * 0.5;
   const war = s.war ? -10 : 0;
   const imf = s.imfTurn != null && s.turn - s.imfTurn < 8 ? -6 : 0;
-  const total = tax + trade + industry + annexed + interest + admin + war + imf;
-  return { tax, trade, industry, annexed, interest, admin, war, imf, total };
+  const total = tax + trade + industry + annexed + defense + interest + admin + war + imf;
+  return { tax, trade, industry, annexed, defense, interest, admin, war, imf, total };
 }
 
 /* ---------------- 공장 건설·특별세·국채 ---------------- */
