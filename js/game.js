@@ -1,0 +1,183 @@
+/* =========================================================
+ *  게임 진행: 실시간 시계·속도 조절, 사건 카드, 분기 결산 카드, 속보 자막, 내각 장관
+ * ========================================================= */
+
+/* ---------------- 시계 ---------------- */
+let gameSpeed = 0;                       // 0 일시정지, 1 보통, 2 빠름, 3 매우 빠름
+const DAY_RATE = { 1: 0.9, 2: 2.2, 3: 5 }; // 0.1초마다 흐르는 날 수 (보통: 한 분기 약 10초)
+const QUARTER_DAYS = 90;
+
+function gameDateText() {
+  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  const d = Math.floor(S.day || 0);
+  return `${t.year}년 ${(t.q - 1) * 3 + 1 + Math.floor(d / 30)}월 ${(d % 30) + 1}일`;
+}
+function setSpeed(v) {
+  gameSpeed = v;
+  $('speed').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.speed === v));
+  $('speed').classList.toggle('paused', v === 0);
+}
+$('speed').querySelectorAll('button').forEach(b => b.onclick = () => setSpeed(+b.dataset.speed));
+document.addEventListener('keydown', e => {
+  if (!S || $('game').classList.contains('hidden') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.code === 'Space') { e.preventDefault(); setSpeed(gameSpeed ? 0 : 1); }
+  else if (['Digit1', 'Digit2', 'Digit3'].includes(e.code)) setSpeed(+e.code.slice(-1));
+  else if (e.key === 'Escape' && openPanelName) closePanel();
+});
+setInterval(() => {
+  if (!S || S.over || busy || !gameSpeed || $('game').classList.contains('hidden')) return;
+  if (!$('modal').classList.contains('hidden')) return;      // 사건 카드·대화 중에는 시간이 멈춤
+  S.day = (S.day || 0) + DAY_RATE[gameSpeed];
+  if (S.day >= QUARTER_DAYS) { S.day = 0; endQuarter(); return; }
+  $('hdr-date').textContent = gameDateText();
+  $('day-prog').style.width = `${(S.day / QUARTER_DAYS) * 100}%`;
+}, 100);
+
+/* ---------------- 분기 결산 후 ---------------- */
+let eventQueue = [];
+function afterQuarter(report, recs, newCrises) {
+  closeModal();
+  $('day-prog').style.width = '0%';
+  refreshTicker();
+  if (report.gameOver) { setSpeed(0); return showEnding(); }
+  const blocking = [];
+  if (report.elections?.length) blocking.push(() => openElectionCard(report));
+  if (S.autoAI && recs.length) blocking.push(() => openAiReportCard(recs));
+  if (!S.autoAI) for (const c of newCrises) blocking.push(() => openEventCard(c.id));
+  eventQueue.push(...blocking);
+  showQuarterCard(report, recs);
+  nextEvent();
+}
+function nextEvent() {
+  if (!$('modal').classList.contains('hidden')) return;
+  const f = eventQueue.shift(); if (f) f();
+}
+// 모달이 닫히면 다음 사건으로
+new MutationObserver(() => { if ($('modal').classList.contains('hidden') && eventQueue.length) setTimeout(nextEvent, 250); })
+  .observe($('modal'), { attributes: true, attributeFilter: ['class'] });
+
+function showQuarterCard(report, recs) {
+  const t = report.label, ap = report.approvalDiff;
+  const moves = Object.entries(report.diff).map(([k, d]) => {
+    const good = k === 'infl' ? Math.abs(S.stats.infl - 2) < Math.abs(S.stats.infl - d - 2) : d * STATS[k].good > 0;
+    const th = STATS[k].dec >= 3 ? 0.0015 : STATS[k].dec === 2 ? 0.005 : STATS[k].dec === 1 ? 0.1 : 0.6;
+    return { k, d, good, mag: Math.abs(d * STATS[k].w) , show: Math.abs(d) >= th };
+  }).filter(x => x.show).sort((a, b) => b.mag - a.mag).slice(0, 4);
+  const passed = (report.bills || []).filter(b => b.result === 'passed').map(b => b.name);
+  const headline = (report.worldNews || []).find(n => n.type === 'bad') || (report.worldNews || [])[0];
+  const el = $('qcard');
+  el.innerHTML = `<div class="qc-head"><b>📋 ${t.year}년 ${t.q}분기 결산</b><button class="btn ghost sm" id="qc-x">✕</button></div>
+    <div class="qc-appr">지지율 <b class="${ap >= 0 ? 'good-t' : 'bad-t'}">${ap >= 0 ? '▲' : '▼'} ${Math.abs(ap).toFixed(1)}%p</b> → ${S.approval.toFixed(1)}%</div>
+    <div class="qc-moves">${moves.map(m => `<span class="${m.good ? 'good-t' : 'bad-t'}">${STATS[m.k].name} ${fmtStat(m.k, m.d, true)}</span>`).join('') || '<span class="muted">큰 변화 없음</span>'}</div>
+    ${passed.length ? `<div class="small">🏛️ 국회 통과: ${passed.map(esc).join(', ')}</div>` : ''}
+    ${recs.length ? `<div class="small">🚨 위기 ${recs.length}건 처리 (${recs.filter(r => r.success).length}건 성공)</div>` : ''}
+    ${headline ? `<div class="small qc-news">🌐 ${esc(headline.text)}</div>` : ''}
+    <div class="row-btns"><button class="btn sm" id="qc-more">보고서 보기</button></div>`;
+  el.classList.remove('hidden', 'leave'); el.classList.add('enter');
+  clearTimeout(showQuarterCard._t);
+  showQuarterCard._t = setTimeout(() => el.classList.add('hidden'), 9000);
+  $('qc-x').onclick = () => el.classList.add('hidden');
+  $('qc-more').onclick = () => { el.classList.add('hidden'); showTab('report'); };
+}
+
+/* ---------------- 사건 카드 ---------------- */
+const EV_ART = { fiscal: '💸', protest: '📢', market: '📉', diplomacy: '🌐', legal: '⚖️', security: '🚨', social: '🔥', brain: '🧳', inflation: '🛒', housing: '🏚️' };
+function openEventCard(cid) {
+  const c = S.crises.find(x => x.id === cid); if (!c) return nextEvent();
+  setSpeed(0);
+  const evals = aiEvaluate(S, c), best = evals[0].i;
+  const p = c.pid && policyById(c.pid, S);
+  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  openModal(`<div class="event">
+    <div class="ev-banner ev-${c.tpl} ${c.good ? 'ev-good' : ''}"><span class="ev-art">${EV_ART[c.tpl] || c.icon}</span><span class="ev-kind">${esc(c.kind)}${c.good ? ' · 기회' : ` · 심각도 ${'●'.repeat(c.sev)}`}</span><span class="ev-date">${t.year}년 ${t.q}분기</span></div>
+    <h2>${esc(c.title)}</h2>
+    <p class="ev-desc">${esc(c.desc)}${p ? `<br><span class="muted small">원인: ${esc(p.name)} — ${esc(optionOf(p, c.oid)?.label || '')}</span>` : ''}</p>
+    <div class="ev-opts">${c.options.map((o, i) => { const ev = evals.find(x => x.i === i); const fx = expandSolution(S, c, o, true); return `
+      <button class="ev-opt ${i === best ? 'best' : ''}" data-i="${i}">
+        <span class="ev-lbl">${esc(o.label)} ${i === best ? '<span class="tag new">참모 추천</span>' : ''}</span>
+        <span class="muted small">${esc(o.desc)}</span>
+        <span class="ev-fx">${fxList(fx.e, fx.rel, fx.f)}</span>
+        <span class="ev-meta">성공 ${(ev.ok * 100).toFixed(0)}% · ⚡${o.pc || 0}${o.rollback ? ` · 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''}</span>
+      </button>`; }).join('')}</div>
+    <div class="modal-actions"><button class="btn" id="ev-ai">🤖 ${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'}에게 맡기기</button></div>
+  </div>`, { closable: false });
+  const done = rec => { saveGame(S); renderAll(); showEventResult(rec); };
+  document.querySelectorAll('.ev-opt').forEach(b => b.onclick = () => done(resolveCrisis(S, c.id, +b.dataset.i, 'player')));
+  $('ev-ai').onclick = async () => { $('ev-ai').disabled = true; $('ev-ai').innerHTML = '<span class="spinner"></span>판단 중…'; done(await aiResolve(c)); };
+}
+function showEventResult(rec) {
+  if (!rec) return closeModal();
+  openModal(`<div class="event">
+    <div class="ev-stamp ${rec.success ? 'ok' : 'fail'}">${rec.success ? '성공' : '실패'}</div>
+    <h2>${rec.icon} ${esc(rec.title)}</h2>
+    <p class="lead">${esc(rec.by)}: <b>${esc(rec.sol)}</b></p>
+    <p>${esc(rec.outcome)}</p>
+    <div class="ev-fx">${fxList(rec.fx.e, rec.fx.rel, rec.fx.f)}</div>
+    ${rec.reasoning ? `<div class="ai-box"><span class="who">🧠 판단 근거</span>${esc(rec.reasoning)}</div>` : ''}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">계속</button></div>
+  </div>`);
+}
+function openAiReportCard(recs) {
+  openModal(`<div class="event">
+    <div class="ev-banner ev-security"><span class="ev-art">🤖</span><span class="ev-kind">${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'} 위기 대응 보고</span></div>
+    <h2>이번 분기 위기 ${recs.length}건을 처리했습니다</h2>
+    ${recs.map(resolvedCard).join('')}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div></div>`);
+}
+function openElectionCard(report) {
+  setSpeed(0);
+  openModal(`<div class="event">
+    <div class="ev-banner ev-diplomacy"><span class="ev-art">🗳️</span><span class="ev-kind">선거 결과</span></div>
+    <h2>국민이 심판했습니다</h2>${report.elections.map(e => `<p class="lead">${esc(e)}</p>`).join('')}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div></div>`);
+}
+
+/* ---------------- 속보 자막 ---------------- */
+function refreshTicker() {
+  if (!S) return;
+  const items = [...(S.world?.news || []).slice(0, 10).map(n => ({ t: n.text, type: n.type })), ...S.log.slice(0, 6).map(l => ({ t: l.text, type: l.type }))];
+  const inner = $('ticker-inner');
+  inner.innerHTML = items.map(i => `<span class="tk ${i.type}">${esc(i.t)}</span>`).join('<span class="tk-sep">◆</span>') || '<span class="tk">대한민국 정부 출범. 국정 운영이 시작됩니다.</span>';
+  inner.style.animationDuration = `${Math.max(30, inner.textContent.length * 0.22)}s`;
+  inner.style.animationName = 'none'; void inner.offsetWidth; inner.style.animationName = '';
+}
+
+/* ---------------- 내각 장관 ---------------- */
+const MINISTRY = { const: '대통령실 정무수석', tax: '기획재정부 장관', econ: '산업통상부 장관', labor: '고용노동부 장관', welfare: '보건복지부 장관', house: '국토교통부 장관', edu: '교육부 장관',
+  defense: '국방부 장관', diplo: '외교부 장관', justice: '법무부 장관', civil: '법제처장', env: '환경에너지부 장관', health: '보건의료 차관' };
+const KOR_SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송'];
+const KOR_GIVEN = ['민준', '서연', '도윤', '지우', '현우', '수빈', '정훈', '은영', '성민', '혜진', '재석', '미경', '동현', '유나', '상철', '지혜'];
+function ministerOf(cat) {
+  S.cabinet = S.cabinet || {};
+  if (!S.cabinet[cat]) { const r = hashRnd(`${cat}:${S.seed || 1}`); S.cabinet[cat] = { name: KOR_SUR[Math.floor(r() * KOR_SUR.length)] + KOR_GIVEN[Math.floor(r() * KOR_GIVEN.length)], hue: Math.floor(r() * 360) }; }
+  return { ...S.cabinet[cat], title: MINISTRY[cat] };
+}
+let ministerPick = 0;
+function ministerProposals(cat) {
+  const out = [];
+  for (const p of allPolicies().filter(x => x.cat === cat)) {
+    if (S.enactedThisTurn.includes(p.id) || S.bills?.some(b => b.pid === p.id)) continue;
+    const cur = currentOption(p, S);
+    for (const o of p.options) {
+      if (o.id === cur.id || o.cur) continue;
+      const pv = previewPolicy(S, p, o);
+      if (pv.cost > S.pcap) continue;
+      out.push({ p, o, net: pv.net - pv.cost * 0.05, prob: pv.vote.prob });
+    }
+  }
+  return out.filter(x => x.net > 1.5 && x.prob > 0.25).sort((a, b) => b.net - a.net);
+}
+function renderMinister() {
+  const el = $('minister'); if (!el || !S) return;
+  const cat = activeCat, m = ministerOf(cat), props = ministerProposals(cat);
+  const pick = props.length ? props[ministerPick % props.length] : null;
+  const line = pick ? `대통령님, <b>${esc(pick.p.name)}</b>을(를) <b>'${esc(pick.o.label)}'</b>(으)로 바꾸실 것을 건의드립니다. ${pick.o.pro ? esc(pick.o.pro) : ''}`
+    : '현재로서는 무리한 변화보다 기존 정책을 안착시키는 편이 낫다고 판단합니다. 정치자본을 아껴 두십시오.';
+  el.innerHTML = `<div class="minister">
+    <div class="avatar" style="background:hsl(${m.hue} 40% 40%)">${esc(m.name[0])}</div>
+    <div class="bubble"><div class="m-name">${esc(m.title)} <b>${esc(m.name)}</b></div><div>${line}</div>
+      <div class="row-btns">${pick ? `<button class="btn sm primary" id="m-review">검토하기</button>` : ''}${props.length > 1 ? `<button class="btn sm ghost" id="m-next">다른 건의 (${(ministerPick % props.length) + 1}/${props.length})</button>` : ''}</div></div>
+  </div>`;
+  $('m-review') && ($('m-review').onclick = () => openPreview(pick.p.id, pick.o.id));
+  $('m-next') && ($('m-next').onclick = () => { ministerPick++; renderMinister(); });
+}

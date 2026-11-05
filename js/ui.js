@@ -5,7 +5,6 @@ let S = null;
 let activeCat = 'const';
 let selectedParty = 'lib';
 let selectedDiff = 'normal';
-let selectedWv = 'con';
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -45,16 +44,13 @@ function renderStart() {
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
     `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
-  $('wv-pick').innerHTML = Object.entries(WORLDVIEWS).map(([k, w]) =>
-    `<div class="party-opt ${k === selectedWv ? 'sel' : ''}" data-w="${k}"><b>${w.name}${k === 'con' ? ' (기본)' : ''}</b><span>${w.desc}</span></div>`).join('');
-  $('wv-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedWv = el.dataset.w; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
   const name = $('pres-name').value.trim() || '대통령';
-  S = newGame(selectedParty, name, selectedDiff, selectedWv);
+  S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
     <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
@@ -81,17 +77,34 @@ function enterGame() {
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
+  closePanel();
   renderAll();
+  if (typeof refreshTicker === 'function') { refreshTicker(); setSpeed(0); }
+  setTimeout(() => toast('⏯ 위쪽 ▶ 버튼이나 <b>스페이스바</b>로 시간을 흐르게 하세요. 메뉴에서 정책·외교·국회를 다루고, 지도에서 나라를 눌러 보세요.', 6000), 400);
 }
 
 /* ---------------- 탭 ---------------- */
-$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
-function showTab(name) {
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab, true));
+const PANEL_TITLES = { status: '📊 국정 현황', policy: '📜 정책 결정', politics: '🏛️ 국회·세력', economy: '🏭 산업 경제', world: '🌏 외교·세계 정세', crisis: '🚨 위기 대응', report: '🗞️ 국정 보고서', trend: '📈 지표 추이', log: '🗂️ 국정 기록' };
+let openPanelName = null;
+// 지도 위에 패널을 엽니다. 같은 버튼을 다시 누르면 닫힘
+function showTab(name, toggle = false) {
+  if (toggle && openPanelName === name) return closePanel();
+  openPanelName = name;
+  $('panel-wrap').classList.remove('hidden');
+  $('panel-title').textContent = PANEL_TITLES[name] || '';
   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  $('panel-wrap').querySelector('.panel-body').scrollTop = 0;
   if (name === 'trend') renderTrend();
   if (name === 'world' && typeof renderWorld === 'function') renderWorld();
 }
+function closePanel() {
+  openPanelName = null;
+  $('panel-wrap').classList.add('hidden');
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+}
+$('panel-x').onclick = closePanel;
 
 /* ---------------- 렌더링 ---------------- */
 function renderAll() {
@@ -101,12 +114,27 @@ function renderAll() {
 }
 function renderHeader() {
   const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
-  $('hdr-date').textContent = `${t.year}년 ${t.q}분기 · 임기 ${t.termYear}년차 (${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS})`;
+  $('hdr-date').textContent = typeof gameDateText === 'function' ? gameDateText() : `${t.year}년 ${t.q}분기`;
+  $('hdr-term').textContent = `임기 ${t.termYear}년차 · ${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS}분기`;
+  hudFloat('hdr-appr', S.approval, 1, '%p'); hudFloat('hdr-pcap', S.pcap, 0, ''); hudFloat('hdr-gdp', S.stats.gdp, 1, '%p');
   const a = $('hdr-appr'); a.textContent = S.approval.toFixed(1) + '%'; a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
   { const g = pcapGain(S); $('hdr-pcap').innerHTML = `${Math.floor(S.pcap)}<small class="gain">${g >= 0 ? '+' : ''}${Math.round(g)}/분기</small>`; }
   const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling];
   const se = $('hdr-seats'); se.textContent = `${rs}/300`; se.style.color = rs >= 151 ? 'var(--good)' : 'var(--mid)';
   $('btn-end').disabled = S.over;
+  const gd = $('hdr-gdp'); gd.textContent = fmtStat('gdp', S.stats.gdp); gd.style.color = S.stats.gdp >= 1.5 ? 'var(--good)' : S.stats.gdp >= 0 ? 'var(--mid)' : 'var(--bad)';
+  const db = $('hdr-debt'); db.textContent = fmtStat('debt', S.stats.debt); db.style.color = S.stats.debt < 60 ? 'var(--text)' : S.stats.debt < 80 ? 'var(--mid)' : 'var(--bad)';
+  const tn = $('hdr-tension'); const T = S.world?.tension ?? 35; tn.textContent = T.toFixed(0); tn.style.color = T >= 70 ? 'var(--bad)' : T >= 50 ? 'var(--mid)' : 'var(--good)';
+}
+// 상단 수치가 바뀌면 +/- 숫자가 떠올랐다 사라짐
+const hudPrev = {};
+function hudFloat(id, v, dec, unit) {
+  const prev = hudPrev[id]; hudPrev[id] = v;
+  if (prev == null || Math.abs(v - prev) < Math.pow(10, -dec) / 2) return;
+  const d = v - prev, host = $(id)?.closest('.res'); if (!host) return;
+  const f = document.createElement('span'); f.className = 'floater ' + (d > 0 ? 'up' : 'down');
+  f.textContent = `${d > 0 ? '+' : ''}${d.toFixed(dec)}${unit}`;
+  host.appendChild(f); setTimeout(() => f.remove(), 1800);
 }
 function renderSide() {
   const prev = S.history.length > 1 ? S.history[S.history.length - 2] : S.history[0];
@@ -129,7 +157,8 @@ function renderPolicies() {
     const changed = allPolicies().filter(p => p.cat === c.id && !currentOption(p, S).cur).length;
     return `<button class="chip ${c.id === activeCat ? 'active' : ''}" data-c="${c.id}">${c.icon} ${c.name}${changed ? `<span class="cnt">●${changed}</span>` : ''}</button>`;
   }).join('');
-  $('cat-chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { activeCat = b.dataset.c; renderPolicies(); });
+  $('cat-chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { activeCat = b.dataset.c; if (typeof ministerPick !== 'undefined') ministerPick = 0; renderPolicies(); });
+  if (typeof renderMinister === 'function') renderMinister();
   const list = allPolicies().filter(p => p.cat === activeCat);
   $('policy-list').innerHTML = list.map(p => {
     const cur = currentOption(p, S);
@@ -355,10 +384,13 @@ async function aiResolve(c) {
 }
 
 /* ---------------- 분기 종료 ---------------- */
-$('btn-end').onclick = async () => {
+$('btn-end').onclick = () => endQuarter();
+async function endQuarter() {
   if (busy || S.over) return;
   busy = true; $('btn-end').disabled = true;
-  openModal(`<h2>⏳ 분기 진행 중</h2><p><span class="spinner"></span>정책 효과를 반영하고 국내외 정세를 시뮬레이션하고 있습니다…</p>`, { closable: false });
+  if (typeof setSpeed === 'function') S.day = 0;
+  const hadModal = !$('modal').classList.contains('hidden');
+  if (!hadModal) openModal(`<h2>⏳ 분기 결산 중</h2><p><span class="spinner"></span>정책 효과를 반영하고 국내외 정세를 시뮬레이션하고 있습니다…</p>`, { closable: false });
   const recs = [];
   // 직접 결정 모드에서 미처리 위기는 AI가 처리
   for (const c of [...S.crises]) recs.push(await aiResolve(c));
@@ -374,7 +406,8 @@ $('btn-end').onclick = async () => {
   report.pendingCrises = S.autoAI ? 0 : newCrises.length;
   saveGame(S);
   busy = false; renderAll();
-  showReportModal(report, recs.filter(Boolean));
+  if (typeof afterQuarter === 'function') afterQuarter(report, recs.filter(Boolean), newCrises);
+  else showReportModal(report, recs.filter(Boolean));
   if (ClaudeAI.enabled() && !report.gameOver) {
     try {
       const txt = await ClaudeAI.briefing(S, report);
@@ -383,7 +416,7 @@ $('btn-end').onclick = async () => {
       renderReport();
     } catch (e) { const el = $('brief-slot'); if (el) el.innerHTML = `<div class="ai-box">Claude 논평 실패: ${esc(e.message)}</div>`; }
   }
-};
+}
 
 function reportHTML(report, recs) {
   const t = report.label;
@@ -476,14 +509,13 @@ $('btn-settings').onclick = () => {
     <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
     <h3 class="sec">게임</h3>
-    ${S ? `<div class="settings-row"><label for="cfg-wv">게임 세계관</label><select id="cfg-wv">${Object.entries(WORLDVIEWS).map(([k, w]) => `<option value="${k}" ${k === S.worldview ? 'selected' : ''}>${w.name}</option>`).join('')}</select><div class="muted small">${esc(WORLDVIEWS[S.worldview || 'con'].desc)} 수치는 게임 밸런스이며 실제 정책 효과를 예측하지 않습니다.</div></div>` : ''}
     <div class="modal-actions" style="justify-content:flex-start">
       <button class="btn" id="cfg-theme">🌓 테마 전환</button>
       <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
     </div>
     <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
   const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
-  $('cfg-save').onclick = () => { if (S && $('cfg-wv')) { S.worldview = $('cfg-wv').value; ClaudeAI.setWorldview(S.worldview); saveGame(S); } ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
+  $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
   $('cfg-test').onclick = async () => {
     ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
     try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }

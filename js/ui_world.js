@@ -116,7 +116,9 @@ function bindMapInteraction(container, svg) {
     if (moved > 6) return;
     const t = e.target.closest('[data-c]'); if (!t) return;
     const k = t.dataset.c; if (k === 'kr') return;
-    selCountry = k; updateMap(); renderCountryPanel();
+    selCountry = k; updateMap();
+    if (openPanelName !== 'world') showTab('world'); else renderCountryPanel();
+    $('cpanel-slot')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   container.querySelectorAll('[data-z]').forEach(b => b.onclick = () => {
     const z = b.dataset.z;
@@ -129,13 +131,13 @@ function bindMapInteraction(container, svg) {
     container.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('primary', x.dataset.mode === mapMode));
     updateMap();
   });
-  container.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { selCountry = b.dataset.q; zoomTo(selCountry); updateMap(); renderCountryPanel(); });
+  container.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { selCountry = b.dataset.q; zoomTo(selCountry); updateMap(); showTab('world'); });
   const search = container.querySelector('#map-search');
   search.addEventListener('change', () => {
     const q = search.value.trim(); if (!q) return;
     const k = allCountryKeys().find(x => cname(x) === q) || allCountryKeys().find(x => cname(x).includes(q));
     if (!k) return toast('그런 나라를 찾을 수 없습니다.');
-    selCountry = k; search.value = ''; zoomTo(k); updateMap(); renderCountryPanel();
+    selCountry = k; search.value = ''; zoomTo(k); updateMap(); showTab('world');
   });
   new ResizeObserver(() => { if (mapView && svg.clientWidth) applyView(svg); }).observe(svg);
 }
@@ -180,10 +182,9 @@ function updateMap() {
 function renderWorld() {
   const el = $('tab-world'); if (!el) return;
   if (typeof MAP_DATA === 'undefined') { el.innerHTML = '<div class="empty">지도 데이터를 불러오지 못했습니다.</div>'; return; }
-  if (!el.querySelector('#geo')) {
-    el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div class="map" id="map-wrap"></div><div id="cpanel-slot"></div>`;
-    buildGeoMap($('map-wrap'));
-  }
+  // 지도는 화면 무대(stage)에 항상 깔려 있고, 외교 패널에는 정세·국가 정보만
+  if (!$('geo')) buildGeoMap($('stage-map'));
+  if (!el.querySelector('#situation-slot')) el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div id="cpanel-slot"></div>`;
   if (!mapView && mapBuilt.svg.clientWidth) mapView = viewAsia();
   renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }

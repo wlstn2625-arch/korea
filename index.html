@@ -26,9 +26,6 @@
       <div class="field">난이도
         <div id="diff-pick" class="party-pick diff-pick"></div>
       </div>
-      <div class="field">게임 세계관
-        <div id="wv-pick" class="party-pick"></div>
-      </div>
       <div class="start-actions">
         <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
         <button id="btn-continue" class="btn big hidden">이어하기</button>
@@ -39,77 +36,83 @@
 
   <!-- 게임 화면 -->
   <section id="game" class="screen hidden">
-    <header class="topbar">
-      <div class="brand">🇰🇷 <b>새로운 대한민국</b></div>
-      <div class="date" id="hdr-date"></div>
-      <div class="kpis">
-        <div class="kpi"><span>지지율</span><b id="hdr-appr"></b></div>
-        <div class="kpi"><span>정치자본</span><b id="hdr-pcap"></b></div>
-        <div class="kpi"><span>여당 의석</span><b id="hdr-seats"></b></div>
+    <header class="hud">
+      <div class="hud-time">
+        <div class="seal">🇰🇷</div>
+        <div class="hud-date"><b id="hdr-date"></b><span id="hdr-term" class="muted"></span><div class="dayprog"><i id="day-prog"></i></div></div>
+        <div class="speed" id="speed" role="group" aria-label="시간 속도">
+          <button data-speed="0" title="일시정지 (스페이스)">⏸</button><button data-speed="1" title="보통 (1)">▶</button><button data-speed="2" title="빠름 (2)">▶▶</button><button data-speed="3" title="매우 빠름 (3)">▶▶▶</button>
+        </div>
       </div>
-      <div class="top-actions">
+      <div class="hud-res">
+        <div class="res" title="지지율"><span class="ri">📣</span><b id="hdr-appr"></b><small>지지율</small></div>
+        <div class="res" title="정치자본: 정책·외교에 쓰는 힘"><span class="ri">⚡</span><b id="hdr-pcap"></b><small>정치자본</small></div>
+        <div class="res" title="여당 의석"><span class="ri">🏛️</span><b id="hdr-seats"></b><small>여당 의석</small></div>
+        <div class="res" title="경제성장률"><span class="ri">📈</span><b id="hdr-gdp"></b><small>성장률</small></div>
+        <div class="res" title="국가채무비율"><span class="ri">💰</span><b id="hdr-debt"></b><small>국가채무</small></div>
+        <div class="res" title="세계 긴장도"><span class="ri">🌐</span><b id="hdr-tension"></b><small>세계 긴장</small></div>
+      </div>
+      <div class="hud-right">
+        <button id="btn-end" class="btn primary" title="분기를 바로 끝냅니다">⏭ 분기 결산</button>
         <button id="btn-settings" class="btn ghost" title="설정">⚙️</button>
-        <button id="btn-end" class="btn primary">분기 종료 ▶</button>
       </div>
     </header>
 
-    <div class="layout">
-      <aside class="side">
-        <div class="panel">
-          <h3>국가 지표</h3>
-          <div id="stat-list" class="stat-list"></div>
-        </div>
-        <div class="panel">
-          <h3>외교 관계</h3>
-          <div id="rel-list" class="bar-list"></div>
-        </div>
-        <div class="panel">
-          <h3>세력별 지지도</h3>
-          <div id="fac-list" class="bar-list"></div>
+    <div class="stage">
+      <div id="stage-map" class="stage-map"></div>
+
+      <nav class="dock" id="tabs">
+        <button data-tab="status"><span>📊</span>국정 현황</button>
+        <button data-tab="policy"><span>📜</span>정책</button>
+        <button data-tab="politics"><span>🏛️</span>국회·세력<i id="bill-badge" class="badge info hidden">0</i></button>
+        <button data-tab="economy"><span>🏭</span>경제</button>
+        <button data-tab="world"><span>🌏</span>외교<i id="war-badge" class="badge hidden">전쟁</i></button>
+        <button data-tab="crisis"><span>🚨</span>위기<i id="crisis-badge" class="badge hidden">0</i></button>
+        <button data-tab="report"><span>🗞️</span>보고서</button>
+        <button data-tab="trend"><span>📈</span>추이</button>
+        <button data-tab="log"><span>🗂️</span>기록</button>
+      </nav>
+
+      <aside class="panel-wrap hidden" id="panel-wrap">
+        <div class="panel-head"><h2 id="panel-title"></h2><button class="btn ghost sm" id="panel-x" aria-label="닫기">✕</button></div>
+        <div class="panel-body">
+          <div id="tab-status" class="tab">
+            <div class="panel"><h3>국가 지표</h3><div id="stat-list" class="stat-list"></div></div>
+            <div class="panel"><h3>외교 관계</h3><div id="rel-list" class="bar-list"></div></div>
+            <div class="panel"><h3>세력별 지지도</h3><div id="fac-list" class="bar-list"></div></div>
+          </div>
+          <div id="tab-policy" class="tab">
+            <div id="minister"></div>
+            <div id="cat-chips" class="chips"></div>
+            <div id="policy-list" class="policy-list"></div>
+            <div class="custom-box">
+              <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">목록에 없는 정책도 입력하면 AI가 효과를 분석합니다</span></div>
+              <div class="custom-row">
+                <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화" maxlength="120">
+                <button id="btn-custom" class="btn primary">AI 분석</button>
+              </div>
+            </div>
+          </div>
+          <div id="tab-crisis" class="tab">
+            <div class="crisis-head">
+              <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
+              <span class="muted" id="ai-mode-label"></span>
+            </div>
+            <div id="crisis-list"></div>
+            <h3 class="sec">최근 처리 결과</h3>
+            <div id="resolved-list"></div>
+          </div>
+          <div id="tab-politics" class="tab"></div>
+          <div id="tab-economy" class="tab"></div>
+          <div id="tab-world" class="tab"></div>
+          <div id="tab-report" class="tab"><div id="report-body"></div></div>
+          <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
+          <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
         </div>
       </aside>
 
-      <main class="main">
-        <nav class="tabs" id="tabs">
-          <button data-tab="policy" class="active">📜 정책 결정</button>
-          <button data-tab="politics">🏛️ 국회·세력 <span id="bill-badge" class="badge info hidden">0</span></button>
-          <button data-tab="economy">🏭 경제</button>
-          <button data-tab="world">🌏 외교·전쟁 <span id="war-badge" class="badge hidden">전쟁</span></button>
-          <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
-          <button data-tab="report">📊 국정 보고서</button>
-          <button data-tab="trend">📈 추이</button>
-          <button data-tab="log">🗂️ 국정 기록</button>
-        </nav>
-
-        <div id="tab-policy" class="tab active">
-          <div class="custom-box">
-            <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">— 목록에 없는 어떤 정책이든 입력하면 AI가 효과를 분석합니다</span></div>
-            <div class="custom-row">
-              <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화, 4년제 대학 무상화…" maxlength="120">
-              <button id="btn-custom" class="btn primary">AI 분석</button>
-            </div>
-          </div>
-          <div id="cat-chips" class="chips"></div>
-          <div id="policy-list" class="policy-list"></div>
-        </div>
-
-        <div id="tab-crisis" class="tab">
-          <div class="crisis-head">
-            <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
-            <span class="muted" id="ai-mode-label"></span>
-          </div>
-          <div id="crisis-list"></div>
-          <h3 class="sec">최근 처리 결과</h3>
-          <div id="resolved-list"></div>
-        </div>
-
-        <div id="tab-politics" class="tab"></div>
-        <div id="tab-economy" class="tab"></div>
-        <div id="tab-world" class="tab"></div>
-        <div id="tab-report" class="tab"><div id="report-body"></div></div>
-        <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
-        <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
-      </main>
+      <div id="qcard" class="qcard hidden"></div>
+      <div class="ticker"><span class="ticker-label">속보</span><div class="ticker-track"><div id="ticker-inner" class="ticker-inner"></div></div></div>
     </div>
   </section>
 
@@ -138,5 +141,6 @@
   <script src="js/ui.js"></script>
   <script src="js/ui_systems.js"></script>
   <script src="js/ui_world.js"></script>
+  <script src="js/game.js"></script>
 </body>
 </html>

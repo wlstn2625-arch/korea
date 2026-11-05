@@ -359,6 +359,136 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 .powers { margin-top: 10px; display: grid; gap: 8px; }
 .powers .pw { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 
+/* =========================================================
+   게임 화면: 지도 무대 + HUD + 도크 + 슬라이드 패널 + 속보 자막
+   ========================================================= */
+#game { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+#game .layout, #game .side { display: none; }
+.hud { position: relative; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 7px max(12px, env(safe-area-inset-right, 0px)) 7px max(12px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(180deg, var(--bg2), var(--card)); border-bottom: 1px solid var(--line); box-shadow: 0 4px 16px rgba(0,0,0,.18); }
+.hud-time { display: flex; align-items: center; gap: 10px; }
+.seal { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; background: var(--card2); border: 2px solid var(--accent); }
+.hud-date { display: grid; line-height: 1.2; min-width: 150px; }
+.hud-date b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.hud-date span { font-size: 11px; }
+.dayprog { height: 4px; background: var(--card2); border-radius: 2px; overflow: hidden; margin-top: 3px; }
+.dayprog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .1s linear; }
+.speed { display: flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.speed button { font: inherit; font-size: 12px; padding: 6px 9px; border: none; background: var(--card2); color: var(--text); cursor: pointer; letter-spacing: -2px; }
+.speed button + button { border-left: 1px solid var(--line); }
+.speed button.on { background: var(--accent); color: #fff; }
+.speed.paused button[data-speed="1"] { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: inset 0 0 0 0 transparent; } 50% { box-shadow: inset 0 0 0 2px var(--accent); background: rgba(79,140,255,.25); } }
+.hud-res { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.res { position: relative; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 6px; align-items: center; padding: 4px 10px; border-radius: 10px; background: var(--card2); border: 1px solid var(--line); min-width: 92px; }
+.res .ri { grid-row: 1 / 3; font-size: 18px; }
+.res b { font-size: 15px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.res b .gain { display: none; }
+.res small { font-size: 10.5px; color: var(--muted); line-height: 1.1; }
+.floater { position: absolute; right: 6px; top: -4px; font-size: 12px; font-weight: 800; pointer-events: none; animation: floatUp 1.8s ease-out forwards; }
+.floater.up { color: var(--good); } .floater.down { color: var(--bad); }
+@keyframes floatUp { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translateY(-22px); } }
+.hud-right { display: flex; gap: 6px; }
+
+.stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--sea); }
+.stage-map { position: absolute; inset: 0 0 30px 0; display: flex; flex-direction: column; }
+.stage-map .map-tools, .stage-map .quick { background: transparent; border: none; padding: 6px 10px 0 92px; }
+.stage-map .map-tools input { max-width: 300px; background: var(--card); box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.stage-map .map-btns .btn, .stage-map .quick .chip { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.stage-map .geo { flex: 1; min-height: 0; height: auto; aspect-ratio: auto; background: var(--sea); }
+.stage-map .map-legend { position: absolute; left: 92px; right: 10px; bottom: 6px; background: color-mix(in srgb, var(--card) 88%, transparent); border: 1px solid var(--line); border-radius: 9px; }
+
+.dock { position: absolute; z-index: 15; left: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; }
+.dock button { position: relative; width: 70px; display: grid; justify-items: center; gap: 1px; padding: 7px 4px; font: inherit; font-size: 11px; color: var(--text);
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.18); transition: transform .12s; }
+.dock button span { font-size: 20px; line-height: 1.1; }
+.dock button:hover { transform: translateX(3px); border-color: var(--accent); }
+.dock button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.dock .badge { position: absolute; top: -5px; right: -5px; font-style: normal; }
+
+.panel-wrap { position: absolute; z-index: 18; top: 0; right: 0; bottom: 30px; width: min(620px, 94vw); display: flex; flex-direction: column;
+  background: var(--bg); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0,0,0,.25); animation: slideIn .18s ease-out; }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.panel-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
+.panel-head h2 { font-size: 17px; }
+.panel-body { flex: 1; overflow-y: auto; padding: 12px 14px 20px; display: block; }
+.panel-body .policy-list { grid-template-columns: 1fr; }
+#tab-status .panel { margin-bottom: 10px; }
+
+.ticker { position: absolute; z-index: 16; left: 0; right: 0; bottom: 0; height: 30px; display: flex; align-items: center; background: #11182b; color: #e9eefb; overflow: hidden; border-top: 1px solid #2a3a5e; }
+.ticker-label { flex: 0 0 auto; height: 100%; display: grid; place-items: center; padding: 0 12px; background: #c63a3f; color: #fff; font-weight: 900; font-size: 12px; letter-spacing: .1em; }
+.ticker-track { flex: 1; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.ticker-inner { display: inline-block; padding-left: 100%; animation: ticker 60s linear infinite; font-size: 12.5px; }
+.tk.bad { color: #ffb3b3; } .tk.good { color: #a6f0c8; }
+.tk-sep { margin: 0 14px; opacity: .5; font-size: 9px; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+.qcard { position: absolute; z-index: 17; left: 92px; bottom: 76px; width: min(340px, calc(100% - 110px)); display: grid; gap: 5px; padding: 10px 12px;
+  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: 13px; }
+.qcard.enter { animation: popIn .25s ease-out; }
+@keyframes popIn { from { transform: translateY(14px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.qc-head { display: flex; justify-content: space-between; align-items: center; }
+.qc-moves { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; }
+.qc-news { color: var(--muted); }
+
+/* 사건 카드 */
+.event { display: grid; gap: 8px; }
+.ev-banner { position: relative; height: 120px; margin: -22px -22px 6px; border-radius: 16px 16px 0 0; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px 16px; overflow: hidden;
+  background: linear-gradient(135deg, #5a2a2f, #a8434a 60%, #e0864d); color: #fff; }
+.ev-banner::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,255,255,.04) 0 8px, transparent 8px 16px); }
+.ev-banner.ev-fiscal { background: linear-gradient(135deg, #3b2e12, #9a7420 60%, #e3b54a); }
+.ev-banner.ev-market, .ev-banner.ev-inflation { background: linear-gradient(135deg, #1c2a4a, #2f5aa8 60%, #5aa0e0); }
+.ev-banner.ev-diplomacy { background: linear-gradient(135deg, #16324a, #23708a 60%, #48b0b8); }
+.ev-banner.ev-security { background: linear-gradient(135deg, #1d1d24, #4a2f36 55%, #b23a3a); }
+.ev-banner.ev-legal { background: linear-gradient(135deg, #2a2440, #5a4a8a 60%, #9a86d0); }
+.ev-banner.ev-housing { background: linear-gradient(135deg, #2c2a20, #6e5d3a 60%, #b39a5e); }
+.ev-banner.ev-good { background: linear-gradient(135deg, #123a2a, #1f7a52 60%, #4cc48a); }
+.ev-art { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -58%); font-size: 64px; filter: drop-shadow(0 6px 12px rgba(0,0,0,.35)); z-index: 1; }
+.ev-kind, .ev-date { position: relative; z-index: 1; font-size: 12px; font-weight: 700; letter-spacing: .03em; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.ev-desc { margin: 0; }
+.ev-opts { display: grid; gap: 7px; }
+.ev-opt { display: grid; gap: 3px; text-align: left; font: inherit; color: var(--text); padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--card2); cursor: pointer; transition: transform .1s, border-color .1s; }
+.ev-opt:hover { transform: translateX(3px); border-color: var(--accent); }
+.ev-opt.best { border-color: var(--accent); }
+.ev-lbl { font-weight: 700; font-size: 14.5px; }
+.ev-meta { font-size: 11.5px; color: var(--muted); }
+.ev-stamp { justify-self: center; font-size: 30px; font-weight: 900; padding: 4px 22px; border: 4px solid; border-radius: 10px; transform: rotate(-6deg); letter-spacing: .2em; animation: stamp .3s ease-out; }
+.ev-stamp.ok { color: var(--good); } .ev-stamp.fail { color: var(--bad); }
+@keyframes stamp { from { transform: rotate(-6deg) scale(1.8); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
+
+/* 내각 장관 */
+.minister { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; margin-bottom: 12px; }
+.minister .avatar { width: 50px; height: 50px; font-size: 20px; }
+.bubble { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; }
+.bubble::before { content: ''; position: absolute; left: -7px; top: 16px; width: 12px; height: 12px; background: var(--card); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
+.m-name { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+@media (max-width: 760px) {
+  .hud { gap: 6px; }
+  .hud-res { order: 3; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; }
+  .hud-time { flex: 1; min-width: 0; }
+  .seal { display: none; }
+  .hud-right .btn { padding: 6px 9px; font-size: 13px; }
+  .stage-map .quick { display: none; }
+  .stage-map .map-tools { gap: 5px; padding-top: 6px; }
+  .stage-map .map-tools input { flex: 1 1 100%; max-width: none; }
+  .stage-map .map-btns .btn { padding: 4px 8px; font-size: 12px; }
+  .res { min-width: 0; padding: 3px 7px; }
+  .res small { display: none; }
+  .hud-right { margin-left: auto; }
+  .hud-date { min-width: 0; }
+  .stage-map { inset: 0 0 86px 0; }
+  .stage-map .map-tools, .stage-map .quick { padding-left: 10px; }
+  .stage-map .map-legend { display: none; }
+  .dock { top: auto; bottom: 30px; left: 0; right: 0; transform: none; flex-direction: row; overflow-x: auto; gap: 0; background: var(--card); border-top: 1px solid var(--line); }
+  .dock button { width: auto; min-width: 62px; flex: 1 0 auto; border-radius: 0; border: none; box-shadow: none; font-size: 10px; padding: 6px 4px; }
+  .dock button:hover { transform: none; }
+  .panel-wrap { width: 100%; bottom: 92px; border-left: none; }
+  .qcard { left: 10px; bottom: 100px; width: calc(100% - 20px); }
+  .ev-banner { height: 96px; } .ev-art { font-size: 50px; }
+}
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -375,9 +505,6 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
       <div class="field">난이도
         <div id="diff-pick" class="party-pick diff-pick"></div>
       </div>
-      <div class="field">게임 세계관
-        <div id="wv-pick" class="party-pick"></div>
-      </div>
       <div class="start-actions">
         <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
         <button id="btn-continue" class="btn big hidden">이어하기</button>
@@ -388,77 +515,83 @@ table.sector .num { text-align: right; font-variant-numeric: tabular-nums; }
 
   <!-- 게임 화면 -->
   <section id="game" class="screen hidden">
-    <header class="topbar">
-      <div class="brand">🇰🇷 <b>새로운 대한민국</b></div>
-      <div class="date" id="hdr-date"></div>
-      <div class="kpis">
-        <div class="kpi"><span>지지율</span><b id="hdr-appr"></b></div>
-        <div class="kpi"><span>정치자본</span><b id="hdr-pcap"></b></div>
-        <div class="kpi"><span>여당 의석</span><b id="hdr-seats"></b></div>
+    <header class="hud">
+      <div class="hud-time">
+        <div class="seal">🇰🇷</div>
+        <div class="hud-date"><b id="hdr-date"></b><span id="hdr-term" class="muted"></span><div class="dayprog"><i id="day-prog"></i></div></div>
+        <div class="speed" id="speed" role="group" aria-label="시간 속도">
+          <button data-speed="0" title="일시정지 (스페이스)">⏸</button><button data-speed="1" title="보통 (1)">▶</button><button data-speed="2" title="빠름 (2)">▶▶</button><button data-speed="3" title="매우 빠름 (3)">▶▶▶</button>
+        </div>
       </div>
-      <div class="top-actions">
+      <div class="hud-res">
+        <div class="res" title="지지율"><span class="ri">📣</span><b id="hdr-appr"></b><small>지지율</small></div>
+        <div class="res" title="정치자본: 정책·외교에 쓰는 힘"><span class="ri">⚡</span><b id="hdr-pcap"></b><small>정치자본</small></div>
+        <div class="res" title="여당 의석"><span class="ri">🏛️</span><b id="hdr-seats"></b><small>여당 의석</small></div>
+        <div class="res" title="경제성장률"><span class="ri">📈</span><b id="hdr-gdp"></b><small>성장률</small></div>
+        <div class="res" title="국가채무비율"><span class="ri">💰</span><b id="hdr-debt"></b><small>국가채무</small></div>
+        <div class="res" title="세계 긴장도"><span class="ri">🌐</span><b id="hdr-tension"></b><small>세계 긴장</small></div>
+      </div>
+      <div class="hud-right">
+        <button id="btn-end" class="btn primary" title="분기를 바로 끝냅니다">⏭ 분기 결산</button>
         <button id="btn-settings" class="btn ghost" title="설정">⚙️</button>
-        <button id="btn-end" class="btn primary">분기 종료 ▶</button>
       </div>
     </header>
 
-    <div class="layout">
-      <aside class="side">
-        <div class="panel">
-          <h3>국가 지표</h3>
-          <div id="stat-list" class="stat-list"></div>
-        </div>
-        <div class="panel">
-          <h3>외교 관계</h3>
-          <div id="rel-list" class="bar-list"></div>
-        </div>
-        <div class="panel">
-          <h3>세력별 지지도</h3>
-          <div id="fac-list" class="bar-list"></div>
+    <div class="stage">
+      <div id="stage-map" class="stage-map"></div>
+
+      <nav class="dock" id="tabs">
+        <button data-tab="status"><span>📊</span>국정 현황</button>
+        <button data-tab="policy"><span>📜</span>정책</button>
+        <button data-tab="politics"><span>🏛️</span>국회·세력<i id="bill-badge" class="badge info hidden">0</i></button>
+        <button data-tab="economy"><span>🏭</span>경제</button>
+        <button data-tab="world"><span>🌏</span>외교<i id="war-badge" class="badge hidden">전쟁</i></button>
+        <button data-tab="crisis"><span>🚨</span>위기<i id="crisis-badge" class="badge hidden">0</i></button>
+        <button data-tab="report"><span>🗞️</span>보고서</button>
+        <button data-tab="trend"><span>📈</span>추이</button>
+        <button data-tab="log"><span>🗂️</span>기록</button>
+      </nav>
+
+      <aside class="panel-wrap hidden" id="panel-wrap">
+        <div class="panel-head"><h2 id="panel-title"></h2><button class="btn ghost sm" id="panel-x" aria-label="닫기">✕</button></div>
+        <div class="panel-body">
+          <div id="tab-status" class="tab">
+            <div class="panel"><h3>국가 지표</h3><div id="stat-list" class="stat-list"></div></div>
+            <div class="panel"><h3>외교 관계</h3><div id="rel-list" class="bar-list"></div></div>
+            <div class="panel"><h3>세력별 지지도</h3><div id="fac-list" class="bar-list"></div></div>
+          </div>
+          <div id="tab-policy" class="tab">
+            <div id="minister"></div>
+            <div id="cat-chips" class="chips"></div>
+            <div id="policy-list" class="policy-list"></div>
+            <div class="custom-box">
+              <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">목록에 없는 정책도 입력하면 AI가 효과를 분석합니다</span></div>
+              <div class="custom-row">
+                <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화" maxlength="120">
+                <button id="btn-custom" class="btn primary">AI 분석</button>
+              </div>
+            </div>
+          </div>
+          <div id="tab-crisis" class="tab">
+            <div class="crisis-head">
+              <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
+              <span class="muted" id="ai-mode-label"></span>
+            </div>
+            <div id="crisis-list"></div>
+            <h3 class="sec">최근 처리 결과</h3>
+            <div id="resolved-list"></div>
+          </div>
+          <div id="tab-politics" class="tab"></div>
+          <div id="tab-economy" class="tab"></div>
+          <div id="tab-world" class="tab"></div>
+          <div id="tab-report" class="tab"><div id="report-body"></div></div>
+          <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
+          <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
         </div>
       </aside>
 
-      <main class="main">
-        <nav class="tabs" id="tabs">
-          <button data-tab="policy" class="active">📜 정책 결정</button>
-          <button data-tab="politics">🏛️ 국회·세력 <span id="bill-badge" class="badge info hidden">0</span></button>
-          <button data-tab="economy">🏭 경제</button>
-          <button data-tab="world">🌏 외교·전쟁 <span id="war-badge" class="badge hidden">전쟁</span></button>
-          <button data-tab="crisis">🚨 위기 대응 <span id="crisis-badge" class="badge hidden">0</span></button>
-          <button data-tab="report">📊 국정 보고서</button>
-          <button data-tab="trend">📈 추이</button>
-          <button data-tab="log">🗂️ 국정 기록</button>
-        </nav>
-
-        <div id="tab-policy" class="tab active">
-          <div class="custom-box">
-            <div class="custom-head">✍️ <b>새 정책 직접 입안</b> <span class="muted">— 목록에 없는 어떤 정책이든 입력하면 AI가 효과를 분석합니다</span></div>
-            <div class="custom-row">
-              <input id="custom-text" placeholder="예) 공무원 임금 20% 인상, 전 국민 AI 교육 의무화, 4년제 대학 무상화…" maxlength="120">
-              <button id="btn-custom" class="btn primary">AI 분석</button>
-            </div>
-          </div>
-          <div id="cat-chips" class="chips"></div>
-          <div id="policy-list" class="policy-list"></div>
-        </div>
-
-        <div id="tab-crisis" class="tab">
-          <div class="crisis-head">
-            <label class="switch"><input type="checkbox" id="auto-ai"><span></span> AI 참모 자동 해결</label>
-            <span class="muted" id="ai-mode-label"></span>
-          </div>
-          <div id="crisis-list"></div>
-          <h3 class="sec">최근 처리 결과</h3>
-          <div id="resolved-list"></div>
-        </div>
-
-        <div id="tab-politics" class="tab"></div>
-        <div id="tab-economy" class="tab"></div>
-        <div id="tab-world" class="tab"></div>
-        <div id="tab-report" class="tab"><div id="report-body"></div></div>
-        <div id="tab-trend" class="tab"><div id="trend-body" class="trend-grid"></div></div>
-        <div id="tab-log" class="tab"><div id="log-body" class="log"></div></div>
-      </main>
+      <div id="qcard" class="qcard hidden"></div>
+      <div class="ticker"><span class="ticker-label">속보</span><div class="ticker-track"><div id="ticker-inner" class="ticker-inner"></div></div></div>
     </div>
   </section>
 
@@ -5309,7 +5442,6 @@ let S = null;
 let activeCat = 'const';
 let selectedParty = 'lib';
 let selectedDiff = 'normal';
-let selectedWv = 'con';
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -5349,16 +5481,13 @@ function renderStart() {
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
     `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
-  $('wv-pick').innerHTML = Object.entries(WORLDVIEWS).map(([k, w]) =>
-    `<div class="party-opt ${k === selectedWv ? 'sel' : ''}" data-w="${k}"><b>${w.name}${k === 'con' ? ' (기본)' : ''}</b><span>${w.desc}</span></div>`).join('');
-  $('wv-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedWv = el.dataset.w; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
   const name = $('pres-name').value.trim() || '대통령';
-  S = newGame(selectedParty, name, selectedDiff, selectedWv);
+  S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
     <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
@@ -5385,17 +5514,34 @@ function enterGame() {
   hydrateUserOptions(S);
   $('start').classList.add('hidden'); $('game').classList.remove('hidden');
   $('auto-ai').checked = S.autoAI;
+  closePanel();
   renderAll();
+  if (typeof refreshTicker === 'function') { refreshTicker(); setSpeed(0); }
+  setTimeout(() => toast('⏯ 위쪽 ▶ 버튼이나 <b>스페이스바</b>로 시간을 흐르게 하세요. 메뉴에서 정책·외교·국회를 다루고, 지도에서 나라를 눌러 보세요.', 6000), 400);
 }
 
 /* ---------------- 탭 ---------------- */
-$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
-function showTab(name) {
+$('tabs').querySelectorAll('button').forEach(b => b.onclick = () => showTab(b.dataset.tab, true));
+const PANEL_TITLES = { status: '📊 국정 현황', policy: '📜 정책 결정', politics: '🏛️ 국회·세력', economy: '🏭 산업 경제', world: '🌏 외교·세계 정세', crisis: '🚨 위기 대응', report: '🗞️ 국정 보고서', trend: '📈 지표 추이', log: '🗂️ 국정 기록' };
+let openPanelName = null;
+// 지도 위에 패널을 엽니다. 같은 버튼을 다시 누르면 닫힘
+function showTab(name, toggle = false) {
+  if (toggle && openPanelName === name) return closePanel();
+  openPanelName = name;
+  $('panel-wrap').classList.remove('hidden');
+  $('panel-title').textContent = PANEL_TITLES[name] || '';
   $('tabs').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+  $('panel-wrap').querySelector('.panel-body').scrollTop = 0;
   if (name === 'trend') renderTrend();
   if (name === 'world' && typeof renderWorld === 'function') renderWorld();
 }
+function closePanel() {
+  openPanelName = null;
+  $('panel-wrap').classList.add('hidden');
+  $('tabs').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+}
+$('panel-x').onclick = closePanel;
 
 /* ---------------- 렌더링 ---------------- */
 function renderAll() {
@@ -5405,12 +5551,27 @@ function renderAll() {
 }
 function renderHeader() {
   const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
-  $('hdr-date').textContent = `${t.year}년 ${t.q}분기 · 임기 ${t.termYear}년차 (${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS})`;
+  $('hdr-date').textContent = typeof gameDateText === 'function' ? gameDateText() : `${t.year}년 ${t.q}분기`;
+  $('hdr-term').textContent = `임기 ${t.termYear}년차 · ${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS}분기`;
+  hudFloat('hdr-appr', S.approval, 1, '%p'); hudFloat('hdr-pcap', S.pcap, 0, ''); hudFloat('hdr-gdp', S.stats.gdp, 1, '%p');
   const a = $('hdr-appr'); a.textContent = S.approval.toFixed(1) + '%'; a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
   { const g = pcapGain(S); $('hdr-pcap').innerHTML = `${Math.floor(S.pcap)}<small class="gain">${g >= 0 ? '+' : ''}${Math.round(g)}/분기</small>`; }
   const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling];
   const se = $('hdr-seats'); se.textContent = `${rs}/300`; se.style.color = rs >= 151 ? 'var(--good)' : 'var(--mid)';
   $('btn-end').disabled = S.over;
+  const gd = $('hdr-gdp'); gd.textContent = fmtStat('gdp', S.stats.gdp); gd.style.color = S.stats.gdp >= 1.5 ? 'var(--good)' : S.stats.gdp >= 0 ? 'var(--mid)' : 'var(--bad)';
+  const db = $('hdr-debt'); db.textContent = fmtStat('debt', S.stats.debt); db.style.color = S.stats.debt < 60 ? 'var(--text)' : S.stats.debt < 80 ? 'var(--mid)' : 'var(--bad)';
+  const tn = $('hdr-tension'); const T = S.world?.tension ?? 35; tn.textContent = T.toFixed(0); tn.style.color = T >= 70 ? 'var(--bad)' : T >= 50 ? 'var(--mid)' : 'var(--good)';
+}
+// 상단 수치가 바뀌면 +/- 숫자가 떠올랐다 사라짐
+const hudPrev = {};
+function hudFloat(id, v, dec, unit) {
+  const prev = hudPrev[id]; hudPrev[id] = v;
+  if (prev == null || Math.abs(v - prev) < Math.pow(10, -dec) / 2) return;
+  const d = v - prev, host = $(id)?.closest('.res'); if (!host) return;
+  const f = document.createElement('span'); f.className = 'floater ' + (d > 0 ? 'up' : 'down');
+  f.textContent = `${d > 0 ? '+' : ''}${d.toFixed(dec)}${unit}`;
+  host.appendChild(f); setTimeout(() => f.remove(), 1800);
 }
 function renderSide() {
   const prev = S.history.length > 1 ? S.history[S.history.length - 2] : S.history[0];
@@ -5433,7 +5594,8 @@ function renderPolicies() {
     const changed = allPolicies().filter(p => p.cat === c.id && !currentOption(p, S).cur).length;
     return `<button class="chip ${c.id === activeCat ? 'active' : ''}" data-c="${c.id}">${c.icon} ${c.name}${changed ? `<span class="cnt">●${changed}</span>` : ''}</button>`;
   }).join('');
-  $('cat-chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { activeCat = b.dataset.c; renderPolicies(); });
+  $('cat-chips').querySelectorAll('.chip').forEach(b => b.onclick = () => { activeCat = b.dataset.c; if (typeof ministerPick !== 'undefined') ministerPick = 0; renderPolicies(); });
+  if (typeof renderMinister === 'function') renderMinister();
   const list = allPolicies().filter(p => p.cat === activeCat);
   $('policy-list').innerHTML = list.map(p => {
     const cur = currentOption(p, S);
@@ -5659,10 +5821,13 @@ async function aiResolve(c) {
 }
 
 /* ---------------- 분기 종료 ---------------- */
-$('btn-end').onclick = async () => {
+$('btn-end').onclick = () => endQuarter();
+async function endQuarter() {
   if (busy || S.over) return;
   busy = true; $('btn-end').disabled = true;
-  openModal(`<h2>⏳ 분기 진행 중</h2><p><span class="spinner"></span>정책 효과를 반영하고 국내외 정세를 시뮬레이션하고 있습니다…</p>`, { closable: false });
+  if (typeof setSpeed === 'function') S.day = 0;
+  const hadModal = !$('modal').classList.contains('hidden');
+  if (!hadModal) openModal(`<h2>⏳ 분기 결산 중</h2><p><span class="spinner"></span>정책 효과를 반영하고 국내외 정세를 시뮬레이션하고 있습니다…</p>`, { closable: false });
   const recs = [];
   // 직접 결정 모드에서 미처리 위기는 AI가 처리
   for (const c of [...S.crises]) recs.push(await aiResolve(c));
@@ -5678,7 +5843,8 @@ $('btn-end').onclick = async () => {
   report.pendingCrises = S.autoAI ? 0 : newCrises.length;
   saveGame(S);
   busy = false; renderAll();
-  showReportModal(report, recs.filter(Boolean));
+  if (typeof afterQuarter === 'function') afterQuarter(report, recs.filter(Boolean), newCrises);
+  else showReportModal(report, recs.filter(Boolean));
   if (ClaudeAI.enabled() && !report.gameOver) {
     try {
       const txt = await ClaudeAI.briefing(S, report);
@@ -5687,7 +5853,7 @@ $('btn-end').onclick = async () => {
       renderReport();
     } catch (e) { const el = $('brief-slot'); if (el) el.innerHTML = `<div class="ai-box">Claude 논평 실패: ${esc(e.message)}</div>`; }
   }
-};
+}
 
 function reportHTML(report, recs) {
   const t = report.label;
@@ -5780,14 +5946,13 @@ $('btn-settings').onclick = () => {
     <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
     <h3 class="sec">게임</h3>
-    ${S ? `<div class="settings-row"><label for="cfg-wv">게임 세계관</label><select id="cfg-wv">${Object.entries(WORLDVIEWS).map(([k, w]) => `<option value="${k}" ${k === S.worldview ? 'selected' : ''}>${w.name}</option>`).join('')}</select><div class="muted small">${esc(WORLDVIEWS[S.worldview || 'con'].desc)} 수치는 게임 밸런스이며 실제 정책 효과를 예측하지 않습니다.</div></div>` : ''}
     <div class="modal-actions" style="justify-content:flex-start">
       <button class="btn" id="cfg-theme">🌓 테마 전환</button>
       <button class="btn danger" id="cfg-reset">새 게임 시작(현재 진행 삭제)</button>
     </div>
     <div class="modal-actions"><button class="btn primary" id="cfg-save">저장</button></div>`);
   const read = () => host ? { ...c, useHost: $('cfg-host').checked } : { ...c, apiKey: $('cfg-key').value.trim(), model: $('cfg-model').value, effort: $('cfg-effort').value };
-  $('cfg-save').onclick = () => { if (S && $('cfg-wv')) { S.worldview = $('cfg-wv').value; ClaudeAI.setWorldview(S.worldview); saveGame(S); } ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
+  $('cfg-save').onclick = () => { ClaudeAI.setCfg(read()); closeModal(); renderCrises(); toast(ClaudeAI.enabled() ? '🤖 Claude 연동이 켜졌습니다.' : '내장 AI 참모 모드입니다.'); };
   $('cfg-test').onclick = async () => {
     ClaudeAI.setCfg(read()); $('cfg-msg').innerHTML = '<span class="spinner"></span>확인 중…';
     try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }
@@ -6033,7 +6198,9 @@ function bindMapInteraction(container, svg) {
     if (moved > 6) return;
     const t = e.target.closest('[data-c]'); if (!t) return;
     const k = t.dataset.c; if (k === 'kr') return;
-    selCountry = k; updateMap(); renderCountryPanel();
+    selCountry = k; updateMap();
+    if (openPanelName !== 'world') showTab('world'); else renderCountryPanel();
+    $('cpanel-slot')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   container.querySelectorAll('[data-z]').forEach(b => b.onclick = () => {
     const z = b.dataset.z;
@@ -6046,13 +6213,13 @@ function bindMapInteraction(container, svg) {
     container.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('primary', x.dataset.mode === mapMode));
     updateMap();
   });
-  container.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { selCountry = b.dataset.q; zoomTo(selCountry); updateMap(); renderCountryPanel(); });
+  container.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { selCountry = b.dataset.q; zoomTo(selCountry); updateMap(); showTab('world'); });
   const search = container.querySelector('#map-search');
   search.addEventListener('change', () => {
     const q = search.value.trim(); if (!q) return;
     const k = allCountryKeys().find(x => cname(x) === q) || allCountryKeys().find(x => cname(x).includes(q));
     if (!k) return toast('그런 나라를 찾을 수 없습니다.');
-    selCountry = k; search.value = ''; zoomTo(k); updateMap(); renderCountryPanel();
+    selCountry = k; search.value = ''; zoomTo(k); updateMap(); showTab('world');
   });
   new ResizeObserver(() => { if (mapView && svg.clientWidth) applyView(svg); }).observe(svg);
 }
@@ -6097,10 +6264,9 @@ function updateMap() {
 function renderWorld() {
   const el = $('tab-world'); if (!el) return;
   if (typeof MAP_DATA === 'undefined') { el.innerHTML = '<div class="empty">지도 데이터를 불러오지 못했습니다.</div>'; return; }
-  if (!el.querySelector('#geo')) {
-    el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div class="map" id="map-wrap"></div><div id="cpanel-slot"></div>`;
-    buildGeoMap($('map-wrap'));
-  }
+  // 지도는 화면 무대(stage)에 항상 깔려 있고, 외교 패널에는 정세·국가 정보만
+  if (!$('geo')) buildGeoMap($('stage-map'));
+  if (!el.querySelector('#situation-slot')) el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div id="cpanel-slot"></div>`;
   if (!mapView && mapBuilt.svg.clientWidth) mapView = viewAsia();
   renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }
@@ -6248,6 +6414,193 @@ function openTalk(k) {
   };
   $('talk-send').onclick = send;
   $('talk-input').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+}
+
+</script>
+<script>
+/* js/game.js */
+/* =========================================================
+ *  게임 진행: 실시간 시계·속도 조절, 사건 카드, 분기 결산 카드, 속보 자막, 내각 장관
+ * ========================================================= */
+
+/* ---------------- 시계 ---------------- */
+let gameSpeed = 0;                       // 0 일시정지, 1 보통, 2 빠름, 3 매우 빠름
+const DAY_RATE = { 1: 0.9, 2: 2.2, 3: 5 }; // 0.1초마다 흐르는 날 수 (보통: 한 분기 약 10초)
+const QUARTER_DAYS = 90;
+
+function gameDateText() {
+  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  const d = Math.floor(S.day || 0);
+  return `${t.year}년 ${(t.q - 1) * 3 + 1 + Math.floor(d / 30)}월 ${(d % 30) + 1}일`;
+}
+function setSpeed(v) {
+  gameSpeed = v;
+  $('speed').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.speed === v));
+  $('speed').classList.toggle('paused', v === 0);
+}
+$('speed').querySelectorAll('button').forEach(b => b.onclick = () => setSpeed(+b.dataset.speed));
+document.addEventListener('keydown', e => {
+  if (!S || $('game').classList.contains('hidden') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (e.code === 'Space') { e.preventDefault(); setSpeed(gameSpeed ? 0 : 1); }
+  else if (['Digit1', 'Digit2', 'Digit3'].includes(e.code)) setSpeed(+e.code.slice(-1));
+  else if (e.key === 'Escape' && openPanelName) closePanel();
+});
+setInterval(() => {
+  if (!S || S.over || busy || !gameSpeed || $('game').classList.contains('hidden')) return;
+  if (!$('modal').classList.contains('hidden')) return;      // 사건 카드·대화 중에는 시간이 멈춤
+  S.day = (S.day || 0) + DAY_RATE[gameSpeed];
+  if (S.day >= QUARTER_DAYS) { S.day = 0; endQuarter(); return; }
+  $('hdr-date').textContent = gameDateText();
+  $('day-prog').style.width = `${(S.day / QUARTER_DAYS) * 100}%`;
+}, 100);
+
+/* ---------------- 분기 결산 후 ---------------- */
+let eventQueue = [];
+function afterQuarter(report, recs, newCrises) {
+  closeModal();
+  $('day-prog').style.width = '0%';
+  refreshTicker();
+  if (report.gameOver) { setSpeed(0); return showEnding(); }
+  const blocking = [];
+  if (report.elections?.length) blocking.push(() => openElectionCard(report));
+  if (S.autoAI && recs.length) blocking.push(() => openAiReportCard(recs));
+  if (!S.autoAI) for (const c of newCrises) blocking.push(() => openEventCard(c.id));
+  eventQueue.push(...blocking);
+  showQuarterCard(report, recs);
+  nextEvent();
+}
+function nextEvent() {
+  if (!$('modal').classList.contains('hidden')) return;
+  const f = eventQueue.shift(); if (f) f();
+}
+// 모달이 닫히면 다음 사건으로
+new MutationObserver(() => { if ($('modal').classList.contains('hidden') && eventQueue.length) setTimeout(nextEvent, 250); })
+  .observe($('modal'), { attributes: true, attributeFilter: ['class'] });
+
+function showQuarterCard(report, recs) {
+  const t = report.label, ap = report.approvalDiff;
+  const moves = Object.entries(report.diff).map(([k, d]) => {
+    const good = k === 'infl' ? Math.abs(S.stats.infl - 2) < Math.abs(S.stats.infl - d - 2) : d * STATS[k].good > 0;
+    const th = STATS[k].dec >= 3 ? 0.0015 : STATS[k].dec === 2 ? 0.005 : STATS[k].dec === 1 ? 0.1 : 0.6;
+    return { k, d, good, mag: Math.abs(d * STATS[k].w) , show: Math.abs(d) >= th };
+  }).filter(x => x.show).sort((a, b) => b.mag - a.mag).slice(0, 4);
+  const passed = (report.bills || []).filter(b => b.result === 'passed').map(b => b.name);
+  const headline = (report.worldNews || []).find(n => n.type === 'bad') || (report.worldNews || [])[0];
+  const el = $('qcard');
+  el.innerHTML = `<div class="qc-head"><b>📋 ${t.year}년 ${t.q}분기 결산</b><button class="btn ghost sm" id="qc-x">✕</button></div>
+    <div class="qc-appr">지지율 <b class="${ap >= 0 ? 'good-t' : 'bad-t'}">${ap >= 0 ? '▲' : '▼'} ${Math.abs(ap).toFixed(1)}%p</b> → ${S.approval.toFixed(1)}%</div>
+    <div class="qc-moves">${moves.map(m => `<span class="${m.good ? 'good-t' : 'bad-t'}">${STATS[m.k].name} ${fmtStat(m.k, m.d, true)}</span>`).join('') || '<span class="muted">큰 변화 없음</span>'}</div>
+    ${passed.length ? `<div class="small">🏛️ 국회 통과: ${passed.map(esc).join(', ')}</div>` : ''}
+    ${recs.length ? `<div class="small">🚨 위기 ${recs.length}건 처리 (${recs.filter(r => r.success).length}건 성공)</div>` : ''}
+    ${headline ? `<div class="small qc-news">🌐 ${esc(headline.text)}</div>` : ''}
+    <div class="row-btns"><button class="btn sm" id="qc-more">보고서 보기</button></div>`;
+  el.classList.remove('hidden', 'leave'); el.classList.add('enter');
+  clearTimeout(showQuarterCard._t);
+  showQuarterCard._t = setTimeout(() => el.classList.add('hidden'), 9000);
+  $('qc-x').onclick = () => el.classList.add('hidden');
+  $('qc-more').onclick = () => { el.classList.add('hidden'); showTab('report'); };
+}
+
+/* ---------------- 사건 카드 ---------------- */
+const EV_ART = { fiscal: '💸', protest: '📢', market: '📉', diplomacy: '🌐', legal: '⚖️', security: '🚨', social: '🔥', brain: '🧳', inflation: '🛒', housing: '🏚️' };
+function openEventCard(cid) {
+  const c = S.crises.find(x => x.id === cid); if (!c) return nextEvent();
+  setSpeed(0);
+  const evals = aiEvaluate(S, c), best = evals[0].i;
+  const p = c.pid && policyById(c.pid, S);
+  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  openModal(`<div class="event">
+    <div class="ev-banner ev-${c.tpl} ${c.good ? 'ev-good' : ''}"><span class="ev-art">${EV_ART[c.tpl] || c.icon}</span><span class="ev-kind">${esc(c.kind)}${c.good ? ' · 기회' : ` · 심각도 ${'●'.repeat(c.sev)}`}</span><span class="ev-date">${t.year}년 ${t.q}분기</span></div>
+    <h2>${esc(c.title)}</h2>
+    <p class="ev-desc">${esc(c.desc)}${p ? `<br><span class="muted small">원인: ${esc(p.name)} — ${esc(optionOf(p, c.oid)?.label || '')}</span>` : ''}</p>
+    <div class="ev-opts">${c.options.map((o, i) => { const ev = evals.find(x => x.i === i); const fx = expandSolution(S, c, o, true); return `
+      <button class="ev-opt ${i === best ? 'best' : ''}" data-i="${i}">
+        <span class="ev-lbl">${esc(o.label)} ${i === best ? '<span class="tag new">참모 추천</span>' : ''}</span>
+        <span class="muted small">${esc(o.desc)}</span>
+        <span class="ev-fx">${fxList(fx.e, fx.rel, fx.f)}</span>
+        <span class="ev-meta">성공 ${(ev.ok * 100).toFixed(0)}% · ⚡${o.pc || 0}${o.rollback ? ` · 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''}</span>
+      </button>`; }).join('')}</div>
+    <div class="modal-actions"><button class="btn" id="ev-ai">🤖 ${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'}에게 맡기기</button></div>
+  </div>`, { closable: false });
+  const done = rec => { saveGame(S); renderAll(); showEventResult(rec); };
+  document.querySelectorAll('.ev-opt').forEach(b => b.onclick = () => done(resolveCrisis(S, c.id, +b.dataset.i, 'player')));
+  $('ev-ai').onclick = async () => { $('ev-ai').disabled = true; $('ev-ai').innerHTML = '<span class="spinner"></span>판단 중…'; done(await aiResolve(c)); };
+}
+function showEventResult(rec) {
+  if (!rec) return closeModal();
+  openModal(`<div class="event">
+    <div class="ev-stamp ${rec.success ? 'ok' : 'fail'}">${rec.success ? '성공' : '실패'}</div>
+    <h2>${rec.icon} ${esc(rec.title)}</h2>
+    <p class="lead">${esc(rec.by)}: <b>${esc(rec.sol)}</b></p>
+    <p>${esc(rec.outcome)}</p>
+    <div class="ev-fx">${fxList(rec.fx.e, rec.fx.rel, rec.fx.f)}</div>
+    ${rec.reasoning ? `<div class="ai-box"><span class="who">🧠 판단 근거</span>${esc(rec.reasoning)}</div>` : ''}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">계속</button></div>
+  </div>`);
+}
+function openAiReportCard(recs) {
+  openModal(`<div class="event">
+    <div class="ev-banner ev-security"><span class="ev-art">🤖</span><span class="ev-kind">${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'} 위기 대응 보고</span></div>
+    <h2>이번 분기 위기 ${recs.length}건을 처리했습니다</h2>
+    ${recs.map(resolvedCard).join('')}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div></div>`);
+}
+function openElectionCard(report) {
+  setSpeed(0);
+  openModal(`<div class="event">
+    <div class="ev-banner ev-diplomacy"><span class="ev-art">🗳️</span><span class="ev-kind">선거 결과</span></div>
+    <h2>국민이 심판했습니다</h2>${report.elections.map(e => `<p class="lead">${esc(e)}</p>`).join('')}
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div></div>`);
+}
+
+/* ---------------- 속보 자막 ---------------- */
+function refreshTicker() {
+  if (!S) return;
+  const items = [...(S.world?.news || []).slice(0, 10).map(n => ({ t: n.text, type: n.type })), ...S.log.slice(0, 6).map(l => ({ t: l.text, type: l.type }))];
+  const inner = $('ticker-inner');
+  inner.innerHTML = items.map(i => `<span class="tk ${i.type}">${esc(i.t)}</span>`).join('<span class="tk-sep">◆</span>') || '<span class="tk">대한민국 정부 출범. 국정 운영이 시작됩니다.</span>';
+  inner.style.animationDuration = `${Math.max(30, inner.textContent.length * 0.22)}s`;
+  inner.style.animationName = 'none'; void inner.offsetWidth; inner.style.animationName = '';
+}
+
+/* ---------------- 내각 장관 ---------------- */
+const MINISTRY = { const: '대통령실 정무수석', tax: '기획재정부 장관', econ: '산업통상부 장관', labor: '고용노동부 장관', welfare: '보건복지부 장관', house: '국토교통부 장관', edu: '교육부 장관',
+  defense: '국방부 장관', diplo: '외교부 장관', justice: '법무부 장관', civil: '법제처장', env: '환경에너지부 장관', health: '보건의료 차관' };
+const KOR_SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송'];
+const KOR_GIVEN = ['민준', '서연', '도윤', '지우', '현우', '수빈', '정훈', '은영', '성민', '혜진', '재석', '미경', '동현', '유나', '상철', '지혜'];
+function ministerOf(cat) {
+  S.cabinet = S.cabinet || {};
+  if (!S.cabinet[cat]) { const r = hashRnd(`${cat}:${S.seed || 1}`); S.cabinet[cat] = { name: KOR_SUR[Math.floor(r() * KOR_SUR.length)] + KOR_GIVEN[Math.floor(r() * KOR_GIVEN.length)], hue: Math.floor(r() * 360) }; }
+  return { ...S.cabinet[cat], title: MINISTRY[cat] };
+}
+let ministerPick = 0;
+function ministerProposals(cat) {
+  const out = [];
+  for (const p of allPolicies().filter(x => x.cat === cat)) {
+    if (S.enactedThisTurn.includes(p.id) || S.bills?.some(b => b.pid === p.id)) continue;
+    const cur = currentOption(p, S);
+    for (const o of p.options) {
+      if (o.id === cur.id || o.cur) continue;
+      const pv = previewPolicy(S, p, o);
+      if (pv.cost > S.pcap) continue;
+      out.push({ p, o, net: pv.net - pv.cost * 0.05, prob: pv.vote.prob });
+    }
+  }
+  return out.filter(x => x.net > 1.5 && x.prob > 0.25).sort((a, b) => b.net - a.net);
+}
+function renderMinister() {
+  const el = $('minister'); if (!el || !S) return;
+  const cat = activeCat, m = ministerOf(cat), props = ministerProposals(cat);
+  const pick = props.length ? props[ministerPick % props.length] : null;
+  const line = pick ? `대통령님, <b>${esc(pick.p.name)}</b>을(를) <b>'${esc(pick.o.label)}'</b>(으)로 바꾸실 것을 건의드립니다. ${pick.o.pro ? esc(pick.o.pro) : ''}`
+    : '현재로서는 무리한 변화보다 기존 정책을 안착시키는 편이 낫다고 판단합니다. 정치자본을 아껴 두십시오.';
+  el.innerHTML = `<div class="minister">
+    <div class="avatar" style="background:hsl(${m.hue} 40% 40%)">${esc(m.name[0])}</div>
+    <div class="bubble"><div class="m-name">${esc(m.title)} <b>${esc(m.name)}</b></div><div>${line}</div>
+      <div class="row-btns">${pick ? `<button class="btn sm primary" id="m-review">검토하기</button>` : ''}${props.length > 1 ? `<button class="btn sm ghost" id="m-next">다른 건의 (${(ministerPick % props.length) + 1}/${props.length})</button>` : ''}</div></div>
+  </div>`;
+  $('m-review') && ($('m-review').onclick = () => openPreview(pick.p.id, pick.o.id));
+  $('m-next') && ($('m-next').onclick = () => { ministerPick++; renderMinister(); });
 }
 
 </script>
