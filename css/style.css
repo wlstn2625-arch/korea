@@ -776,3 +776,27 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @keyframes sirenTxt { 50% { color: #ffd22e; } }
 @keyframes quake { 0%, 100% { transform: translate(0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, -1px); } }
 @media (prefers-reduced-motion: reduce) { .modal-card:has(.event.extreme), .ev-banner.ev-extreme .ev-kind { animation: none; } }
+
+/* AI 참모 조언 */
+.res.clickable { cursor: pointer; transition: transform .1s, border-color .1s; }
+.res.clickable:hover { transform: translateY(-1px); border-color: var(--accent); }
+.advisor { display: grid; gap: 8px; }
+.adv-head { display: flex; gap: 10px; align-items: center; }
+.adv-ic { font-size: 30px; }
+.adv-val { font-size: 22px; margin-left: 6px; }
+.adv-val.good, .adv-tabs b.good { color: var(--good); } .adv-val.mid, .adv-tabs b.mid { color: var(--mid); } .adv-val.bad, .adv-tabs b.bad { color: var(--bad); }
+.adv-ex { font-size: 13px; color: var(--muted); line-height: 1.6; margin: 0; }
+.adv-sec { font-size: 11px; letter-spacing: .08em; color: var(--accent); margin-top: 4px; }
+.adv-factors { display: grid; gap: 3px; font-size: 12.5px; }
+.adv-factors .good { color: var(--good); } .adv-factors .bad { color: #ff8b8b; }
+.adv-acts { display: grid; gap: 6px; }
+.adv-act { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; text-align: left; font: inherit; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; cursor: pointer; transition: transform .1s, border-color .1s; }
+.adv-act:hover:not(:disabled) { transform: translateX(3px); border-color: var(--accent); }
+.adv-act:disabled { opacity: .45; cursor: not-allowed; }
+.adv-act .ic { font-size: 20px; } .adv-act .tx { display: grid; gap: 2px; min-width: 0; }
+.adv-act .tx b { font-size: 13px; } .adv-act .tx small { font-size: 11.5px; color: var(--muted); }
+.adv-act .go { font-size: 11.5px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.adv-tabs { display: flex; flex-wrap: wrap; gap: 5px; }
+.adv-tabs .chip.on { border-color: var(--accent); background: rgba(201, 164, 76, .15); }
+.adv-claude { white-space: pre-line; font-size: 13px; line-height: 1.6; }
+.qc-tip { color: #ffd27a; }

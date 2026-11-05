@@ -87,12 +87,14 @@ function showQuarterCard(report, recs) {
     ${report.built?.length ? `<div class="small">🏭 완공: ${report.built.map(esc).join(', ')}</div>` : ''}
     ${recs.length ? `<div class="small">🚨 위기 ${recs.length}건 처리 (${recs.filter(r => r.success).length}건 성공)</div>` : ''}
     ${headline ? `<div class="small qc-news">🌐 ${esc(headline.text)}</div>` : ''}
-    <div class="row-btns"><button class="btn sm" id="qc-more">보고서 보기</button></div>`;
+    ${(() => { const um = typeof urgentMetric === 'function' ? urgentMetric(S) : null; return um ? `<div class="small qc-tip">💡 참모: ${esc(ADV_TIP[um])}</div>` : ''; })()}
+    <div class="row-btns"><button class="btn sm" id="qc-more">보고서 보기</button>${typeof urgentMetric === 'function' && urgentMetric(S) ? '<button class="btn sm primary" id="qc-adv">💡 해결 방법 보기</button>' : ''}</div>`;
   el.classList.remove('hidden', 'leave'); el.classList.add('enter');
   clearTimeout(showQuarterCard._t);
   showQuarterCard._t = setTimeout(() => el.classList.add('hidden'), 9000);
   $('qc-x').onclick = () => el.classList.add('hidden');
   $('qc-more').onclick = () => { el.classList.add('hidden'); showTab('report'); };
+  if ($('qc-adv')) $('qc-adv').onclick = () => { el.classList.add('hidden'); openAdvisor(urgentMetric(S)); };
 }
 
 /* ---------------- 사건 카드 ---------------- */
@@ -210,9 +212,11 @@ function renderAlerts() {
   const ally = (S.world?.conflicts || []).find(c => c.type === 'war' && dip(S, c.b).alliance); if (ally) list.push({ k: 'ally', icon: '🛡️', red: true, tip: `동맹국 ${cname(ally.b)}이(가) 침공당했습니다`, go: () => showTab('world') });
   const soon = typeof nextElections === 'function' ? nextElections(S).find(e => e.left <= 1) : null; if (soon) list.push({ k: 'elec', icon: '🗳️', tip: `${soon.name} ${soon.left ? '다음 분기' : '이번 분기'}`, go: () => showTab('politics') });
   if (S.pcap >= 200) list.push({ k: 'cash', icon: '💰', tip: `쓰지 않은 국고 ${won(S.pcap)} — 공장을 짓거나 정책에 투자하세요`, go: () => showTab('economy') });
-  if (S.pcap < 15) list.push({ k: 'broke', icon: '🪙', red: true, tip: '국고가 바닥났습니다 — 국채·특별세로 재원을 마련하세요', go: () => showTab('economy') });
+  if (S.pcap < 15) list.push({ k: 'broke', icon: '🪙', red: true, tip: '국고가 바닥났습니다 — 눌러서 참모 조언 보기', go: () => openAdvisor('pcap') });
   if ((S.construction || []).length < 3 && S.pcap >= 60 && !list.some(x => x.k === 'cash')) list.push({ k: 'build', icon: '🏗️', tip: '공사할 수 있는 자리가 남았습니다', go: () => showTab('economy') });
-  if (S.world?.tension >= 70) list.push({ k: 'tension', icon: '🌐', red: true, tip: `세계 긴장도 ${S.world.tension.toFixed(0)} — 위험`, go: () => showTab('world') });
+  if (S.world?.tension >= 70) list.push({ k: 'tension', icon: '🌐', red: true, tip: `세계 긴장도 ${S.world.tension.toFixed(0)} — 위험. 눌러서 낮추는 방법 보기`, go: () => openAdvisor('tension') });
+  const um = typeof urgentMetric === 'function' ? urgentMetric(S) : null;
+  if (um && !(um === 'tension' && list.some(x => x.k === 'tension')) && !(um === 'pcap' && list.some(x => x.k === 'broke'))) list.push({ k: 'adv-' + um, icon: '💡', red: true, tip: `AI 참모: ${ADV_TIP[um]}`, go: () => openAdvisor(um) });
   const keys = list.map(x => x.k).join(',');
   if (el.dataset.keys === keys && !list.some(x => x.n)) return;
   el.dataset.keys = keys;

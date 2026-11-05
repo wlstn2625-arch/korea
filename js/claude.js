@@ -274,6 +274,19 @@ ${stateSummary(s)}
     return await call({ system: SYS(), user, maxTokens: 3000 });
   }
 
+  /* ---- 4-2) 지표 조언 ---- */
+  async function metricAdvice(s, name, value, factors, recs) {
+    const user = `대통령이 "${name}"(현재 ${value})을(를) 개선하는 방법을 묻습니다.
+게임이 계산한 현재 요인: ${factors}
+내장 참모의 추천 후보: ${recs}
+
+현재 국가 상황:
+${stateSummary(s)}
+
+① 지금 ${name}이(가) 이런 이유(2문장) ② 이번 분기에 할 일 3가지(구체적으로, 비용과 부작용 포함) ③ 피해야 할 것 1~2가지. 350자 내외. 마크다운 없이 줄바꿈과 •만 사용.`;
+    return await call({ system: SYS(), user, maxTokens: 2500 });
+  }
+
   /* ---- 5) 외국 지도자 역할극 ---- */
   async function leaderTalk(s, k, L, history, msg) {
     const schema = { type: 'object', additionalProperties: false, required: ['reply', 'mood', 'relDelta', 'proposal'],
@@ -307,5 +320,5 @@ relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정�
     return r;
   }
 
-  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, test };
+  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, metricAdvice, test };
 })();
