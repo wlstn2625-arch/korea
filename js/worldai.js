@@ -240,7 +240,7 @@ const INTERVENTIONS = [
 function intervene(s, cid, act) {
   const c = s.world.conflicts.find(x => x.id === cid); if (!c) return { ok: false, msg: '이미 끝난 분쟁입니다.' };
   const a = INTERVENTIONS.find(x => x.id === act);
-  if (s.pcap < a.pc) return { ok: false, msg: `정치자본 ⚡${a.pc}이 필요합니다.` };
+  if (s.pcap < a.pc) return { ok: false, msg: `국고 ${won(a.pc)}이 필요합니다.` };
   if (c.krDone?.includes(act)) return { ok: false, msg: '이미 실행했습니다.' };
   s.pcap -= a.pc; (c.krDone = c.krDone || []).push(act);
   let msg;

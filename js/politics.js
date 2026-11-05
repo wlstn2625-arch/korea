@@ -47,7 +47,7 @@ function canJoin(s, k) {
   if ((s.coalition || []).includes(k)) return { ok: false, why: '이미 연합에 있습니다.' };
   if ((s.coalition || []).length >= 6) return { ok: false, why: '연합은 최대 6개 세력까지입니다.' };
   if (s.factions[k] < 42) return { ok: false, why: `지지도가 42 이상이어야 합니다. (현재 ${s.factions[k].toFixed(0)})` };
-  if (s.pcap < joinCost(s, k)) return { ok: false, why: `정치자본 ⚡${joinCost(s, k)}이 필요합니다.` };
+  if (s.pcap < joinCost(s, k)) return { ok: false, why: `국고 ${won(joinCost(s, k))}이 필요합니다.` };
   return { ok: true };
 }
 function joinCoalition(s, k) {
@@ -141,12 +141,12 @@ function billAction(s, billId, act) {
   const p = policyById(b.pid, s), o = optionOf(p, b.oid);
   if (act === 'lobby') {
     if (b.lobby >= 3) return { ok: false, msg: '협상은 3단계가 최대입니다.' };
-    if (s.pcap < LOBBY_COST) return { ok: false, msg: `정치자본 ⚡${LOBBY_COST}이 필요합니다.` };
+    if (s.pcap < LOBBY_COST) return { ok: false, msg: `국고 ${won(LOBBY_COST)}이 필요합니다.` };
     s.pcap -= LOBBY_COST; b.lobby++;
     addLog(s, 'info', `🤝 [${p.name}] 야당과 협상 ${b.lobby}단계 진행.`);
   } else if (act === 'fast') {
     if (b.fast) return { ok: false, msg: '이미 신속처리 안건입니다.' };
-    if (s.pcap < 20) return { ok: false, msg: '정치자본 ⚡20이 필요합니다.' };
+    if (s.pcap < 20) return { ok: false, msg: `국고 ${won(20)}이(가) 필요합니다.` };
     s.pcap -= 20; b.fast = true; b.progress = clamp(b.progress + 15, 0, 99);
     s.factions.con = clamp(s.factions.con - (s.ruling === 'L' ? 3 : 0), 0, 100); s.factions.lib = clamp(s.factions.lib - (s.ruling === 'R' ? 3 : 0), 0, 100);
     addLog(s, 'info', `⏩ [${p.name}] 신속처리안건(패스트트랙)으로 지정했습니다. 야당 반발.`);
@@ -163,7 +163,7 @@ function billAction(s, billId, act) {
 function politicsTurn(s, report) {
   s.clout = computeClout(s);
   const L = legitimacy(s), fr = coalitionFriction(s);
-  // 정당성(연합 영향력 합)과 내부 마찰이 정치자본 회복에 반영
+  // 정당성(연합 영향력 합)과 내부 마찰이 국정 운영 효율(국고 수입)에 반영
   let bonus = (L - 40) * 0.25 - fr.length * 3;
   // 충성 세력: 연합 내 지지도 70+ → 보너스
   for (const k of s.coalition) if (s.factions[k] >= 70) bonus += 1.5;

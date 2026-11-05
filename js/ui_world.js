@@ -40,6 +40,7 @@ function buildGeoMap(container) {
     <div class="quick">${QUICK.map(k => `<button class="chip" data-q="${k}">${cflag(k)} ${esc(cname(k))}</button>`).join('')}</div>
     <svg id="geo" class="geo" viewBox="0 0 ${M.w} ${M.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="세계 외교 지도">
       <defs>
+        <radialGradient id="seaGrad" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1d3e5b"></stop><stop offset="1" stop-color="#0b1622"></stop></radialGradient>
         <pattern id="hatch-kr" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--enemy-fill)"></rect><rect width="1.5" height="3" style="fill:var(--kr-fill)"></rect></pattern>
         <pattern id="hatch-enemy" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--kr-fill)"></rect><rect width="1.5" height="3" style="fill:var(--enemy-fill)"></rect></pattern>
       </defs>
@@ -174,6 +175,10 @@ function updateMap() {
     const a = MAP_DATA.cities['서울'], b = MAP_DATA.cities[CAPITAL[S.war.k]] || MAP_DATA.countries[S.war.k]?.c;
     if (b) front = `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="front"></line>`;
   }
+  // 분쟁 지점: 맥박 치는 표시
+  const hot = (k, type) => { const c = MAP_DATA.countries[k]?.c; return c ? `<g class="hot ${type}"><circle cx="${c[0]}" cy="${c[1]}" r="6"></circle><circle cx="${c[0]}" cy="${c[1]}" r="6" style="animation-delay:1s"></circle><circle class="core" cx="${c[0]}" cy="${c[1]}" r="1.6"></circle></g>` : ''; };
+  for (const c of (S.world?.conflicts || [])) if (c.type !== 'cyber') front += hot(c.type === 'civil' ? c.a : c.b, c.type);
+  if (S.war) front += hot(S.war.k, 'war') + hot('kr', 'war');
   mapBuilt.front.innerHTML = front;
   if (mapView) applyView(mapBuilt.svg);
 }
@@ -197,7 +202,7 @@ function renderWarPanel() {
     <div>전황 점수 <b>${w.score.toFixed(0)}</b> · 우리 편 ${['대한민국', ...w.allies.map(cname)].join(', ')} · 상대 편 ${[cname(w.k), ...w.enemyAllies.map(cname)].join(', ')}</div>
     <div class="muted small">분기마다 성장률·행복도·재정이 깎이고 채무가 늘어납니다. 점령당한 시·도만큼 피해가 커집니다. 10분기가 지나면 국제 중재로 정전됩니다.${nukeRisk(S) > 0 ? ` <b style="color:var(--bad)">☢️ 핵 사용 위험 분기당 ${(nukeRisk(S) * 100).toFixed(1)}%</b>` : ''}</div>
     ${w.log.length ? `<div class="muted small">${esc(w.log[w.log.length - 1])}</div>` : ''}
-    <div class="row-btns"><button class="btn sm danger" data-war="offensive">🎖️ 총공세 ⚡15</button><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
+    <div class="row-btns"><button class="btn sm danger" data-war="offensive">🎖️ 총공세 ${won(15)}</button><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
   </div>` : '';
   slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
   slot.querySelectorAll('[data-wfocus]').forEach(b => b.onclick = () => zoomTo(S.war.k));
@@ -232,7 +237,7 @@ function renderCountryPanel() {
   })() : '';
   const actions = S.annexed[k] ? '<div class="empty">합병된 지역입니다.</div>' : DIPLO_ACTIONS.map(a => {
     const why = a.can(S, k), cost = diploCost(S, a, k);
-    return `<div class="dact ${why ? 'off' : ''}"><div><b>${a.icon} ${a.name}</b> <span class="tag">⚡${cost}</span><div class="muted small">${esc(why || a.desc)}</div></div>
+    return `<div class="dact ${why ? 'off' : ''}"><div><b>${a.icon} ${a.name}</b> <span class="tag">${won(cost)}</span><div class="muted small">${esc(why || a.desc)}</div></div>
       <button class="btn sm ${a.id === 'war' ? 'danger' : ''}" data-dact="${a.id}" ${why ? 'disabled' : ''}>실행</button></div>`;
   }).join('');
   slot.innerHTML = `<div class="cpanel">
@@ -270,7 +275,7 @@ function renderSituation() {
   const W = S.world, T = W.tension;
   const tc = T >= 70 ? 'var(--bad)' : T >= 50 ? 'var(--mid)' : 'var(--good)';
   const list = W.conflicts.filter(c => c.type !== 'cyber').map(c => {
-    const acts = INTERVENTIONS.filter(a => a.types.includes(c.type)).map(a => `<button class="btn sm ${a.id === 'join' ? 'danger' : ''}" data-iv="${a.id}" data-cid="${c.id}" ${c.krDone?.includes(a.id) ? 'disabled' : ''} title="${esc(a.desc)}">${a.icon} ${a.name} ⚡${a.pc}</button>`).join('');
+    const acts = INTERVENTIONS.filter(a => a.types.includes(c.type)).map(a => `<button class="btn sm ${a.id === 'join' ? 'danger' : ''}" data-iv="${a.id}" data-cid="${c.id}" ${c.krDone?.includes(a.id) ? 'disabled' : ''} title="${esc(a.desc)}">${a.icon} ${a.name} ${won(a.pc)}</button>`).join('');
     const ally = c.type === 'war' && dip(S, c.b).alliance;
     return `<div class="conf ${c.type}">
       <div class="conf-top"><b>${CONFLICT_TYPES[c.type].icon} ${CONFLICT_TYPES[c.type].name}</b> ${cflag(c.a)} ${esc(cname(c.a))}${c.b !== c.a ? ` ↔ ${cflag(c.b)} ${esc(cname(c.b))}` : ''} <span class="muted small">${c.turns}분기째${c.type === 'war' ? ` · 전황 ${c.score >= 0 ? cname(c.a) : cname(c.b)} 우세(${Math.abs(c.score).toFixed(0)})` : ''}${c.supportB.length ? ` · ${c.supportB.map(cname).join('·')} 무기 지원` : ''}</span>${ally ? ' <span class="tag const">우리 동맹국 피침</span>' : ''}</div>

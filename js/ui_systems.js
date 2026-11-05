@@ -25,8 +25,8 @@ function renderPolitics() {
       ${pbar(b.progress, 'var(--accent)')}
       ${b.log.length ? `<div class="muted small">${esc(b.log[b.log.length - 1])}</div>` : ''}
       <div class="row-btns">
-        <button class="btn sm" data-bill="${b.id}" data-act="lobby" ${b.lobby >= 3 ? 'disabled' : ''}>🤝 야당 협상 ⚡${LOBBY_COST}</button>
-        <button class="btn sm" data-bill="${b.id}" data-act="fast" ${b.fast ? 'disabled' : ''}>⏩ 신속처리 지정 ⚡20</button>
+        <button class="btn sm" data-bill="${b.id}" data-act="lobby" ${b.lobby >= 3 ? 'disabled' : ''}>🤝 야당 협상 ${won(LOBBY_COST)}</button>
+        <button class="btn sm" data-bill="${b.id}" data-act="fast" ${b.fast ? 'disabled' : ''}>⏩ 신속처리 지정 ${won(20)}</button>
         <button class="btn sm ghost" data-bill="${b.id}" data-act="withdraw">↩️ 철회</button>
       </div></div>`;
   }).join('') || '<div class="empty">국회에 계류 중인 법안이 없습니다. 법률·개헌 정책을 추진하면 이곳에서 심의가 진행됩니다.</div>';
@@ -38,19 +38,21 @@ function renderPolitics() {
     return `<div class="grp">
       <div class="grp-name">${f.icon} <b>${f.name}</b> ${chips}</div>
       <div class="grp-bars"><span class="muted small">영향력 ${cl.toFixed(1)}%</span>${pbar(cl, 'var(--accent)', 25)}<span class="muted small">지지도 ${sup.toFixed(0)}</span>${pbar(sup, sup >= 60 ? 'var(--good)' : sup >= 35 ? 'var(--mid)' : 'var(--bad)')}</div>
-      <div>${inC ? `<button class="btn sm ghost" data-leave="${k}">연합 제외</button>` : `<button class="btn sm" data-join="${k}" ${cj.ok ? '' : `disabled title="${esc(cj.why)}"`}>연합 영입 ⚡${joinCost(S, k)}</button>`}</div>
+      <div>${inC ? `<button class="btn sm ghost" data-leave="${k}">연합 제외</button>` : `<button class="btn sm" data-join="${k}" ${cj.ok ? '' : `disabled title="${esc(cj.why)}"`}>연합 영입 ${won(joinCost(S, k))}</button>`}</div>
     </div>`;
   }).join('');
 
-  el.innerHTML = `
+  el.innerHTML = `<div id="dom-slot"></div>
+    <h3 class="sec">👥 국정 연합</h3>
     <div class="sys-head">
       <div class="big-kpi"><span>국정 정당성</span><b style="color:${L >= 50 ? 'var(--good)' : L >= 35 ? 'var(--mid)' : 'var(--bad)'}">${L.toFixed(0)}%</b><small>연합 세력 영향력 합계</small></div>
-      <div class="big-kpi"><span>정치자본 보정</span><b>${S.pcapBonus >= 0 ? '+' : ''}${(S.pcapBonus || 0).toFixed(1)}</b><small>분기당 (정당성·마찰·충성)</small></div>
+      <div class="big-kpi"><span>국정 효율(수입 보정)</span><b>${S.pcapBonus >= 0 ? '+' : ''}${(S.pcapBonus || 0).toFixed(1)}</b><small>분기당 (정당성·마찰·충성)</small></div>
       <div class="big-kpi"><span>연합 내 마찰</span><b>${fr.length}</b><small>${fr.map(([a, b]) => FACTIONS[a].name + '↔' + FACTIONS[b].name).join(', ') || '없음'}</small></div>
     </div>
-    <p class="muted">국정 연합에 든 세력은 자기에게 유리한 법안에 찬성표를 몰아주고(불리하면 반대), 정당성이 높을수록 정치자본이 더 많이 회복됩니다. 지지도가 30 아래로 떨어진 연합 세력은 이탈할 수 있고, 20 아래인 세력은 급진화해 집단행동에 나섭니다.</p>
+    <p class="muted">국정 연합에 든 세력은 자기에게 유리한 법안에 찬성표를 몰아주고(불리하면 반대), 정당성이 높을수록 국정 운영 효율이 올라 국고 수입이 늘어납니다. 지지도가 30 아래로 떨어진 연합 세력은 이탈할 수 있고, 20 아래인 세력은 급진화해 집단행동에 나섭니다.</p>
     <h3 class="sec">🏛️ 국회 계류 법안 (${S.bills.length})</h3>${bills}
     <h3 class="sec">👥 이익집단</h3><div class="grp-list">${groups}</div>`;
+  if (typeof renderDomestic === 'function') renderDomestic();
   el.querySelectorAll('[data-bill]').forEach(b => b.onclick = () => act(billAction)(S, b.dataset.bill, b.dataset.act));
   el.querySelectorAll('[data-join]').forEach(b => b.onclick = () => act(joinCoalition)(S, b.dataset.join));
   el.querySelectorAll('[data-leave]').forEach(b => b.onclick = () => { leaveCoalition(S, b.dataset.leave); saveGame(S); renderAll(); });
@@ -59,30 +61,44 @@ function renderPolitics() {
 /* ---------------- 경제 ---------------- */
 function renderEconomy() {
   const el = $('tab-economy'); if (!el) return;
-  const rows = SECTORS.map(x => {
-    const sec = S.sectors[x.id], g = sec.g, inv = S.sectorInvest.find(i => i.id === x.id);
+  const B = budgetIncome(S);
+  const row = (label, v, hint) => `<div class="brow"><span>${label}${hint ? ` <small class="muted">${hint}</small>` : ''}</span><b class="${v >= 0 ? 'good-t' : 'bad-t'}">${v >= 0 ? '+' : '−'}${won(Math.abs(v))}</b></div>`;
+  const ftaN = Object.values(S.diplo || {}).filter(d => d.fta).length;
+  const cards = SECTORS.map(x => {
+    const sec = S.sectors[x.id], g = sec.g, lv = S.buildings[x.id] || 0, building = S.construction.filter(c => c.id === x.id);
     const color = g >= x.base + 0.5 ? 'var(--good)' : g <= x.base - 0.5 ? 'var(--bad)' : 'var(--text)';
-    return `<tr>
-      <td>${x.icon} <b>${x.name}</b></td>
-      <td class="num">${x.share}%</td><td class="num">${x.emp}%</td>
-      <td class="num" style="color:${color}">${g >= 0 ? '+' : ''}${g.toFixed(1)}%</td>
-      <td class="num">${sec.idx.toFixed(1)}</td>
-      <td class="spark-cell">${spark(sec.hist, color)}</td>
-      <td>${inv ? `<span class="tag new">육성 중 ${inv.left}분기</span>` : `<button class="btn sm" data-invest="${x.id}">집중 육성 ⚡${INVEST_COST}</button>`}</td>
-    </tr>`;
+    const cost = buildCost(S, x.id), full = lv + building.length >= BUILD_MAX;
+    return `<div class="fac">
+      <div class="fac-top"><span class="fac-ic">${x.icon}</span><div><b>${x.name}</b><div class="muted small">GDP ${x.share}% · 고용 ${x.emp}%</div></div>
+        <div class="fac-g" style="color:${color}">${g >= 0 ? '+' : ''}${g.toFixed(1)}%</div></div>
+      <div class="fac-lv">${[...Array(BUILD_MAX)].map((_, i) => `<i class="${i < lv ? 'on' : i < lv + building.length ? 'wip' : ''}"></i>`).join('')}<span class="muted small">시설 ${lv}단계${building.length ? ` · 공사 중(${building[0].left}분기)` : ''}</span></div>
+      <div class="fac-spark">${spark(sec.hist, color)}</div>
+      <button class="btn sm ${full ? '' : 'primary'}" data-build="${x.id}" ${full || S.pcap < cost ? 'disabled' : ''}>${full ? '최대 단계' : `🏗️ 공장 건설 ${won(cost)}`}</button>
+    </div>`;
   }).join('');
-  const contrib = S.econDelta || 0;
+  const fin = FINANCE_ACTIONS.map(a => { const cd = (S.finCd?.[a.id] || 0) > S.turn; return `<button class="pact" data-fin="${a.id}" ${cd ? 'disabled' : ''} title="${esc(a.desc)}"><span class="pi">${a.icon}</span><b>${a.name}</b><small>${cd ? `${S.finCd[a.id] - S.turn}분기 후` : esc(a.desc)}</small></button>`; }).join('');
   el.innerHTML = `
-    <div class="sys-head">
-      <div class="big-kpi"><span>경제성장률</span><b>${fmtStat('gdp', S.stats.gdp)}</b><small>산업 구조 기여 ${contrib >= 0 ? '+' : ''}${contrib.toFixed(2)}%p</small></div>
-      <div class="big-kpi"><span>실업률</span><b>${fmtStat('unemp', S.stats.unemp)}</b><small>산업 고용 기여 ${(S.econUnemp || 0) >= 0 ? '+' : ''}${(S.econUnemp || 0).toFixed(2)}%p</small></div>
-      <div class="big-kpi"><span>집중 육성</span><b>${S.sectorInvest.length}/3</b><small>8분기간 성장률 +2.5%p, 재정 부담</small></div>
+    <div class="treasury">
+      <div class="tr-main"><span>💰 국고</span><b>${won(S.pcap)}</b><small>분기 순수입 <b class="${B.total >= 0 ? 'good-t' : 'bad-t'}">${B.total >= 0 ? '+' : '−'}${won(Math.abs(B.total))}</b></small></div>
+      <div class="tr-rows">
+        ${row('🧾 세수', B.tax, `세율 수준 ${Math.round(taxLevel(S) * 100)}% · 성장률 연동`)}
+        ${row('🚢 무역 이익', B.trade, `FTA ${ftaN}개국`)}
+        ${row('🏭 산업 수익', B.industry, `시설 ${Object.values(S.buildings).reduce((a, b) => a + b, 0)}단계`)}
+        ${B.annexed ? row('🚩 편입 지역', B.annexed) : ''}
+        ${row('🏛️ 국정 효율', B.admin, '지지율·국정 연합')}
+        ${row('🏦 국채 이자', B.interest, `채무비율 ${S.stats.debt.toFixed(1)}%`)}
+        ${B.war ? row('⚔️ 전쟁 비용', B.war) : ''}${B.imf ? row('🆘 IMF 상환', B.imf) : ''}
+      </div>
     </div>
-    <p class="muted">각 산업의 성장률은 산업 경쟁력·외교관계·제도 변화에 따라 달라지고, 비중만큼 GDP 성장률과 고용에 반영됩니다. 예: 반도체는 미·중 관계와 반도체 지원책, 건설은 주택 공급·대출 규제, 농어업은 FTA·CPTPP에 민감합니다.</p>
-    <div class="table-wrap"><table class="sector">
-      <thead><tr><th>산업</th><th>GDP 비중</th><th>고용 비중</th><th>성장률(연)</th><th>규모 지수</th><th>추이</th><th></th></tr></thead>
-      <tbody>${rows}</tbody></table></div>`;
-  el.querySelectorAll('[data-invest]').forEach(b => b.onclick = () => act(investSector)(S, b.dataset.invest));
+    <h3 class="sec">💵 재원 마련</h3><div class="pacts">${fin}</div>
+    <h3 class="sec">🏭 산업 시설 <span class="muted small">공장을 지으면 그 산업의 성장률(+0.6%p/단계)과 국고 수입(+${won(12)}/분기)이 오르고 일자리가 늘어납니다. 동시 공사 3곳.</span></h3>
+    <div class="fac-grid">${cards}</div>
+    <div class="sys-head" style="margin-top:12px">
+      <div class="big-kpi"><span>경제성장률</span><b>${fmtStat('gdp', S.stats.gdp)}</b><small>산업 구조 기여 ${(S.econDelta || 0) >= 0 ? '+' : ''}${(S.econDelta || 0).toFixed(2)}%p</small></div>
+      <div class="big-kpi"><span>실업률</span><b>${fmtStat('unemp', S.stats.unemp)}</b><small>산업 고용 기여 ${(S.econUnemp || 0) >= 0 ? '+' : ''}${(S.econUnemp || 0).toFixed(2)}%p</small></div>
+    </div>`;
+  el.querySelectorAll('[data-build]').forEach(b => b.onclick = () => act(buildFactory)(S, b.dataset.build));
+  el.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => act(financeAction)(S, b.dataset.fin));
 }
 
 /* 분기 보고서 추가 항목 */

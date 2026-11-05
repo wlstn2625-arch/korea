@@ -7,7 +7,7 @@
   <meta name="description" content="대한민국 대통령이 되어 헌법부터 세율·국방·외교·교육·검경까지 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -46,10 +46,10 @@
       </div>
       <div class="hud-res">
         <div class="res" title="지지율"><span class="ri">📣</span><b id="hdr-appr"></b><small>지지율</small></div>
-        <div class="res" title="정치자본: 정책·외교에 쓰는 힘"><span class="ri">⚡</span><b id="hdr-pcap"></b><small>정치자본</small></div>
+        <div class="res" title="국고: 세금·무역·산업으로 들어오고 정책·외교·전쟁에 쓰입니다"><span class="ri">💰</span><b id="hdr-pcap"></b><small>국고</small></div>
         <div class="res" title="여당 의석"><span class="ri">🏛️</span><b id="hdr-seats"></b><small>여당 의석</small></div>
         <div class="res" title="경제성장률"><span class="ri">📈</span><b id="hdr-gdp"></b><small>성장률</small></div>
-        <div class="res" title="국가채무비율"><span class="ri">💰</span><b id="hdr-debt"></b><small>국가채무</small></div>
+        <div class="res" title="국가채무비율"><span class="ri">🏦</span><b id="hdr-debt"></b><small>국가채무</small></div>
         <div class="res" title="세계 긴장도"><span class="ri">🌐</span><b id="hdr-tension"></b><small>세계 긴장</small></div>
       </div>
       <div class="hud-right">
@@ -111,6 +111,7 @@
         </div>
       </aside>
 
+      <div id="alerts" class="alerts"></div>
       <div id="qcard" class="qcard hidden"></div>
       <div class="ticker"><span class="ticker-label">속보</span><div class="ticker-track"><div id="ticker-inner" class="ticker-inner"></div></div></div>
     </div>
@@ -133,6 +134,7 @@
   <script src="js/engine.js"></script>
   <script src="js/politics.js"></script>
   <script src="js/powers.js"></script>
+  <script src="js/domestic.js"></script>
   <script src="js/economy.js"></script>
   <script src="js/world.js"></script>
   <script src="js/leaders.js"></script>
@@ -142,5 +144,6 @@
   <script src="js/ui_systems.js"></script>
   <script src="js/ui_world.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/ui_domestic.js"></script>
 </body>
 </html>

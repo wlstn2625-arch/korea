@@ -28,7 +28,7 @@ function emergencyDecree(s, pid, oid) {
   const p = policyById(pid, s), opt = optionOf(p, oid), old = currentOption(p, s);
   const why = canEmergency(s, p, opt); if (why) return { ok: false, msg: why };
   if (s.enactedThisTurn.includes(pid) || s.bills.some(b => b.pid === pid)) return { ok: false, msg: '이 분야는 이번 분기에 이미 손댔거나 국회 심의 중입니다.' };
-  const cost = emergencyCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  const cost = emergencyCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `국고 ${won(cost)}이 필요합니다.` };
   s.pcap -= cost; s.enactedThisTurn.push(pid);
   applyPassed(s, p, opt, old);
   s.approval = clamp(s.approval - 2, 0, 100);
@@ -43,7 +43,7 @@ function referendumPolicy(s, pid, oid) {
   const p = policyById(pid, s), opt = optionOf(p, oid), old = currentOption(p, s);
   const why = canReferendum(s, p, opt); if (why) return { ok: false, msg: why };
   if (s.enactedThisTurn.includes(pid) || s.bills.some(b => b.pid === pid)) return { ok: false, msg: '이 분야는 이번 분기에 이미 손댔거나 국회 심의 중입니다.' };
-  const cost = referendumCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  const cost = referendumCost(s, opt); if (s.pcap < cost) return { ok: false, msg: `국고 ${won(cost)}이 필요합니다.` };
   s.pcap -= cost; s.enactedThisTurn.push(pid); s.referendumTurn = s.turn;
   const { sup } = referendumOdds(s, opt);
   const result = clamp(sup + gauss() * 5, 5, 95);

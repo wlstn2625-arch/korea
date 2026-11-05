@@ -79,7 +79,8 @@ const ClaudeAI = (() => {
     const fac = Object.entries(s.factions).map(([k, v]) => `${FACTIONS[k].name}=${v.toFixed(0)}`).join(', ');
     const changed = [...POLICIES, ...s.customPolicies].filter(p => !optionOf(p, s.policies[p.id])?.cur).map(p => `${p.name}→${currentOption(p, s).label}`);
     const rulingSeats = s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
-    return `[${t.year}년 ${t.q}분기, 임기 ${t.termYear}년차] 지지율 ${s.approval.toFixed(1)}%, 정치자본 ${Math.floor(s.pcap)}, 여당 의석 ${rulingSeats}/300
+    const T = termInfo(s);
+    return `[${t.year}년 ${t.q}분기, 제${T.ord}대 대통령 임기 ${T.year}년차] 지지율 ${s.approval.toFixed(1)}%, 국고 ${won(s.pcap)}, 여당 의석 ${rulingSeats}/300
 지표: ${st}
 외교관계(0~100): ${rel}
 세력별 지지(0~100): ${fac}
@@ -145,7 +146,7 @@ ${stateSummary(s)}
 - e: 각 지표의 장기 균형값 변화(현행 대비). 단위: gdp/unemp/infl/fiscal/debt는 %p, tfr은 명, gini는 0~1 지니계수 변화, 나머지는 0~100 지수 포인트. 관련 없는 지표는 0.
 - rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25).
 - lt: 대통령령으로 가능하면 decree, 법률 개정이면 law, 헌법 개정 필요하면 const. lean: 진보 L/보수 R/중립 N.
-- pc: 정치자본 비용(10~80), lag: 효과가 완전히 나타나기까지 분기 수(1~16).
+- pc: 시행 비용(10~80, 단위 1000억 원), lag: 효과가 완전히 나타나기까지 분기 수(1~16).
 - risks: 현실적으로 예상되는 부작용 0~3개(prob 0~1, sev 1~3).
 참고용 기존 정책 데이터 예시:
 ${examples}`;
@@ -214,7 +215,7 @@ ${stateSummary(s)}
     const p = c.pid && policyById(c.pid, s);
     const opts = c.options.map((o, i) => {
       const ev = ruleEvals.find(x => x.i === i);
-      return `${i}. ${o.label} — ${o.desc} | 효과(심각도 반영 전) e=${JSON.stringify(o.e || {})}, 외교=${JSON.stringify(o.rel || {})}, 세력=${JSON.stringify(o.f || {})}, 정치자본 ${o.pc || 0}, 기본 성공률 ${(o.ok * 100).toFixed(0)}%${o.rollback ? `, 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''} | 규칙 AI 점수 ${ev ? ev.score.toFixed(1) : '-'}`;
+      return `${i}. ${o.label} — ${o.desc} | 효과(심각도 반영 전) e=${JSON.stringify(o.e || {})}, 외교=${JSON.stringify(o.rel || {})}, 세력=${JSON.stringify(o.f || {})}, 비용 ${won(o.pc || 0)}, 기본 성공률 ${(o.ok * 100).toFixed(0)}%${o.rollback ? `, 원인 정책 ${(o.rollback * 100).toFixed(0)}% 후퇴` : ''} | 규칙 AI 점수 ${ev ? ev.score.toFixed(1) : '-'}`;
     }).join('\n');
     const user = `${c.good ? '기회' : '위기'} 발생: [${c.kind}] ${c.title}
 상황: ${c.desc}

@@ -158,7 +158,7 @@ function diploAction(s, aid, k, goal) {
   if (s.world?.owner?.[k]) return { ok: false, msg: `${cname(s.world.owner[k])}에 병합된 지역입니다.` };
   const why = a.can(s, k); if (why) return { ok: false, msg: why };
   const cost = diploCost(s, a, k);
-  if (s.pcap < cost) return { ok: false, msg: `정치자본 ⚡${cost}이 필요합니다.` };
+  if (s.pcap < cost) return { ok: false, msg: `국고 ${won(cost)}이 필요합니다.` };
   s.pcap -= cost;
   const msg = a.run(s, k, goal);
   for (const f in s.factions) s.factions[f] = clamp(s.factions[f], 0, 100);
@@ -226,7 +226,7 @@ function startWar(s, k, aggressor, goal) {
 function warAction(s, act) {
   const w = s.war; if (!w) return { ok: false, msg: '전쟁 중이 아닙니다.' };
   if (act === 'offensive') {
-    if (s.pcap < 15) return { ok: false, msg: '정치자본 ⚡15가 필요합니다.' };
+    if (s.pcap < 15) return { ok: false, msg: `국고 ${won(15)}이(가) 필요합니다.` };
     s.pcap -= 15; w.push = 12; s.stats.happiness -= 1; s.stats.debt += 1;
     addLog(s, 'info', '🎖️ 총공세를 명령했습니다. 다음 분기 전황에 큰 영향을 줍니다.');
     return { ok: true };
@@ -318,7 +318,7 @@ function worldTurn(s, report) {
   for (const k of cands) {
     if (s.annexed[k] || k === 'nk' || !cinfo(k)) continue;
     const d = dip(s, k); if (d.fta || (cinfo(k).eu && !dip(s, 'eu').fta)) continue;
-    if (relOf(s, k) >= 68 && Math.random() < 0.06) { d.offer = s.turn + 2; const t = `📨 ${cname(k)}이(가) FTA 체결을 제안했습니다. (2분기 동안 비용 ⚡10)`; addLog(s, 'info', t); report.world.events.push(t); }
+    if (relOf(s, k) >= 68 && Math.random() < 0.06) { d.offer = s.turn + 2; const t = `📨 ${cname(k)}이(가) FTA 체결을 제안했습니다. (2분기 동안 비용 ${won(10)})`; addLog(s, 'info', t); report.world.events.push(t); }
   }
   for (const k of Object.keys(s.diplo)) if (s.diplo[k].sanction && !s.annexed[k]) s.rel[k] = clamp(relOf(s, k) - 2, 0, 100);
   for (const k in (s.occupied || {})) { s.stats.safety -= 0.5 + 0.5 * ecoK(k); s.stats.fiscal -= 0.1; }

@@ -42,29 +42,30 @@ function renderStart() {
     `<div class="party-opt ${k === selectedParty ? 'sel' : ''}" data-p="${k}"><b>${p.name}</b><span>${p.desc}</span></div>`).join('');
   $('party-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedParty = el.dataset.p; renderStart(); });
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
-    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 ⚡${d.start}, 분기마다 약 ⚡${d.base}씩 회복</span></div>`).join('');
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
 }
 $('btn-start').onclick = () => {
-  const name = $('pres-name').value.trim() || '대통령';
+  const name = $('pres-name').value.trim() || randName();
   S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
-    <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 임기 5년(20분기) · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
+    <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 제21대 대통령 · 임기 5년마다 대선, 정권이 바뀌어도 계속 플레이 · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
     <div class="box"><h4>게임 방법</h4><ul>
       <li><b>📜 정책 결정</b>: 헌법·세제·국방·외교·교육·검경·민법 등 13개 분야 ${POLICIES.length}개 제도가 <b>현재 대한민국 그대로</b> 설정되어 있습니다. 원하는 제도를 바꾸세요.</li>
       <li>바꾸기 전에 <b>AI 참모가 이득·손해·부작용·국회 통과 가능성</b>을 분석해 줍니다.</li>
       <li>법률은 국회 과반, <b>개헌은 국회 2/3 + 국민투표</b>가 필요합니다. 행정조치는 즉시 시행됩니다.</li>
       <li>정책을 바꾸면 효과가 몇 분기에 걸쳐 나타나고, <b>부작용(위기)</b>이 터질 수 있습니다. 위기가 오면 <b>AI가 해결책을 판단해 결과를 도출</b>합니다. (직접 결정 모드도 가능)</li>
       <li>목록에 없는 정책은 <b>✍️ 새 정책 직접 입안</b>으로 무엇이든 만들 수 있습니다.</li>
+      <li><b>🔁 끝없는 국정</b>: 5년마다 대선이 치러집니다. 여당이 이기면 후임으로, 지면 정권이 바뀐 새 대통령으로 <b>계속 플레이</b>합니다. 탄핵돼도 조기 대선으로 이어집니다.</li>
       <li><b>🏛️ 국회·세력</b>: 법률·개헌은 여러 분기에 걸쳐 국회 심의를 거칩니다. 협상·신속처리로 밀어붙이고, 재계·노동계 등 이익집단을 국정 연합에 영입해 정당성을 높이세요.</li>
-      <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. 전략 산업을 집중 육성할 수 있습니다.</li>
+      <li><b>🏭 경제</b>: 반도체·자동차·조선 등 12개 산업이 각자 성장하며 GDP를 만듭니다. <b>공장을 지어</b> 산업을 키우고 국고 수입을 늘리세요.</li>
       <li><b>🌏 외교·전쟁</b>: 세계지도 위 약 200개국. 나라마다 <b>지도자(가상 인물)</b>가 있고 성향대로 움직입니다. 관세 전쟁·사이버 공격·국경 분쟁·전쟁·내전이 실시간으로 일어나고, 중재·인도적 지원·무기 지원·제재·참전으로 개입할 수 있습니다. 지도자와 직접 대화도 할 수 있습니다.</li>
       <li><b>🏛️ 대통령 권한</b>: 국회가 막으면 <b>긴급재정경제명령</b>(헌법 76조)이나 <b>국민투표</b>(72조)로 돌파할 수 있습니다. 대가는 따릅니다.</li>
-      <li>정치자본은 정책 추진에 쓰이고 지지율이 높을수록 많이 회복됩니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
+      <li><b>💰 국고</b>는 세금·무역·산업에서 들어오고, 정책 추진·외교·전쟁에 쓰입니다. 경제 패널에서 <b>공장을 짓고</b>, 특별세를 걷거나 국채를 발행할 수 있습니다. 지지율이 바닥나면 <b>탄핵</b>될 수 있습니다.</li>
       <li>⚙️ 설정에서 <b>Claude API 키</b>를 넣으면 실제 AI(Claude)가 위기 판단·정책 분석·분기 논평을 수행합니다.</li>
     </ul></div>
     <div class="modal-actions"><button class="btn primary" onclick="closeModal()">국정 시작</button></div>`);
@@ -80,6 +81,7 @@ function enterGame() {
   closePanel();
   renderAll();
   if (typeof refreshTicker === 'function') { refreshTicker(); setSpeed(0); }
+  if (S.pendingSuccession) setTimeout(openPresidentialCard, 300);
   setTimeout(() => toast('⏯ 위쪽 ▶ 버튼이나 <b>스페이스바</b>로 시간을 흐르게 하세요. 메뉴에서 정책·외교·국회를 다루고, 지도에서 나라를 눌러 보세요.', 6000), 400);
 }
 
@@ -113,18 +115,29 @@ function renderAll() {
   if ($('tab-trend').classList.contains('active')) renderTrend();
 }
 function renderHeader() {
-  const t = turnLabel(Math.min(S.turn, TERM_TURNS - 1));
+  const t = turnLabel(S.turn), T = termInfo(S);
   $('hdr-date').textContent = typeof gameDateText === 'function' ? gameDateText() : `${t.year}년 ${t.q}분기`;
-  $('hdr-term').textContent = `임기 ${t.termYear}년차 · ${Math.min(S.turn + 1, TERM_TURNS)}/${TERM_TURNS}분기`;
-  hudFloat('hdr-appr', S.approval, 1, '%p'); hudFloat('hdr-pcap', S.pcap, 0, ''); hudFloat('hdr-gdp', S.stats.gdp, 1, '%p');
-  const a = $('hdr-appr'); a.textContent = S.approval.toFixed(1) + '%'; a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
-  { const g = pcapGain(S); $('hdr-pcap').innerHTML = `${Math.floor(S.pcap)}<small class="gain">${g >= 0 ? '+' : ''}${Math.round(g)}/분기</small>`; }
+  $('hdr-term').textContent = `제${T.ord}대 ${S.name} · 임기 ${T.year}년차 ${T.q}/${TERM_TURNS}분기`;
+  hudFloat('hdr-appr', S.approval, 1, '%p'); hudFloat('hdr-pcap', S.pcap / 10, 1, '조'); hudFloat('hdr-gdp', S.stats.gdp, 1, '%p');
+  const a = $('hdr-appr'); rollNum(a, S.approval, v => v.toFixed(1) + '%'); a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
+  { const g = pcapGain(S); const el = $('hdr-pcap'); rollNum(el, S.pcap, v => won(v)); el.style.color = S.pcap < 0 ? 'var(--bad)' : ''; el.closest('.res').title = `국고 ${won(S.pcap)} · 분기 순수입 ${g >= 0 ? '+' : ''}${won(g)} (경제 패널에서 내역 확인)`; }
   const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling];
   const se = $('hdr-seats'); se.textContent = `${rs}/300`; se.style.color = rs >= 151 ? 'var(--good)' : 'var(--mid)';
   $('btn-end').disabled = S.over;
-  const gd = $('hdr-gdp'); gd.textContent = fmtStat('gdp', S.stats.gdp); gd.style.color = S.stats.gdp >= 1.5 ? 'var(--good)' : S.stats.gdp >= 0 ? 'var(--mid)' : 'var(--bad)';
-  const db = $('hdr-debt'); db.textContent = fmtStat('debt', S.stats.debt); db.style.color = S.stats.debt < 60 ? 'var(--text)' : S.stats.debt < 80 ? 'var(--mid)' : 'var(--bad)';
-  const tn = $('hdr-tension'); const T = S.world?.tension ?? 35; tn.textContent = T.toFixed(0); tn.style.color = T >= 70 ? 'var(--bad)' : T >= 50 ? 'var(--mid)' : 'var(--good)';
+  if (typeof renderAlerts === 'function') renderAlerts();
+  const gd = $('hdr-gdp'); rollNum(gd, S.stats.gdp, v => fmtStat('gdp', v)); gd.style.color = S.stats.gdp >= 1.5 ? 'var(--good)' : S.stats.gdp >= 0 ? 'var(--mid)' : 'var(--bad)';
+  const db = $('hdr-debt'); rollNum(db, S.stats.debt, v => fmtStat('debt', v)); db.style.color = S.stats.debt < 60 ? 'var(--text)' : S.stats.debt < 80 ? 'var(--mid)' : 'var(--bad)';
+  const tn = $('hdr-tension'); const TN = S.world?.tension ?? 35; tn.textContent = TN.toFixed(0); tn.style.color = TN >= 70 ? 'var(--bad)' : TN >= 50 ? 'var(--mid)' : 'var(--good)';
+}
+// 숫자가 굴러가며 바뀌는 연출
+function rollNum(el, to, fmt) {
+  const from = el._v ?? to; el._v = to;
+  if (from === to || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = fmt(to); return; }
+  el.closest('.res')?.classList.remove('bump'); void el.offsetWidth; el.closest('.res')?.classList.add('bump');
+  const t0 = performance.now(), dur = 700;
+  cancelAnimationFrame(el._raf);
+  const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (to - from) * e); if (k < 1) el._raf = requestAnimationFrame(step); };
+  el._raf = requestAnimationFrame(step);
 }
 // 상단 수치가 바뀌면 +/- 숫자가 떠올랐다 사라짐
 const hudPrev = {};
@@ -174,7 +187,7 @@ function renderPolicies() {
         const isCur = o.id === cur.id;
         return `<button class="opt ${isCur ? 'current' : ''} ${locked && !isCur ? 'disabled' : ''}" data-p="${p.id}" data-o="${o.id}" ${isCur ? 'disabled' : ''}>
           <span>${isCur ? '✔ ' : ''}${esc(o.label)}${o.user ? ' <span class="tag new">직접 입력</span>' : ''}</span>
-          <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">⚡${policyCost(S, o)}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">⚡${policyCost(S, { pc: 20 })}</span>` : ''}</span>
+          <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ''}${!isCur && !o.cur ? ltTag(o) + `<span class="tag">${won(policyCost(S, o))}</span>` : ''}${!isCur && o.cur ? ltTag({ lt: cur.lt || 'law' }) + `<span class="tag">${won(policyCost(S, { pc: 20 }))}</span>` : ''}</span>
         </button>`;
       }).join('')}</div>
       <div class="custom-row own"><input id="own-${p.id}" data-own="${p.id}" placeholder="✍️ 직접 입력: ${esc(ownHint(p))}" maxlength="80"><button class="btn sm" data-ownbtn="${p.id}">AI 분석</button></div>
@@ -226,7 +239,7 @@ function openExplain(pid) {
     ${p.issue ? `<div class="box" style="margin-top:8px"><h4>쟁점</h4><p class="ptext">${esc(p.issue)}</p></div>` : ''}
     <h3 class="sec">선택지 ${p.options.length}개</h3>
     ${p.options.map(o => { const isCur = o.id === cur.id; return `<div class="xopt ${isCur ? 'is-cur' : ''}">
-      <div class="xhead"><b>${isCur ? '✔ ' : ''}${esc(o.label)}</b> <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ltTag(o) + `<span class="tag">⚡${policyCost(S, o)}</span>`}${o.user ? '<span class="tag new">직접 입력</span>' : ''}</span>
+      <div class="xhead"><b>${isCur ? '✔ ' : ''}${esc(o.label)}</b> <span class="meta">${o.cur ? '<span class="tag cur">현행</span>' : ltTag(o) + `<span class="tag">${won(policyCost(S, o))}</span>`}${o.user ? '<span class="tag new">직접 입력</span>' : ''}</span>
       ${isCur ? '' : `<button class="btn sm" data-review="${o.id}">이 안 검토</button>`}</div>
       ${o.desc && !o.cur ? `<div class="muted">${esc(o.desc)}</div>` : ''}${argBox(o)}</div>`; }).join('')}
     <div class="modal-actions"><button class="btn primary" onclick="closeModal()">닫기</button></div>`);
@@ -254,9 +267,9 @@ function openPreview(pid, oid, lobby = 0) {
   openModal(`<h2>${esc(p.name)}</h2>
     <p class="lead">${esc(cur.label)} → <b>${esc(o.label)}</b><br>${esc(o.desc || '')}</p>
     ${argBox(o0)}
-    <div class="vote"><span>${voteTxt}</span><span>정치자본 <b>⚡${pv.cost}</b> (보유 ${Math.floor(S.pcap)})</span><span>효과 완성까지 <b>${pv.lag}분기</b></span></div>
+    <div class="vote"><span>${voteTxt}</span><span>비용 <b>${won(pv.cost)}</b> (국고 ${won(S.pcap)})</span><span>효과 완성까지 <b>${pv.lag}분기</b></span></div>
     <div>통과 가능성 <b style="color:${probColor}">${probPct}%</b><div class="prob"><i style="width:${probPct}%;background:${probColor}"></i></div></div>
-    ${pv.vote.type !== 'decree' ? `<div class="vote" style="margin-top:10px"><span>🤝 야당 협상(협치):</span>${[0, 1, 2, 3].map(l => `<button class="btn sm ${l === lobby ? 'primary' : ''}" data-lobby="${l}">${l ? `${l}단계 ⚡+${l * LOBBY_COST}` : '없음'}</button>`).join('')}<span>1단계당 찬성 약 +16석</span></div>` : ''}
+    ${pv.vote.type !== 'decree' ? `<div class="vote" style="margin-top:10px"><span>🤝 야당 협상(협치):</span>${[0, 1, 2, 3].map(l => `<button class="btn sm ${l === lobby ? 'primary' : ''}" data-lobby="${l}">${l ? `${l}단계 +${won(l * LOBBY_COST)}` : '없음'}</button>`).join('')}<span>1단계당 찬성 약 +16석</span></div>` : ''}
     <h3 class="sec">🤖 AI 참모 사전 분석</h3>
     <div class="two">
       <div class="box gain"><h4>예상 이득</h4>${pv.gains.length ? `<ul>${pv.gains.map(x => `<li>${fmtPart(x)}</li>`).join('')}</ul>` : '<span class="muted">뚜렷한 이득 없음</span>'}</div>
@@ -269,8 +282,8 @@ function openPreview(pid, oid, lobby = 0) {
     ${o0.lt === 'law' ? (() => {
       const ce = canEmergency(S, p, o0), cr = canReferendum(S, p, o0), ro = referendumOdds(S, o0);
       return `<div class="box powers"><h4>🏛️ 대통령 권한으로 국회 우회</h4>
-        <div class="pw"><div><b>⚡ 긴급재정경제명령</b> (헌법 76조) <span class="tag">⚡${emergencyCost(S, o0)}</span><div class="muted small">${esc(ce || '즉시 시행. 다음 분기 국회 승인 필요(승인 확률 약 ' + Math.round(clamp(voteModel(S, o0).prob + 0.15, 0.05, 0.97) * 100) + '%), 거부되면 효력 상실. 법조계·야권 반발, 지지율 -2.')}</div></div><button class="btn sm" id="btn-emerg" ${ce || S.pcap < emergencyCost(S, o0) ? 'disabled' : ''}>발동</button></div>
-        <div class="pw"><div><b>🗳️ 국민투표 부의</b> (헌법 72조) <span class="tag">⚡${referendumCost(S, o0)}</span><div class="muted small">${esc(cr || '국회 대신 국민에게 직접 묻습니다. 예상 찬성 ' + ro.sup.toFixed(0) + '% (가결 확률 ' + Math.round(ro.prob * 100) + '%). 부결되면 지지율 -4. 1년에 한 번.')}</div></div><button class="btn sm" id="btn-refer" ${cr || S.pcap < referendumCost(S, o0) ? 'disabled' : ''}>부의</button></div>
+        <div class="pw"><div><b>⚡ 긴급재정경제명령</b> (헌법 76조) <span class="tag">${won(emergencyCost(S, o0))}</span><div class="muted small">${esc(ce || '즉시 시행. 다음 분기 국회 승인 필요(승인 확률 약 ' + Math.round(clamp(voteModel(S, o0).prob + 0.15, 0.05, 0.97) * 100) + '%), 거부되면 효력 상실. 법조계·야권 반발, 지지율 -2.')}</div></div><button class="btn sm" id="btn-emerg" ${ce || S.pcap < emergencyCost(S, o0) ? 'disabled' : ''}>발동</button></div>
+        <div class="pw"><div><b>🗳️ 국민투표 부의</b> (헌법 72조) <span class="tag">${won(referendumCost(S, o0))}</span><div class="muted small">${esc(cr || '국회 대신 국민에게 직접 묻습니다. 예상 찬성 ' + ro.sup.toFixed(0) + '% (가결 확률 ' + Math.round(ro.prob * 100) + '%). 부결되면 지지율 -4. 1년에 한 번.')}</div></div><button class="btn sm" id="btn-refer" ${cr || S.pcap < referendumCost(S, o0) ? 'disabled' : ''}>부의</button></div>
       </div>`; })() : ''}
     <div class="modal-actions">
       ${ClaudeAI.enabled() ? `<button class="btn" id="btn-ask-claude">🤖 Claude 의견 듣기</button>` : ''}
@@ -293,7 +306,7 @@ function openPreview(pid, oid, lobby = 0) {
     closeModal(); saveGame(S); renderAll();
     if (r.bill) return openModal(`<h2>📨 국회 제출</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p><p class="muted">심의 진행과 협상·신속처리·철회는 [🏛️ 국회·세력] 탭에서 관리할 수 있습니다.</p><div class="modal-actions"><button class="btn" onclick="closeModal();showTab('politics')">국회 탭 보기</button><button class="btn primary" onclick="closeModal()">확인</button></div>`);
     openModal(`<h2>${r.passed ? '✅ 시행 확정' : '❌ 부결'}</h2><p class="lead">${esc(p.name)}: ${esc(o.label)}</p><p>${esc(r.detail)}</p>
-      ${r.passed ? `<p class="muted">효과는 ${pv.lag}분기에 걸쳐 나타납니다. 세력 반응은 즉시 반영되었습니다.${pv.risks.length ? ' 부작용이 잠복 중이니 주의하세요.' : ''}</p>` : '<p class="muted">정치자본의 절반이 소모되었고 지지율이 소폭 하락했습니다. 다음 분기에 다시 시도할 수 있습니다.</p>'}
+      ${r.passed ? `<p class="muted">효과는 ${pv.lag}분기에 걸쳐 나타납니다. 세력 반응은 즉시 반영되었습니다.${pv.risks.length ? ' 부작용이 잠복 중이니 주의하세요.' : ''}</p>` : '<p class="muted">투입 예산의 절반이 소모되었고 지지율이 소폭 하락했습니다. 다음 분기에 다시 시도할 수 있습니다.</p>'}
       <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
   };
   const ask = $('btn-ask-claude');
@@ -340,7 +353,7 @@ function renderCrises() {
       <h4>${c.icon} ${esc(c.title)} <span class="tag">${esc(c.kind)}</span> <span class="tag">심각도 ${'●'.repeat(c.sev)}</span></h4>
       <p>${esc(c.desc)}${p ? `<br>원인 정책: <b>${esc(p.name)} — ${esc(optionOf(p, c.oid).label)}</b>` : ''}</p>
       ${c.options.map((o, i) => { const ev = evals.find(x => x.i === i); const fx = expandSolution(S, c, o, true); return `<div class="sol ${i === best ? 'best' : ''}">
-        <div><b>${esc(o.label)}</b> ${i === best ? '<span class="tag new">AI 추천</span>' : ''} <span class="tag">성공 ${(ev.ok * 100).toFixed(0)}%</span> <span class="tag">⚡${o.pc || 0}</span>${o.rollback ? `<span class="tag">정책 ${(o.rollback * 100).toFixed(0)}% 후퇴</span>` : ''}
+        <div><b>${esc(o.label)}</b> ${i === best ? '<span class="tag new">AI 추천</span>' : ''} <span class="tag">성공 ${(ev.ok * 100).toFixed(0)}%</span> <span class="tag">${won(o.pc || 0)}</span>${o.rollback ? `<span class="tag">정책 ${(o.rollback * 100).toFixed(0)}% 후퇴</span>` : ''}
           <div class="sd">${esc(o.desc)}</div><div class="fx">${fxList(fx.e, fx.rel, fx.f)}</div></div>
         <button class="btn sm" data-c="${c.id}" data-i="${i}">선택</button></div>`; }).join('')}
       <div class="modal-actions"><button class="btn primary sm" data-ai="${c.id}">🤖 AI에게 맡기기</button></div>
@@ -387,6 +400,7 @@ async function aiResolve(c) {
 $('btn-end').onclick = () => endQuarter();
 async function endQuarter() {
   if (busy || S.over) return;
+  if (S.pendingSuccession) return openPresidentialCard();
   busy = true; $('btn-end').disabled = true;
   if (typeof setSpeed === 'function') S.day = 0;
   const hadModal = !$('modal').classList.contains('hidden');
@@ -484,12 +498,13 @@ function showEnding() {
   const changed = allPolicies().filter(p => !currentOption(p, S).cur);
   const H = S.history, first = H[0];
   openModal(`<div class="ending">
-    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : e.type === 'nuke' ? '☢️ 핵 공격' : e.type === 'defeat' ? '🏳️ 패전' : '🚨 안보 붕괴'}</h2>
+    <h2>${e.type === 'term' ? '🎖️ 임기 만료 — 퇴임' : e.type === 'impeach' ? '⚖️ 탄핵' : e.type === 'default' ? '💥 국가 부도' : e.type === 'nuke' ? '☢️ 핵 공격' : e.type === 'defeat' ? '🏳️ 패전' : e.type === 'retire' ? '📜 역사 속으로' : '🚨 안보 붕괴'}</h2>
     ${e.desc ? `<p class="lead">${esc(e.desc)}</p>` : ''}
     <div class="grade" style="color:${sc.total >= 70 ? 'var(--good)' : sc.total >= 50 ? 'var(--mid)' : 'var(--bad)'}">${sc.grade}</div>
     <h3>${esc(sc.title)}</h3><p class="muted">${esc(sc.desc)}</p>
     <p>종합 ${sc.total.toFixed(1)}점 · 국가지표 ${sc.indexScore.toFixed(1)}점 · 최종 지지율 ${sc.approval.toFixed(1)}%</p></div>
     <div class="rep-grid">${Object.entries(STATS).map(([k, m]) => { let d = S.stats[k] - first.stats[k]; if (Math.abs(d) < Math.pow(10, -m.dec) / 2) d = 0; return `<div class="rep-item">${m.name}<b>${fmtStat(k, S.stats[k])}</b><span class="delta ${deltaClass(k, d)}">${d >= 0 ? '+' : ''}${d.toFixed(m.dec)}</span></div>`; }).join('')}</div>
+    ${(S.presidents || []).length ? `<div class="box"><h4>🏛️ 역대 대통령</h4><div class="hall">${S.presidents.map(presRow).join('')}</div></div>` : ''}
     <div class="box"><h4>당신이 바꾼 대한민국 (${changed.length}개 제도)</h4>${changed.length ? `<ul>${changed.map(p => `<li>${esc(p.name)}: ${esc(currentOption(p, S).label)}</li>`).join('')}</ul>` : '<span class="muted">아무것도 바꾸지 않았습니다.</span>'}</div>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">기록 둘러보기</button><button class="btn primary" onclick="restart()">새 게임</button></div>`);
 }

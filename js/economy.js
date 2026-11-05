@@ -53,6 +53,7 @@ function sectorGrowth(s, x) {
   for (const k in x.drv) g += x.drv[k] * (driverVal(s, k) - DRIVER_BASE(k));
   for (const pid in x.pol) { const v = x.pol[pid][s.policies[pid]]; if (v) g += v; }
   const inv = (s.sectorInvest || []).find(i => i.id === x.id); if (inv) g += 2.5;
+  g += (s.buildings?.[x.id] || 0) * 0.6; // 지어 둔 공장
   const sh = (s.sectorShock || {})[x.id]; if (sh) g += sh;
   if (s.war) g -= x.id === 'ship' ? -2 : 3;     // 전쟁: 방산 특수, 나머지 타격
   if (s.annexed?.nk && (x.id === 'build' || x.id === 'agri')) g += 1.5; // 통일 재건 수요
@@ -92,7 +93,7 @@ function investSector(s, id) {
   s.sectorInvest = s.sectorInvest || [];
   if (s.sectorInvest.some(i => i.id === id)) return { ok: false, msg: '이미 집중 육성 중인 산업입니다.' };
   if (s.sectorInvest.length >= 3) return { ok: false, msg: '집중 육성은 동시에 3개 산업까지입니다.' };
-  if (s.pcap < INVEST_COST) return { ok: false, msg: `정치자본 ⚡${INVEST_COST}이 필요합니다.` };
+  if (s.pcap < INVEST_COST) return { ok: false, msg: `국고 ${won(INVEST_COST)}이 필요합니다.` };
   s.pcap -= INVEST_COST;
   s.sectorInvest.push({ id, left: 8 });
   s.stats.fiscal = clamp(s.stats.fiscal - 0.25, STATS.fiscal.min, STATS.fiscal.max);
@@ -103,6 +104,82 @@ function investSector(s, id) {
   return { ok: true };
 }
 
+/* ---------------- 국고: 수입 내역 ---------------- */
+// 내부 단위 10 = 1조 원. 정상 난이도 출발 시 분기 순수입 약 ₩3조
+const TAX_CATS = new Set(['tax']);
+function taxLevel(s) {
+  let sum = 0;
+  for (const p of POLICIES) if (TAX_CATS.has(p.cat)) { const o = currentOption(p, s); if (o?.e?.fiscal) sum += o.e.fiscal; }
+  return clamp(1 + sum * 0.25, 0.4, 1.8);
+}
+function budgetIncome(s) {
+  const mul = (DIFFICULTY[s.difficulty] || DIFFICULTY.normal).incomeMul || 1;
+  const tax = 16 * taxLevel(s) * (1 + (s.stats.gdp - 1.8) * 0.06) * mul;
+  let trade = 0;
+  for (const k in (s.diplo || {})) { const d = s.diplo[k]; if (!d.fta || s.annexed?.[k] || s.world?.owner?.[k]) continue; const c = typeof cinfo === 'function' ? cinfo(k) : null; if (c && !c.eu) trade += Math.pow(c.eco, 0.8) * 0.045; }
+  trade *= mul * (1 - (s.world?.conflicts || []).filter(c => c.type === 'trade' && [c.a, c.b].some(x => ['us', 'cn'].includes(x))).length * 0.1);
+  let industry = 0;
+  for (const x of SECTORS) industry += x.share * ((s.sectors?.[x.id]?.idx || 100) / 100) * 0.05;
+  industry = (industry + Object.values(s.buildings || {}).reduce((a, b) => a + b, 0) * 1.2) * mul;
+  const annexed = Object.keys(s.annexed || {}).reduce((a, k) => a + (typeof cinfo === 'function' ? cinfo(k).eco * 0.06 : 0), 0) * mul;
+  const interest = -Math.max(0, s.stats.debt - 40) * 0.09;
+  const admin = (s.approval - 45) * 0.12 + (s.pcapBonus || 0) * 0.5;
+  const war = s.war ? -10 : 0;
+  const imf = s.imfTurn != null && s.turn - s.imfTurn < 8 ? -6 : 0;
+  const total = tax + trade + industry + annexed + interest + admin + war + imf;
+  return { tax, trade, industry, annexed, interest, admin, war, imf, total };
+}
+
+/* ---------------- 공장 건설·특별세·국채 ---------------- */
+const BUILD_COST = 40, BUILD_TIME = 2, BUILD_MAX = 5;
+function buildCost(s, id) { return Math.round(BUILD_COST * (1 + (s.buildings?.[id] || 0) * 0.35)); }
+function buildFactory(s, id) {
+  const x = SECTORS.find(z => z.id === id), lv = (s.buildings[id] || 0) + s.construction.filter(c => c.id === id).length;
+  if (lv >= BUILD_MAX) return { ok: false, msg: `${x.name} 시설은 최대 ${BUILD_MAX}단계입니다.` };
+  if (s.construction.length >= 3) return { ok: false, msg: '동시에 공사할 수 있는 곳은 3곳까지입니다.' };
+  const cost = buildCost(s, id);
+  if (s.pcap < cost) return { ok: false, msg: `국고 ${won(cost)}이(가) 필요합니다. 국채를 발행하거나 특별세를 걷으세요.` };
+  s.pcap -= cost;
+  s.construction.push({ id, left: BUILD_TIME });
+  s.factions.local = clamp(s.factions.local + 2, 0, 100); s.factions.labor = clamp(s.factions.labor + 1, 0, 100);
+  addLog(s, 'info', `🏗️ ${x.name} 시설 ${lv + 1}단계 착공 (${won(cost)}, ${BUILD_TIME}분기 후 완공)`);
+  return { ok: true, msg: `${x.icon} ${x.name} 시설 착공! ${BUILD_TIME}분기 후 완공됩니다.` };
+}
+function constructionTurn(s, report) {
+  report.built = [];
+  for (const c of [...s.construction]) {
+    if (--c.left > 0) continue;
+    s.construction = s.construction.filter(x => x !== c);
+    s.buildings[c.id] = (s.buildings[c.id] || 0) + 1;
+    const x = SECTORS.find(z => z.id === c.id);
+    s.mods.unemp -= 0.04 * x.emp / 5; s.mods.innovation += ['semi', 'it', 'auto'].includes(x.id) ? 0.6 : 0.2;
+    if (['heavy', 'energy', 'build'].includes(x.id)) s.mods.env -= 0.4;
+    report.built.push(`${x.icon} ${x.name} ${s.buildings[c.id]}단계`);
+    addLog(s, 'good', `🏭 ${x.name} 시설 ${s.buildings[c.id]}단계 완공! 산업 성장과 국고 수입이 늘어납니다.`);
+  }
+}
+const FINANCE_ACTIONS = [
+  { id: 'levy', name: '특별세 징수', icon: '🧾', cd: 2, desc: '국고 +₩3조. 지지율 -2.5, 재계·노동계 반발.',
+    run: s => { s.pcap += 30; s.approval = clamp(s.approval - 2.5, 0, 100); s.factions.biz = clamp(s.factions.biz - 4, 0, 100); s.factions.labor = clamp(s.factions.labor - 2, 0, 100); return '한시적 특별세를 걷어 국고 ₩3조를 확보했습니다.'; } },
+  { id: 'bond', name: '국채 발행', icon: '📜', cd: 0, desc: '국고 +₩5조. 국가채무비율 +0.5%p, 이자 부담 증가.',
+    run: s => { s.pcap += 50; s.stats.debt += 0.5; s.mods.debt += 0.3; return '국채를 발행해 국고 ₩5조를 마련했습니다.'; } },
+  { id: 'sell', name: '국유재산 매각', icon: '🏢', cd: 4, desc: '국고 +₩4조. 공공 자산 감소, 진보층 반발.',
+    run: s => { s.pcap += 40; s.factions.lib = clamp(s.factions.lib - 3, 0, 100); s.stats.welfare -= 0.5; return '유휴 국유지와 공기업 지분 일부를 매각했습니다.'; } },
+];
+function financeAction(s, id) {
+  const a = FINANCE_ACTIONS.find(x => x.id === id); s.finCd = s.finCd || {};
+  if ((s.finCd[id] || 0) > s.turn) return { ok: false, msg: `${s.finCd[id] - s.turn}분기 후에 다시 할 수 있습니다.` };
+  if (id === 'bond' && s.stats.debt > 120) return { ok: false, msg: '국가채무가 너무 커서 국채를 더 찍을 수 없습니다.' };
+  s.finCd[id] = s.turn + a.cd;
+  const msg = a.run(s); addLog(s, 'info', `${a.icon} ${msg}`);
+  return { ok: true, msg };
+}
+
+HOOKS.migrate.push(s => {
+  if (!s.buildings) s.buildings = {};
+  if (!s.construction) s.construction = [];
+});
+HOOKS.preMacro.push(constructionTurn);
 HOOKS.migrate.push(s => {
   if (!s.sectors) { s.sectors = {}; for (const x of SECTORS) s.sectors[x.id] = { idx: 100, g: x.base, hist: [100] }; }
   if (!s.sectorInvest) s.sectorInvest = [];
