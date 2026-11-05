@@ -793,9 +793,6 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
       <label class="field">대통령 이름
         <input id="pres-name" maxlength="12" placeholder="이름을 입력하세요" value="">
       </label>
-      <div class="field">소속
-        <div id="party-pick" class="party-pick"></div>
-      </div>
       <div class="field">난이도
         <div id="diff-pick" class="party-pick diff-pick"></div>
       </div>
@@ -960,6 +957,9 @@ const FACTIONS = {
 
 /* ---------- 정당 ---------- */
 const PARTIES = {
+  // 기본: 진보·보수 구분 없는 대통령 정당. 두 야당은 같은 크기로 시작해 어느 쪽 정책이든 조건이 같음
+  pres: { name: '여당', lean: 'P', seats: 155, desc: '대통령 정당이 과반(155석)으로 시작합니다. 두 야당은 각각 67~68석.' },
+  opp: { name: '야권 연합', lean: 'N', seats: 0, desc: '' },
   lib: { name: '진보 성향 여당', lean: 'L', seats: 170, desc: '국회 과반(170석)을 확보한 상태로 시작합니다. 진보 정책은 쉽게 통과되지만 보수층 반발이 큽니다.' },
   con: { name: '보수 성향 여당', lean: 'R', seats: 108, desc: '여소야대(108석)로 시작합니다. 보수 정책은 야당의 벽에 부딪히기 쉽습니다. 고난이도.' },
   ind: { name: '무소속 대통령', lean: 'N', seats: 12,  desc: '기반 정당이 거의 없습니다. 모든 법안이 협치에 달려 있습니다. 최고 난이도.' },
@@ -3548,16 +3548,18 @@ function newGame(partyKey, presidentName, difficulty = 'normal', worldview = 'co
   if (partyKey === 'lib') { factions.lib = 66; factions.con = 30; }
   if (partyKey === 'con') { factions.con = 66; factions.lib = 32; factions.mil = 58; factions.labor = 38; }
   if (partyKey === 'ind') { factions.con = 46; factions.lib = 50; factions.youth = 50; }
+  if (partyKey === 'pres') { factions.con = 50; factions.lib = 50; }
   const policies = {};
   for (const p of POLICIES) policies[p.id] = p.options.find(o => o.cur).id;
 
   let seats;
-  if (partyKey === 'lib') seats = { L: 170, R: 108, N: 22, P: 0 };
+  if (partyKey === 'pres') seats = { L: 68, R: 67, N: 10, P: 155 };
+  else if (partyKey === 'lib') seats = { L: 170, R: 108, N: 22, P: 0 };
   else if (partyKey === 'con') seats = { L: 170, R: 108, N: 22, P: 0 };
   else seats = { L: 166, R: 104, N: 18, P: 12 };
 
   const s = {
-    v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
+    v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P', // pres·ind는 대통령 정당(P)
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
     difficulty, worldview, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
@@ -4026,8 +4028,8 @@ function generalElection(s) {
   if (s.dom) s.dom.campaign = 0;
   const before = { ...s.seats };
   if (r === 'P') {
-    s.seats.P = Math.round(clamp((s.approval - 25) * 3, 5, 200));
-    const rest = 300 - s.seats.P - 15; s.seats.L = Math.round(rest * 0.6); s.seats.R = rest - s.seats.L; s.seats.N = 15;
+    s.seats.P = Math.round(300 * share); s.seats.N = Math.round(clamp(rnd(8, 22), 0, 40));
+    const rest = 300 - s.seats.P - s.seats.N; s.seats.L = Math.round(rest * clamp(0.5 + gauss() * 0.05, 0.4, 0.6)); s.seats.R = rest - s.seats.L;
   } else {
     const opp = r === 'L' ? 'R' : 'L';
     s.seats.P = 0; // 대통령 신당은 여당이 아니면 군소 정당으로 흡수
@@ -4075,7 +4077,7 @@ function checkGameOver(s, report) {
 const PRES_SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '홍', '유'];
 const PRES_GIVEN = ['태준', '서영', '민호', '정우', '현정', '승민', '지훈', '혜원', '동건', '수진', '재원', '은숙', '성훈', '나연', '준혁', '경민'];
 const randName = () => PRES_SUR[Math.floor(Math.random() * PRES_SUR.length)] + PRES_GIVEN[Math.floor(Math.random() * PRES_GIVEN.length)];
-const otherParty = s => s.party === 'lib' ? 'con' : s.party === 'con' ? 'lib' : (Math.random() < 0.5 ? 'lib' : 'con');
+const otherParty = s => s.party === 'pres' ? 'opp' : s.party === 'lib' ? 'con' : s.party === 'con' ? 'lib' : (Math.random() < 0.5 ? 'lib' : 'con');
 function presidentialElection(s, reason) {
   const term = finalScore(s);
   const inPower = (s.partyTerms || 1);                      // 같은 정당 연속 집권 피로도
@@ -4092,13 +4094,19 @@ function presidentialElection(s, reason) {
   addLog(s, won ? 'good' : 'bad', `🗳️ 제${no}대 대통령 선거: 여당 후보 ${result.rulingCandidate} ${share.toFixed(1)}% — ${won ? '정권 재창출' : '정권 교체'}`);
   return result;
 }
-const PARTY_LEAN = { lib: 'L', con: 'R', ind: 'P' };
+const PARTY_LEAN = { lib: 'L', con: 'R', ind: 'P', pres: 'P', opp: 'N' };
 function applySuccession(s, newName) {
   const r = s.pendingSuccession; if (!r) return;
   (s.presidents = s.presidents || []).push(r.term);
   s.name = newName || (r.won ? r.rulingCandidate : r.oppCandidate);
   s.presidentNo = r.no;
-  if (!r.won) {
+  if (!r.won && s.party === 'pres') {
+    // 정권 교체: 야권 연합 후보가 당선 → 더 큰 야당이 새 여당, 옛 여당은 야당으로 (진보·보수 구분 없음)
+    const big = s.seats.L >= s.seats.R ? 'L' : 'R', t = s.seats.P; s.seats.P = s.seats[big]; s.seats[big] = t;
+    s.partyTerms = 1;
+    if (typeof INITIAL_COALITION !== 'undefined') s.coalition = [...INITIAL_COALITION.pres];
+    s.approval = 56;
+  } else if (!r.won) {
     // 정권 교체: 새 정부는 상대 정당. 지지층·연합이 바뀜
     const np = r.oppParty;
     if (s.ruling === 'P') { s.seats.N += s.seats.P; s.seats.P = 0; }
@@ -4223,7 +4231,7 @@ function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }
 const CLOUT_BASE = { biz: 18, labor: 12, youth: 8, elder: 12, con: 10, lib: 10, mil: 6, legal: 6, teach: 5, medic: 5, farm: 4, local: 4 };
 // 함께 연합하면 마찰이 생기는 조합
 const RIVALS = [['con', 'lib'], ['biz', 'labor'], ['youth', 'elder'], ['medic', 'local']];
-const INITIAL_COALITION = { lib: ['lib', 'labor', 'youth', 'teach'], con: ['con', 'biz', 'elder', 'mil'], ind: ['youth', 'local'] };
+const INITIAL_COALITION = { lib: ['lib', 'labor', 'youth', 'teach'], con: ['con', 'biz', 'elder', 'mil'], ind: ['youth', 'local'], pres: ['youth', 'local'] };
 
 // 세력 이름에 맞는 조사(이/가)
 const iga = w => { const c = w.charCodeAt(w.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 ? '이' : '가'; };
@@ -4503,7 +4511,7 @@ HOOKS.preMacro.push(emergencyTurn);
  *  국내 정치: 정치 인물, 당 장악력·야당 협조도, 대통령의 정치 행동, 정치 사건 카드
  * ========================================================= */
 const PARTY_COLOR = { L: '#2a6fdb', R: '#d6393f', N: '#9aa3b5', P: '#8a5cc7' };
-const BLOC_NAME = { L: '진보 정당', R: '보수 정당', N: '군소·무소속', P: '대통령 신당' };
+const BLOC_NAME = { L: '민주연합', R: '국민연대', N: '군소·무소속', P: '여당' };
 const oppBloc = s => s.ruling === 'L' ? 'R' : s.ruling === 'R' ? 'L' : (s.seats.L >= s.seats.R ? 'L' : 'R');
 const rulingSeats = s => s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
 
@@ -5086,6 +5094,8 @@ const FINANCE_ACTIONS = [
     run: s => { s.pcap += 30; s.approval = clamp(s.approval - 2.5, 0, 100); s.factions.biz = clamp(s.factions.biz - 4, 0, 100); s.factions.labor = clamp(s.factions.labor - 2, 0, 100); return '한시적 특별세를 걷어 국고 ₩3조를 확보했습니다.'; } },
   { id: 'bond', name: '국채 발행', icon: '📜', cd: 0, desc: '국고 +₩5조. 국가채무비율 +0.5%p, 이자 부담 증가.',
     run: s => { s.pcap += 50; s.stats.debt += 0.5; s.mods.debt += 0.3; return '국채를 발행해 국고 ₩5조를 마련했습니다.'; } },
+  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 1, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소.',
+    run: s => { s.pcap -= 50; s.stats.debt = Math.max(0, s.stats.debt - 1); s.mods.debt -= 0.2; return '국고 ₩5조로 국채를 조기 상환했습니다.'; } },
   { id: 'sell', name: '국유재산 매각', icon: '🏢', cd: 4, desc: '국고 +₩4조. 공공 자산 감소, 진보층 반발.',
     run: s => { s.pcap += 40; s.factions.lib = clamp(s.factions.lib - 3, 0, 100); s.stats.welfare -= 0.5; return '유휴 국유지와 공기업 지분 일부를 매각했습니다.'; } },
 ];
@@ -5093,6 +5103,7 @@ function financeAction(s, id) {
   const a = FINANCE_ACTIONS.find(x => x.id === id); s.finCd = s.finCd || {};
   if ((s.finCd[id] || 0) > s.turn) return { ok: false, msg: `${s.finCd[id] - s.turn}분기 후에 다시 할 수 있습니다.` };
   if (id === 'bond' && s.stats.debt > 120) return { ok: false, msg: '국가채무가 너무 커서 국채를 더 찍을 수 없습니다.' };
+  if (a.cost && s.pcap < a.cost) return { ok: false, msg: `국고 ${won(a.cost)}이(가) 필요합니다.` };
   s.finCd[id] = s.turn + a.cd;
   const msg = a.run(s); addLog(s, 'info', `${a.icon} ${msg}`);
   return { ok: true, msg };
@@ -6813,7 +6824,7 @@ relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정�
  * ========================================================= */
 let S = null;
 let activeCat = 'const';
-let selectedParty = 'lib';
+let selectedParty = 'pres';
 let selectedDiff = 'normal';
 let busy = false;
 
@@ -6848,9 +6859,6 @@ function ltTag(o) { const lt = o.lt || 'decree'; return `<span class="tag ${lt}"
 
 /* ---------------- 시작 화면 ---------------- */
 function renderStart() {
-  $('party-pick').innerHTML = Object.entries(PARTIES).map(([k, p]) =>
-    `<div class="party-opt ${k === selectedParty ? 'sel' : ''}" data-p="${k}"><b>${p.name}</b><span>${p.desc}</span></div>`).join('');
-  $('party-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedParty = el.dataset.p; renderStart(); });
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
     `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
@@ -6863,7 +6871,7 @@ $('btn-start').onclick = () => {
   S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
-    <p class="lead">${esc(PARTIES[selectedParty].name)} · 난이도 ${DIFFICULTY[selectedDiff].name} · 제21대 대통령 · 임기 5년마다 대선, 정권이 바뀌어도 계속 플레이 · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
+    <p class="lead">여당 155석으로 시작 · 난이도 ${DIFFICULTY[selectedDiff].name} · 제21대 대통령 · 임기 5년마다 대선, 정권이 바뀌어도 계속 플레이 · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
     <div class="box"><h4>게임 방법</h4><ul>
       <li><b>📜 정책 결정</b>: 헌법·세제·국방·외교·교육·검경·민법 등 13개 분야 ${POLICIES.length}개 제도가 <b>현재 대한민국 그대로</b> 설정되어 있습니다. 원하는 제도를 바꾸세요.</li>
       <li>바꾸기 전에 <b>AI 참모가 이득·손해·부작용·국회 통과 가능성</b>을 분석해 줍니다.</li>

@@ -2,7 +2,7 @@
  *  국내 정치: 정치 인물, 당 장악력·야당 협조도, 대통령의 정치 행동, 정치 사건 카드
  * ========================================================= */
 const PARTY_COLOR = { L: '#2a6fdb', R: '#d6393f', N: '#9aa3b5', P: '#8a5cc7' };
-const BLOC_NAME = { L: '진보 정당', R: '보수 정당', N: '군소·무소속', P: '대통령 신당' };
+const BLOC_NAME = { L: '민주연합', R: '국민연대', N: '군소·무소속', P: '여당' };
 const oppBloc = s => s.ruling === 'L' ? 'R' : s.ruling === 'R' ? 'L' : (s.seats.L >= s.seats.R ? 'L' : 'R');
 const rulingSeats = s => s.ruling === 'P' ? s.seats.P : s.seats[s.ruling];
 

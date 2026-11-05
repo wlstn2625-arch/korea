@@ -148,16 +148,18 @@ function newGame(partyKey, presidentName, difficulty = 'normal', worldview = 'co
   if (partyKey === 'lib') { factions.lib = 66; factions.con = 30; }
   if (partyKey === 'con') { factions.con = 66; factions.lib = 32; factions.mil = 58; factions.labor = 38; }
   if (partyKey === 'ind') { factions.con = 46; factions.lib = 50; factions.youth = 50; }
+  if (partyKey === 'pres') { factions.con = 50; factions.lib = 50; }
   const policies = {};
   for (const p of POLICIES) policies[p.id] = p.options.find(o => o.cur).id;
 
   let seats;
-  if (partyKey === 'lib') seats = { L: 170, R: 108, N: 22, P: 0 };
+  if (partyKey === 'pres') seats = { L: 68, R: 67, N: 10, P: 155 };
+  else if (partyKey === 'lib') seats = { L: 170, R: 108, N: 22, P: 0 };
   else if (partyKey === 'con') seats = { L: 170, R: 108, N: 22, P: 0 };
   else seats = { L: 166, R: 104, N: 18, P: 12 };
 
   const s = {
-    v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P',
+    v: 1, name: presidentName || '대통령', party: partyKey, ruling: partyKey === 'lib' ? 'L' : partyKey === 'con' ? 'R' : 'P', // pres·ind는 대통령 정당(P)
     turn: 0, stats, mods, rel, relMods, factions, policies, seats,
     difficulty, worldview, approval: 58, pcap: DIFFICULTY[difficulty]?.start ?? 160, pending: [], latent: [], crises: [], resolved: [],
     log: [], history: [], customPolicies: [], enactedThisTurn: [], reports: [],
@@ -626,8 +628,8 @@ function generalElection(s) {
   if (s.dom) s.dom.campaign = 0;
   const before = { ...s.seats };
   if (r === 'P') {
-    s.seats.P = Math.round(clamp((s.approval - 25) * 3, 5, 200));
-    const rest = 300 - s.seats.P - 15; s.seats.L = Math.round(rest * 0.6); s.seats.R = rest - s.seats.L; s.seats.N = 15;
+    s.seats.P = Math.round(300 * share); s.seats.N = Math.round(clamp(rnd(8, 22), 0, 40));
+    const rest = 300 - s.seats.P - s.seats.N; s.seats.L = Math.round(rest * clamp(0.5 + gauss() * 0.05, 0.4, 0.6)); s.seats.R = rest - s.seats.L;
   } else {
     const opp = r === 'L' ? 'R' : 'L';
     s.seats.P = 0; // 대통령 신당은 여당이 아니면 군소 정당으로 흡수
@@ -675,7 +677,7 @@ function checkGameOver(s, report) {
 const PRES_SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '홍', '유'];
 const PRES_GIVEN = ['태준', '서영', '민호', '정우', '현정', '승민', '지훈', '혜원', '동건', '수진', '재원', '은숙', '성훈', '나연', '준혁', '경민'];
 const randName = () => PRES_SUR[Math.floor(Math.random() * PRES_SUR.length)] + PRES_GIVEN[Math.floor(Math.random() * PRES_GIVEN.length)];
-const otherParty = s => s.party === 'lib' ? 'con' : s.party === 'con' ? 'lib' : (Math.random() < 0.5 ? 'lib' : 'con');
+const otherParty = s => s.party === 'pres' ? 'opp' : s.party === 'lib' ? 'con' : s.party === 'con' ? 'lib' : (Math.random() < 0.5 ? 'lib' : 'con');
 function presidentialElection(s, reason) {
   const term = finalScore(s);
   const inPower = (s.partyTerms || 1);                      // 같은 정당 연속 집권 피로도
@@ -692,13 +694,19 @@ function presidentialElection(s, reason) {
   addLog(s, won ? 'good' : 'bad', `🗳️ 제${no}대 대통령 선거: 여당 후보 ${result.rulingCandidate} ${share.toFixed(1)}% — ${won ? '정권 재창출' : '정권 교체'}`);
   return result;
 }
-const PARTY_LEAN = { lib: 'L', con: 'R', ind: 'P' };
+const PARTY_LEAN = { lib: 'L', con: 'R', ind: 'P', pres: 'P', opp: 'N' };
 function applySuccession(s, newName) {
   const r = s.pendingSuccession; if (!r) return;
   (s.presidents = s.presidents || []).push(r.term);
   s.name = newName || (r.won ? r.rulingCandidate : r.oppCandidate);
   s.presidentNo = r.no;
-  if (!r.won) {
+  if (!r.won && s.party === 'pres') {
+    // 정권 교체: 야권 연합 후보가 당선 → 더 큰 야당이 새 여당, 옛 여당은 야당으로 (진보·보수 구분 없음)
+    const big = s.seats.L >= s.seats.R ? 'L' : 'R', t = s.seats.P; s.seats.P = s.seats[big]; s.seats[big] = t;
+    s.partyTerms = 1;
+    if (typeof INITIAL_COALITION !== 'undefined') s.coalition = [...INITIAL_COALITION.pres];
+    s.approval = 56;
+  } else if (!r.won) {
     // 정권 교체: 새 정부는 상대 정당. 지지층·연합이 바뀜
     const np = r.oppParty;
     if (s.ruling === 'P') { s.seats.N += s.seats.P; s.seats.P = 0; }

@@ -7,7 +7,7 @@
 const CLOUT_BASE = { biz: 18, labor: 12, youth: 8, elder: 12, con: 10, lib: 10, mil: 6, legal: 6, teach: 5, medic: 5, farm: 4, local: 4 };
 // 함께 연합하면 마찰이 생기는 조합
 const RIVALS = [['con', 'lib'], ['biz', 'labor'], ['youth', 'elder'], ['medic', 'local']];
-const INITIAL_COALITION = { lib: ['lib', 'labor', 'youth', 'teach'], con: ['con', 'biz', 'elder', 'mil'], ind: ['youth', 'local'] };
+const INITIAL_COALITION = { lib: ['lib', 'labor', 'youth', 'teach'], con: ['con', 'biz', 'elder', 'mil'], ind: ['youth', 'local'], pres: ['youth', 'local'] };
 
 // 세력 이름에 맞는 조사(이/가)
 const iga = w => { const c = w.charCodeAt(w.length - 1); return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 ? '이' : '가'; };

@@ -163,6 +163,8 @@ const FINANCE_ACTIONS = [
     run: s => { s.pcap += 30; s.approval = clamp(s.approval - 2.5, 0, 100); s.factions.biz = clamp(s.factions.biz - 4, 0, 100); s.factions.labor = clamp(s.factions.labor - 2, 0, 100); return '한시적 특별세를 걷어 국고 ₩3조를 확보했습니다.'; } },
   { id: 'bond', name: '국채 발행', icon: '📜', cd: 0, desc: '국고 +₩5조. 국가채무비율 +0.5%p, 이자 부담 증가.',
     run: s => { s.pcap += 50; s.stats.debt += 0.5; s.mods.debt += 0.3; return '국채를 발행해 국고 ₩5조를 마련했습니다.'; } },
+  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 1, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소.',
+    run: s => { s.pcap -= 50; s.stats.debt = Math.max(0, s.stats.debt - 1); s.mods.debt -= 0.2; return '국고 ₩5조로 국채를 조기 상환했습니다.'; } },
   { id: 'sell', name: '국유재산 매각', icon: '🏢', cd: 4, desc: '국고 +₩4조. 공공 자산 감소, 진보층 반발.',
     run: s => { s.pcap += 40; s.factions.lib = clamp(s.factions.lib - 3, 0, 100); s.stats.welfare -= 0.5; return '유휴 국유지와 공기업 지분 일부를 매각했습니다.'; } },
 ];
@@ -170,6 +172,7 @@ function financeAction(s, id) {
   const a = FINANCE_ACTIONS.find(x => x.id === id); s.finCd = s.finCd || {};
   if ((s.finCd[id] || 0) > s.turn) return { ok: false, msg: `${s.finCd[id] - s.turn}분기 후에 다시 할 수 있습니다.` };
   if (id === 'bond' && s.stats.debt > 120) return { ok: false, msg: '국가채무가 너무 커서 국채를 더 찍을 수 없습니다.' };
+  if (a.cost && s.pcap < a.cost) return { ok: false, msg: `국고 ${won(a.cost)}이(가) 필요합니다.` };
   s.finCd[id] = s.turn + a.cd;
   const msg = a.run(s); addLog(s, 'info', `${a.icon} ${msg}`);
   return { ok: true, msg };
