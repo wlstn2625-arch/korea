@@ -5,6 +5,7 @@
 function renderSystemsTabs() {
   if (!S) return;
   renderPolitics(); renderEconomy(); renderWorld();
+  if (typeof renderWarHud === 'function') renderWarHud();
   const wb = $('war-badge'); if (wb) wb.classList.toggle('hidden', !S.war);
   const bb = $('bill-badge'); if (bb) { bb.textContent = S.bills.length; bb.classList.toggle('hidden', !S.bills.length); }
 }

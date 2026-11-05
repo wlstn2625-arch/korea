@@ -28,7 +28,14 @@ setInterval(() => {
   if (!S || S.over || busy || !gameSpeed || $('game').classList.contains('hidden')) return;
   if (S.pendingSuccession) { setSpeed(0); return openPresidentialCard(); }
   if (!$('modal').classList.contains('hidden')) return;      // 사건 카드·대화 중에는 시간이 멈춤
+  const before = Math.floor(S.day || 0);
   S.day = (S.day || 0) + DAY_RATE[gameSpeed];
+  // 전쟁 중이면 하루하루 전투가 실시간으로 진행
+  if (S.war?.theater) {
+    const days = Math.min(Math.floor(S.day), QUARTER_DAYS) - before;
+    if (days > 0) { runWarDays(S, days); warTick(); }
+  }
+  if (S.nukePending) { setSpeed(0); return openNukeCard(); }
   if (S.day >= QUARTER_DAYS) { S.day = 0; endQuarter(); return; }
   $('hdr-date').textContent = gameDateText();
   $('day-prog').style.width = `${(S.day / QUARTER_DAYS) * 100}%`;
@@ -45,6 +52,7 @@ function afterQuarter(report, recs, newCrises) {
   const blocking = [];
   if (report.presElection) blocking.push(() => openPresidentialCard());
   if (report.imf) blocking.push(() => openImfCard());
+  if (S.nukePending) blocking.push(() => openNukeCard());
   if (report.elections?.length) blocking.push(() => openElectionCard(report));
   for (const id of (report.domEvents || [])) blocking.push(() => openDomEventCard(id));
   for (const p of (S.world?.proposals || []).filter(p => p.turn === report.turn)) blocking.push(() => openProposalCard(p.id));
@@ -211,4 +219,30 @@ function renderAlerts() {
   el.innerHTML = list.map((x, i) => `<div class="alert ${x.red ? 'red' : ''}" data-i="${i}" style="${alertSeen.has(x.k) ? 'animation:none' : ''}">${x.icon}${x.n ? `<b>${x.n}</b>` : ''}<span class="tip">${esc(x.tip)}</span></div>`).join('');
   el.querySelectorAll('.alert').forEach(a => a.onclick = () => list[+a.dataset.i].go());
   alertSeen = new Set(list.map(x => x.k));
+}
+
+/* ---------------- 전쟁: 실시간 갱신, 핵 위기 카드 ---------------- */
+let warTickAt = 0;
+function warTick() {
+  const now = Date.now(); if (now - warTickAt < 350) return; warTickAt = now;
+  if (typeof updateMap === 'function') updateMap();
+  // 버튼 위에 마우스가 있으면 덜 자주 다시 그려 클릭이 끊기지 않게
+  const slot = $('war-slot'), hov = slot?.matches(':hover');
+  if (openPanelName === 'world' && slot && (!hov || now - warPanelAt > 2500)) { warPanelAt = now; renderWarPanel(); }
+  if (typeof renderWarHud === 'function') renderWarHud();
+}
+function openNukeCard() {
+  const P = S.nukePending; if (!P || !$('modal').classList.contains('hidden')) return;
+  const canRet = hasNukes(S, 'kr') || S.war?.allies.includes('us');
+  const resolve = choice => { const msg = nukeResponse(S, choice); saveGame(S); closeModal(); toast(esc(msg), 5000); addLog(S, 'info', `☢️ ${msg}`); renderAll(); };
+  openModal(`<div class="event nuke">
+    <div class="ev-banner ev-nuke"><span class="ev-art">☢️</span><span class="ev-kind">국가 존망의 위기</span></div>
+    <h2>${esc(P.city)} 핵 피격</h2>
+    <p class="ev-desc">${esc(cname(P.k))} 진영이 ${esc(P.city)}에 핵무기를 사용했습니다. 도시 기능이 마비되고 대규모 사상자가 발생했습니다. 성장률·행복도·안전이 폭락했고 국가채무가 급증했습니다. 그러나 국민은 정부를 중심으로 결집하고 있습니다. 대한민국은 무너지지 않았습니다. 대통령의 결단이 필요합니다.</p>
+    <div class="ev-opts">
+      <button class="ev-opt" data-nk="retaliate" ${canRet ? '' : 'disabled'}><b>☢️ 핵 보복</b><span>${canRet ? (hasNukes(S, 'kr') ? '자체 핵전력으로 보복. 적군이 붕괴하지만 세계가 등을 돌립니다.' : '미국에 확장억제(핵우산) 발동을 요청합니다. 적군 붕괴, 국제 여론 악화.') : '핵무기도, 참전한 미국도 없어 불가능합니다.'}</span></button>
+      <button class="ev-opt" data-nk="ceasefire"><b>🏳️ 즉시 휴전</b><span>현 전선에서 전쟁을 멈춥니다. 추가 핵 공격은 막지만 지지율이 떨어집니다.</span></button>
+      <button class="ev-opt" data-nk="un"><b>🇺🇳 유엔 안보리 중재</b><span>60% 확률로 휴전과 국제 재건 지원. 실패하면 전쟁이 계속됩니다.</span></button>
+    </div></div>`);
+  document.querySelectorAll('[data-nk]').forEach(b => b.onclick = () => resolve(b.dataset.nk));
 }

@@ -42,16 +42,19 @@ function buildGeoMap(container) {
       <defs>
         <radialGradient id="seaGrad" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1d3e5b"></stop><stop offset="1" stop-color="#0b1622"></stop></radialGradient>
         <pattern id="hatch-kr" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--enemy-fill)"></rect><rect width="1.5" height="3" style="fill:var(--kr-fill)"></rect></pattern>
+        <marker id="arr-kr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4c8dff"></path></marker>
+        <marker id="arr-en" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ff4b4b"></path></marker>
         <pattern id="hatch-enemy" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--kr-fill)"></rect><rect width="1.5" height="3" style="fill:var(--enemy-fill)"></rect></pattern>
       </defs>
       <path d="${M.sphere}" class="sea"></path>
       <g class="g-land">${land}</g><g class="g-prov">${provs}</g>
       <g class="g-front"></g><g class="g-city">${cities}</g><g class="g-lbl">${labels}</g>
+      <g class="g-war"></g>
       <g class="eu-mark" data-c="eu"><circle cx="${bx}" cy="${by}"></circle><text x="${bx}" y="${by}" dx="0.7em" dy="0.35em">🇪🇺 EU</text></g>
     </svg>
     <div class="map-legend" id="map-legend"><span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth</span></div>`;
   const svg = container.querySelector('#geo');
-  mapBuilt = { svg, land: [...svg.querySelectorAll('.land[data-c]')], prov: [...svg.querySelectorAll('.prov')], lbl: [...svg.querySelectorAll('.clbl')], front: svg.querySelector('.g-front') };
+  mapBuilt = { svg, land: [...svg.querySelectorAll('.land[data-c]')], prov: [...svg.querySelectorAll('.prov')], lbl: [...svg.querySelectorAll('.clbl')], front: svg.querySelector('.g-front'), war: svg.querySelector('.g-war') };
   bindMapInteraction(container, svg);
 }
 
@@ -171,7 +174,7 @@ function updateMap() {
     + `<span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth · 지도자는 가상 인물</span>`;
   // 전쟁 중이면 서울과 상대 수도를 잇는 전선 화살표
   let front = '';
-  if (S.war) {
+  if (S.war && !S.war.theater) {
     const a = MAP_DATA.cities['서울'], b = MAP_DATA.cities[CAPITAL[S.war.k]] || MAP_DATA.countries[S.war.k]?.c;
     if (b) front = `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="front"></line>`;
   }
@@ -180,6 +183,7 @@ function updateMap() {
   for (const c of (S.world?.conflicts || [])) if (c.type !== 'cyber') front += hot(c.type === 'civil' ? c.a : c.b, c.type);
   if (S.war) front += hot(S.war.k, 'war') + hot('kr', 'war');
   mapBuilt.front.innerHTML = front;
+  mapBuilt.war.innerHTML = S.war?.theater ? warOverlay(S) : '';
   if (mapView) applyView(mapBuilt.svg);
 }
 
@@ -194,18 +198,100 @@ function renderWorld() {
   renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }
 
-function renderWarPanel() {
+/* ---------------- 하츠식 전선 표시: 전선·부대·전투·공세 화살표 ---------------- */
+// 부대 마커는 화면에서 같은 크기로 보이도록 --u 배율을 씀
+const unitG = (x, y, cls, inner) => `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><g class="${cls}">${inner}</g></g>`;
+function warOverlay(s) {
+  const w = s.war, T = w.theater, byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  const edges = frontEdges(T);
+  const A = sideForces(s, 'kr'), B = sideForces(s, 'en'), share = 1 / Math.max(1, edges.length);
+  let lines = '', arrows = '', units = '', fights = '', virt = '';
+  const fp = {}; // 전선에 닿은 시·도 → 그곳에 배치된 부대
+  // 가상 작전 지역(시·도 데이터가 없는 나라)
+  const vs = T.provs.filter(p => p.virtual);
+  for (let i = 0; i < vs.length - 1; i++) virt += `<line class="vlink" x1="${vs[i].c[0]}" y1="${vs[i].c[1]}" x2="${vs[i + 1].c[0]}" y2="${vs[i + 1].c[1]}"></line>`;
+  for (const p of vs) virt += unitG(p.c[0], p.c[1], `vreg ${p.owner === 'kr' ? 'kr' : 'en'}`, `<circle r="${p.vp >= 5 ? 8 : 6}"></circle>${p.vp >= 5 ? '<text y="-11">★ 수도권</text>' : ''}<title>${esc(p.n)}</title>`);
+  for (const [ourId, enId] of edges) {
+    const a = byId[ourId], b = byId[enId], e = T.edges[ourId + '>' + enId] || { prog: 0 };
+    const mx = (a.c[0] + b.c[0]) / 2, my = (a.c[1] + b.c[1]) / 2, dx = b.c[0] - a.c[0], dy = b.c[1] - a.c[1], L = Math.hypot(dx, dy) || 1;
+    // 전선은 전투 진행도만큼 밀려 있음
+    const sh = (e.prog / 100) * 0.35, fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
+    lines += `<line class="fline" x1="${(fx + px).toFixed(2)}" y1="${(fy + py).toFixed(2)}" x2="${(fx - px).toFixed(2)}" y2="${(fy - py).toFixed(2)}"></line>`;
+    if (STANCES[T.kr.stance].atk) arrows += `<line class="farrow kr" x1="${(a.c[0] + dx * 0.15).toFixed(2)}" y1="${(a.c[1] + dy * 0.15).toFixed(2)}" x2="${(fx + dx * 0.14).toFixed(2)}" y2="${(fy + dy * 0.14).toFixed(2)}" marker-end="url(#arr-kr)"></line>`;
+    if (STANCES[T.en.stance].atk) arrows += `<line class="farrow en" x1="${(b.c[0] - dx * 0.15).toFixed(2)}" y1="${(b.c[1] - dy * 0.15).toFixed(2)}" x2="${(fx - dx * 0.14).toFixed(2)}" y2="${(fy - dy * 0.14).toFixed(2)}" marker-end="url(#arr-en)"></line>`;
+    for (const [id, side, o] of [[ourId, 'kr', b], [enId, 'en', a]]) { const u = fp[id] = fp[id] || { side, n: 0, tx: 0, ty: 0 }; u.n++; u.tx += o.c[0]; u.ty += o.c[1]; }
+    if (e.active) {
+      const pct = Math.abs(e.prog), good = e.prog >= 0;
+      fights += unitG(fx, fy, 'battle', `<circle class="ring" r="9"></circle><text class="ic" y="4">⚔</text><rect class="pbg" x="-12" y="11" width="24" height="4"></rect><rect class="pfg ${good ? 'kr' : 'en'}" x="-12" y="11" width="${(24 * pct / 100).toFixed(1)}" height="4"></rect>`);
+    }
+  }
+  // 시·도마다 부대 마커 하나 (전선 쪽으로 약간 치우치게), 숫자는 배치된 사단 수
+  const nK = Object.values(fp).filter(u => u.side === 'kr').reduce((x, u) => x + u.n, 0) || 1, nE = Object.values(fp).filter(u => u.side === 'en').reduce((x, u) => x + u.n, 0) || 1;
+  for (const [id, u] of Object.entries(fp)) {
+    const p = byId[id], tx = u.tx / u.n, ty = u.ty / u.n, x = p.c[0] + (tx - p.c[0]) * 0.22, y = p.c[1] + (ty - p.c[1]) * 0.22;
+    const n = Math.max(1, Math.round((u.side === 'kr' ? A.divs / nK : B.divs / nE) * u.n));
+    units += unitG(x, y, `unit ${u.side}`, `<rect x="-11" y="-7" width="22" height="14" rx="1.5"></rect><path d="M-11 -7 L11 7 M-11 7 L11 -7"></path><text y="18">${n}</text>`);
+  }
+  const nuked = T.provs.filter(p => p.nuked).map(p => unitG(p.c[0], p.c[1], 'nuked', `<circle r="10"></circle><text y="5">☢</text>`)).join('');
+  return virt + lines + arrows + units + fights + nuked;
+}
+
+/* ---------------- 전쟁 대시보드 ---------------- */
+const fmtCas = n => n >= 10000 ? `${(n / 10000).toFixed(1)}만` : Math.round(n).toLocaleString('ko-KR');
+const meter = (v, cls = '', mark) => `<span class="meter ${cls}"><i style="width:${clamp(v, 0, 100).toFixed(0)}%"></i>${mark ? `<b style="left:${mark}%"></b>` : ''}</span>`;
+let warPanelAt = 0;
+function renderWarPanel(force) {
   const w = S.war, slot = $('war-slot'); if (!slot) return;
-  slot.innerHTML = w ? `<div class="warbox">
-    <h3>⚔️ 전쟁 중: ${cflag(w.k)} ${esc(cname(w.k))} (${w.turns}분기째) · 목표 ${GOAL_NAMES[w.goal]}</h3>
-    <div class="warbar"><i style="left:${50 + w.score / 2}%"></i><span>패전 -100</span><span>0</span><span>승리 +100</span></div>
-    <div>전황 점수 <b>${w.score.toFixed(0)}</b> · 우리 편 ${['대한민국', ...w.allies.map(cname)].join(', ')} · 상대 편 ${[cname(w.k), ...w.enemyAllies.map(cname)].join(', ')}</div>
-    <div class="muted small">분기마다 성장률·행복도·재정이 깎이고 채무가 늘어납니다. 점령당한 시·도만큼 피해가 커집니다. 10분기가 지나면 국제 중재로 정전됩니다.${nukeRisk(S) > 0 ? ` <b style="color:var(--bad)">☢️ 핵 사용 위험 분기당 ${(nukeRisk(S) * 100).toFixed(1)}%</b>` : ''}</div>
-    ${w.log.length ? `<div class="muted small">${esc(w.log[w.log.length - 1])}</div>` : ''}
-    <div class="row-btns"><button class="btn sm danger" data-war="offensive">🎖️ 총공세 ${won(15)}</button><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
-  </div>` : '';
+  if (!w) { slot.innerHTML = ''; return; }
+  if (!w.theater) { slot.innerHTML = `<div class="warbox"><h3>⚔️ 전쟁 중: ${cflag(w.k)} ${esc(cname(w.k))}</h3><div class="row-btns"><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button></div></div>`; slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war)); return; }
+  const T = w.theater, sup = supremacy(S), A = sup.a, B = sup.b, es = surrender(S, 'en'), ks = surrender(S, 'kr');
+  const side = (name, flags, f, st, cas, day, sur) => `<div class="wside">
+      <div class="wname">${flags} <b>${name}</b> <span class="stance ${st.stance}">${STANCES[st.stance].name}</span></div>
+      <div class="wstat"><span>사단</span><b>${Math.round(f.divs)}</b><span>질</span><b>${f.quality.toFixed(2)}</b></div>
+      <div class="wrow"><span>조직력</span>${meter(st.org, 'org')}<em>${st.org.toFixed(0)}</em></div>
+      <div class="wrow"><span>장비</span>${meter(st.equip * 100, 'eq')}<em>${(st.equip * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>병력</span>${meter(st.mp, 'mp')}<em>${st.mp.toFixed(0)}%</em></div>
+      <div class="wrow"><span>항복</span>${meter(sur, 'sur', 75)}<em>${sur.toFixed(0)}%</em></div>
+      <div class="wcas">사상자 <b>${fmtCas(cas)}</b>명 ${day ? `<span class="muted">(+${fmtCas(day)}/일)</span>` : ''}</div>
+    </div>`;
+  const ours = ['kr', ...w.allies].map(cflag).join(''), theirs = [w.k, ...w.enemyAllies].map(cflag).join('');
+  const front = frontEdges(T).length, nr = nukeRisk(S);
+  const ops = OPS.map(o => { const cd = (T.ops[o.id] || 0) - T.days, why = cd > 0 ? `${cd}일 뒤` : o.can?.(S) || (S.pcap < o.cost ? '국고 부족' : '');
+    return `<button class="wop" data-op="${o.id}" ${why ? 'disabled' : ''} title="${esc(o.desc)}"><span class="ic">${o.icon}</span><b>${o.name}</b><small>${won(o.cost)}${why ? ` · ${esc(why)}` : ''}</small></button>`; }).join('');
+  slot.innerHTML = `<div class="warbox hoi">
+    <div class="whead"><h3>⚔️ ${esc(cname(w.k))} 전쟁</h3><span class="muted small">개전 ${T.days}일째 · 목표 ${GOAL_NAMES[w.goal]} · ${front ? `전선 ${front}곳` : T.landLinked ? '전선 정리 중' : '바다 건너 대치 — 상륙 작전 필요'}</span></div>
+    <div class="wsides">${side('대한민국 측', ours, A, T.kr, T.kr.cas, T.dayKr, ks)}<div class="wvs">VS</div>${side(`${esc(cname(w.k))} 측`, theirs, B, T.en, T.en.cas, T.dayEn, es)}</div>
+    <div class="wsup">
+      <div class="wrow"><span>✈️ 제공권</span>${meter(sup.air * 100, 'air', 50)}<em>${(sup.air * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>🚢 제해권</span>${meter(sup.navy * 100, 'navy', 50)}<em>${(sup.navy * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>😮‍💨 전쟁 피로</span>${meter(T.exhaustion, 'exh')}<em>${T.exhaustion.toFixed(0)}</em></div>
+    </div>
+    <div class="wlabel">태세</div>
+    <div class="wstances">${Object.entries(STANCES).map(([k, v]) => `<button class="btn sm ${T.kr.stance === k ? 'primary' : ''}" data-st="${k}">${{ hold: '🛡️', attack: '➡️', all: '⏩' }[k]} ${v.name}</button>`).join('')}</div>
+    <div class="wlabel">작전 명령</div>
+    <div class="wops">${ops}</div>
+    ${nr > 0 ? `<div class="wnuke">☢️ 적 핵 사용 위험 분기당 ${(nr * 100).toFixed(1)}% — 적이 궁지에 몰릴수록 커집니다</div>` : ''}
+    <div class="row-btns"><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
+    <div class="wlabel">전황 일지</div>
+    <div class="wlog">${T.log.slice(0, 8).map(l => `<div class="${l.type}">${esc(l.text)}</div>`).join('') || '<div class="muted">아직 큰 전투가 없습니다.</div>'}</div>
+  </div>`;
   slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
+  slot.querySelectorAll('[data-st]').forEach(b => b.onclick = () => act(setStance)(S, b.dataset.st));
+  slot.querySelectorAll('[data-op]').forEach(b => b.onclick = () => act(warOp)(S, b.dataset.op));
   slot.querySelectorAll('[data-wfocus]').forEach(b => b.onclick = () => zoomTo(S.war.k));
+}
+// 화면 위 전쟁 HUD (어느 화면에서든 보임)
+function renderWarHud() {
+  let h = $('war-hud');
+  const w = S?.war;
+  if (!w?.theater) { if (h) h.remove(); return; }
+  if (!h) { h = document.createElement('button'); h.id = 'war-hud'; h.className = 'war-hud'; h.onclick = () => { showTab('world'); zoomTo(S.war.k); }; document.querySelector('.stage')?.appendChild(h); }
+  const T = w.theater, es = surrender(S, 'en'), ks = surrender(S, 'kr');
+  const last = T.log[0];
+  h.innerHTML = `<span class="t">⚔️ ${cflag(w.k)} ${esc(cname(w.k))} 전쟁 · ${T.days}일째 · ${STANCES[T.kr.stance].name}</span>
+    <span class="b"><i class="kr" style="width:${es}%"></i></span><span class="n">적 항복 ${es.toFixed(0)}%</span>
+    <span class="b"><i class="en" style="width:${ks}%"></i></span><span class="n">아군 ${ks.toFixed(0)}%</span>
+    ${last ? `<span class="l ${last.type}">${esc(last.text)}</span>` : ''}`;
 }
 
 function renderCountryPanel() {

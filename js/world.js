@@ -204,6 +204,7 @@ function startWar(s, k, aggressor, goal) {
   if (goal !== 'concession' && !c.annex) goal = 'concession';
   const allies = warAllies(s, k, 'kr', aggressor), enemyAllies = warAllies(s, k, 'them');
   s.war = { k, goal, aggressor, score: 0, turns: 0, allies, enemyAllies, log: [] };
+  if (typeof initTheater === 'function' && typeof MAP_DATA !== 'undefined') initTheater(s);
   for (const e of enemyAllies) relBump(s, e, -25, -20);
   if (aggressor === 'kr') {
     // 침략 전쟁: 국제 사회 반발 (미국이 함께 싸우는 대북 전쟁은 예외)
@@ -225,6 +226,7 @@ function startWar(s, k, aggressor, goal) {
 
 function warAction(s, act) {
   const w = s.war; if (!w) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  if (act === 'offensive' && w.theater) return setStance(s, 'all');
   if (act === 'offensive') {
     if (s.pcap < 15) return { ok: false, msg: `국고 ${won(15)}이(가) 필요합니다.` };
     s.pcap -= 15; w.push = 12; s.stats.happiness -= 1; s.stats.debt += 1;
@@ -284,6 +286,16 @@ const dist2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 function warOccupation(s) {
   const out = { byUs: new Set(), byEnemy: new Set(), seoulLost: false, wholeCountry: false };
   const w = s.war; if (!w || typeof MAP_DATA === 'undefined') return out;
+  if (w.theater) {
+    const T = w.theater; let vOurs = 0, vAll = 0;
+    for (const p of T.provs) {
+      if (p.home === 'kr' && p.owner !== 'kr') { out.byEnemy.add(p.id); if (p.n === '서울특별시') out.seoulLost = true; }
+      if (p.home !== 'kr' && p.owner === 'kr') { out.byUs.add(p.id); if (p.virtual) vOurs += p.vp; }
+      if (p.virtual) vAll += p.vp;
+    }
+    out.wholeCountry = vAll > 0 && vOurs / vAll >= 0.5;
+    return out;
+  }
   const seoul = MAP_DATA.cities['서울'];
   if (w.score > 0) {
     if (MAP_DATA.prov[w.k]) {
@@ -324,6 +336,7 @@ function worldTurn(s, report) {
   for (const k in (s.occupied || {})) { s.stats.safety -= 0.5 + 0.5 * ecoK(k); s.stats.fiscal -= 0.1; }
 
   const w = s.war; if (!w) return;
+  if (w.theater) return theaterTurn(s, w, report);
   w.turns++;
   const o = warOdds(s, w.k);
   const delta = o.edge * 52 + gauss() * 10 + (w.push || 0);
@@ -347,6 +360,37 @@ function worldTurn(s, report) {
   else if (w.turns >= 10) { report.world.events.push('장기전 끝에 국제 사회 중재로 정전협정이 맺어졌습니다.'); endWar(s, 'white'); }
 }
 
+// 하츠식 전역 전쟁의 분기 결산
+function theaterTurn(s, w, report) {
+  w.turns++;
+  const T = w.theater, r = warQuarter(s, report);
+  const exh = T.exhaustion;
+  s.stats.gdp -= 0.4 + exh / 200; s.stats.happiness -= 1 + exh / 60; s.stats.debt += 1.2 + (T.mobilized ? 0.8 : 0); s.stats.fiscal -= 0.3; s.stats.safety -= 0.8;
+  if (w.turns > 1) s.approval = clamp(s.approval - 0.8 - exh / 40, 0, 100);
+  for (const a of w.allies) relBump(s, a, 1, 0);
+  const occ = warOccupation(s);
+  s.stats.gdp -= 0.12 * occ.byEnemy.size; s.stats.happiness -= 0.4 * occ.byEnemy.size;
+  if (occ.seoulLost) { s.stats.gdp -= 1; s.approval = clamp(s.approval - 4, 0, 100); }
+  const line = `${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q ${r.line}${occ.byUs.size ? ` · 아군 점령 ${occ.byUs.size}곳` : ''}${occ.byEnemy.size ? ` · 적 점령 ${occ.byEnemy.size}곳${occ.seoulLost ? '(서울 함락!)' : ''}` : ''}`;
+  w.log.push(line); report.world.war = line;
+  if (!s.nukePending && Math.random() < nukeRisk(s)) {
+    nuclearStrike(s);
+    report.world.events.push(`☢️ ${cname(w.k)} 진영이 ${s.nukePending.city}에 핵무기를 사용했습니다!`);
+    report.nuke = true;
+    return;
+  }
+  if (r.es >= 75) { report.world.events.push(`🏳️ ${cname(w.k)}이(가) 항복했습니다! 전쟁에서 승리했습니다.`); endWar(s, 'victory'); }
+  else if (r.ks >= 75) {
+    // 패전: 게임 오버 대신 굴욕적 강화
+    report.world.events.push(`📜 전선 붕괴. ${cname(w.k)} 진영에 굴욕적인 조건으로 강화했습니다.`);
+    endWar(s, 'concede');
+    s.stats.security -= 8; s.mods.security -= 3; s.mods.gdp -= 0.15; s.stats.debt += 6;
+    s.approval = clamp(s.approval - 12, 0, 100); s.scoreBonus = (s.scoreBonus || 0) - 8;
+    addLog(s, 'bad', '📜 굴욕적 강화: 배상금·군비 제한·영토 협상. 국민적 분노가 들끓습니다.');
+  }
+  else if (w.turns >= 12) { report.world.events.push('장기전 끝에 국제 사회 중재로 정전협정이 맺어졌습니다.'); endWar(s, 'white'); }
+}
+
 function worldEvents(s, report, newCrises) {
   for (let i = newCrises.length - 1; i >= 0; i--) {
     const c = newCrises[i];
@@ -362,6 +406,7 @@ HOOKS.migrate.push(s => {
   if (!s.annexed) s.annexed = {};
   if (s.war === undefined) s.war = null;
   if (s.war && !s.war.enemyAllies) s.war.enemyAllies = [];
+  if (s.war && !s.war.theater && typeof initTheater === 'function' && typeof MAP_DATA !== 'undefined') initTheater(s);
   // 전 세계 나라 관계 초기화
   for (const k of allCountryKeys()) {
     if (s.rel[k] == null) s.rel[k] = baseRel(k);

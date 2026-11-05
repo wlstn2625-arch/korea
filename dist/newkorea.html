@@ -699,6 +699,76 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @keyframes cardPick { from { transform: scale(.9); } to { transform: none; } }
 @media (max-width: 760px) { .tr-grid { grid-template-columns: 1fr; } .tcards { grid-template-columns: 1fr 1fr; } }
 
+/* ===================== 하츠식 전쟁: 지도 전선·부대·전투 ===================== */
+.geo .g-war { pointer-events: none; }
+.geo .fline { stroke: #ff3b3b; stroke-width: calc(var(--u) * 3.2px); stroke-linecap: round; filter: drop-shadow(0 0 calc(var(--u) * 2px) #ff3b3b); }
+.geo .farrow { stroke-width: calc(var(--u) * 3px); stroke-linecap: round; stroke-dasharray: calc(var(--u) * 6px) calc(var(--u) * 4px); animation: march 1s linear infinite; }
+.geo .farrow.kr { stroke: #4c8dff; }
+.geo .farrow.en { stroke: #ff4b4b; }
+.geo .unit, .geo .battle, .geo .vreg, .geo .nuked { transform: scale(var(--u)); }
+.geo .unit rect { stroke: #0b0f16; stroke-width: 1.5px; }
+.geo .unit path { stroke: #0b0f16; stroke-width: 1.3px; }
+.geo .unit.kr rect { fill: #6aa2ff; }
+.geo .unit.en rect { fill: #ff6b6b; }
+.geo .unit text, .geo .vreg text { font-size: 10px; font-weight: 800; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.geo .battle { opacity: .9; }
+.geo .battle .ring { fill: rgba(255, 170, 40, .25); stroke: #ffb02e; stroke-width: 1.5px; animation: battlePulse 1.1s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+.geo .battle .ic { font-size: 12px; text-anchor: middle; fill: #fff; }
+.geo .battle .pbg { fill: rgba(0, 0, 0, .65); }
+.geo .battle .pfg.kr { fill: #4c8dff; }
+.geo .battle .pfg.en { fill: #ff4b4b; }
+.geo .vlink { stroke: rgba(255, 255, 255, .35); stroke-width: calc(var(--u) * 2px); stroke-dasharray: calc(var(--u) * 3px) calc(var(--u) * 3px); }
+.geo .vreg circle { stroke: #0b0f16; stroke-width: 2px; }
+.geo .vreg.kr circle { fill: #4c8dff; }
+.geo .vreg.en circle { fill: #c4343b; }
+.geo .nuked circle { fill: rgba(255, 220, 40, .3); stroke: #ffd22e; stroke-width: 2px; animation: battlePulse 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.geo .nuked text { font-size: 14px; text-anchor: middle; fill: #ffd22e; }
+@keyframes battlePulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: .55; } }
+
+/* 전쟁 대시보드 */
+.warbox.hoi { border-color: #8e2f2f; background: linear-gradient(180deg, rgba(120, 30, 30, .22), var(--card) 40%); gap: 8px; }
+.warbox .whead { display: grid; gap: 2px; }
+.wsides { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: start; }
+.wvs { align-self: center; font-weight: 900; color: var(--accent); font-size: 13px; }
+.wside { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: grid; gap: 4px; font-size: 12px; min-width: 0; }
+.wside .wname { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.wside .stance { font-size: 10px; padding: 1px 6px; border-radius: 6px; background: #2b3444; }
+.wside .stance.attack { background: #6b4a12; } .wside .stance.all { background: #8e2f2f; }
+.wstat { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 6px; color: var(--muted); }
+.wstat b { color: var(--text); }
+.wrow { display: grid; grid-template-columns: 78px 1fr 34px; gap: 6px; align-items: center; font-size: 11.5px; }
+.wrow em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.wside .wrow { grid-template-columns: 38px 1fr 32px; }
+.meter { position: relative; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--accent); transition: width .35s; }
+.meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .7; }
+.meter.org i { background: #5fb3e6; } .meter.eq i { background: #c9a44c; } .meter.mp i { background: #6fcf7f; }
+.meter.sur i { background: #e05252; } .meter.air i { background: #7ea8ff; } .meter.navy i { background: #3bb4c4; } .meter.exh i { background: #d0803a; }
+.wcas { font-size: 11.5px; color: var(--muted); } .wcas b { color: var(--text); }
+.wsup { display: grid; gap: 4px; }
+.wlabel { font-size: 11px; color: var(--muted); letter-spacing: .08em; margin-top: 2px; }
+.wstances { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.wops { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.wop { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 6px; text-align: left; font: inherit; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; cursor: pointer; transition: transform .1s, border-color .1s; }
+.wop:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.wop:disabled { opacity: .45; cursor: not-allowed; }
+.wop .ic { grid-row: span 2; font-size: 18px; align-self: center; }
+.wop b { font-size: 12px; } .wop small { font-size: 10.5px; color: var(--muted); }
+.wnuke { font-size: 12px; color: #ffd22e; background: rgba(255, 210, 46, .08); border: 1px solid rgba(255, 210, 46, .35); border-radius: 8px; padding: 6px 8px; }
+.wlog { display: grid; gap: 3px; font-size: 11.5px; max-height: 170px; overflow: auto; }
+.wlog div { padding: 3px 6px; border-left: 3px solid var(--line); background: rgba(255, 255, 255, .03); }
+.wlog .good { border-color: var(--good); } .wlog .bad { border-color: var(--bad); }
+
+/* 화면 위 전쟁 HUD */
+.war-hud { position: absolute; left: 92px; bottom: 40px; z-index: 14; display: grid; grid-template-columns: 90px auto; gap: 3px 8px; align-items: center; max-width: min(380px, calc(100% - 24px)); padding: 8px 10px; font: inherit; font-size: 11.5px; color: var(--text); text-align: left; cursor: pointer; background: rgba(20, 10, 12, .88); border: 1px solid #8e2f2f; border-radius: 10px; box-shadow: 0 4px 18px rgba(0, 0, 0, .45); animation: alertIn .3s ease-out; }
+.war-hud .t { grid-column: 1 / -1; font-weight: 800; color: #ff8b8b; }
+.war-hud .b { height: 7px; border-radius: 4px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.war-hud .b i { display: block; height: 100%; transition: width .35s; } .war-hud .b i.kr { background: #4c8dff; } .war-hud .b i.en { background: #e05252; }
+.war-hud .l { grid-column: 1 / -1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.war-hud .l.good { color: var(--good); } .war-hud .l.bad { color: #ff8b8b; }
+.ev-banner.ev-nuke { background: radial-gradient(circle at 50% 70%, #fff3a8, #f0a020 25%, #8a2a10 55%, #1a0b08); }
+@media (prefers-reduced-motion: reduce) { .geo .farrow, .geo .battle .ring, .geo .nuked circle { animation: none; } }
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -5003,6 +5073,7 @@ function startWar(s, k, aggressor, goal) {
   if (goal !== 'concession' && !c.annex) goal = 'concession';
   const allies = warAllies(s, k, 'kr', aggressor), enemyAllies = warAllies(s, k, 'them');
   s.war = { k, goal, aggressor, score: 0, turns: 0, allies, enemyAllies, log: [] };
+  if (typeof initTheater === 'function' && typeof MAP_DATA !== 'undefined') initTheater(s);
   for (const e of enemyAllies) relBump(s, e, -25, -20);
   if (aggressor === 'kr') {
     // 침략 전쟁: 국제 사회 반발 (미국이 함께 싸우는 대북 전쟁은 예외)
@@ -5024,6 +5095,7 @@ function startWar(s, k, aggressor, goal) {
 
 function warAction(s, act) {
   const w = s.war; if (!w) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  if (act === 'offensive' && w.theater) return setStance(s, 'all');
   if (act === 'offensive') {
     if (s.pcap < 15) return { ok: false, msg: `국고 ${won(15)}이(가) 필요합니다.` };
     s.pcap -= 15; w.push = 12; s.stats.happiness -= 1; s.stats.debt += 1;
@@ -5083,6 +5155,16 @@ const dist2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
 function warOccupation(s) {
   const out = { byUs: new Set(), byEnemy: new Set(), seoulLost: false, wholeCountry: false };
   const w = s.war; if (!w || typeof MAP_DATA === 'undefined') return out;
+  if (w.theater) {
+    const T = w.theater; let vOurs = 0, vAll = 0;
+    for (const p of T.provs) {
+      if (p.home === 'kr' && p.owner !== 'kr') { out.byEnemy.add(p.id); if (p.n === '서울특별시') out.seoulLost = true; }
+      if (p.home !== 'kr' && p.owner === 'kr') { out.byUs.add(p.id); if (p.virtual) vOurs += p.vp; }
+      if (p.virtual) vAll += p.vp;
+    }
+    out.wholeCountry = vAll > 0 && vOurs / vAll >= 0.5;
+    return out;
+  }
   const seoul = MAP_DATA.cities['서울'];
   if (w.score > 0) {
     if (MAP_DATA.prov[w.k]) {
@@ -5123,6 +5205,7 @@ function worldTurn(s, report) {
   for (const k in (s.occupied || {})) { s.stats.safety -= 0.5 + 0.5 * ecoK(k); s.stats.fiscal -= 0.1; }
 
   const w = s.war; if (!w) return;
+  if (w.theater) return theaterTurn(s, w, report);
   w.turns++;
   const o = warOdds(s, w.k);
   const delta = o.edge * 52 + gauss() * 10 + (w.push || 0);
@@ -5146,6 +5229,37 @@ function worldTurn(s, report) {
   else if (w.turns >= 10) { report.world.events.push('장기전 끝에 국제 사회 중재로 정전협정이 맺어졌습니다.'); endWar(s, 'white'); }
 }
 
+// 하츠식 전역 전쟁의 분기 결산
+function theaterTurn(s, w, report) {
+  w.turns++;
+  const T = w.theater, r = warQuarter(s, report);
+  const exh = T.exhaustion;
+  s.stats.gdp -= 0.4 + exh / 200; s.stats.happiness -= 1 + exh / 60; s.stats.debt += 1.2 + (T.mobilized ? 0.8 : 0); s.stats.fiscal -= 0.3; s.stats.safety -= 0.8;
+  if (w.turns > 1) s.approval = clamp(s.approval - 0.8 - exh / 40, 0, 100);
+  for (const a of w.allies) relBump(s, a, 1, 0);
+  const occ = warOccupation(s);
+  s.stats.gdp -= 0.12 * occ.byEnemy.size; s.stats.happiness -= 0.4 * occ.byEnemy.size;
+  if (occ.seoulLost) { s.stats.gdp -= 1; s.approval = clamp(s.approval - 4, 0, 100); }
+  const line = `${turnLabel(s.turn).year}.${turnLabel(s.turn).q}Q ${r.line}${occ.byUs.size ? ` · 아군 점령 ${occ.byUs.size}곳` : ''}${occ.byEnemy.size ? ` · 적 점령 ${occ.byEnemy.size}곳${occ.seoulLost ? '(서울 함락!)' : ''}` : ''}`;
+  w.log.push(line); report.world.war = line;
+  if (!s.nukePending && Math.random() < nukeRisk(s)) {
+    nuclearStrike(s);
+    report.world.events.push(`☢️ ${cname(w.k)} 진영이 ${s.nukePending.city}에 핵무기를 사용했습니다!`);
+    report.nuke = true;
+    return;
+  }
+  if (r.es >= 75) { report.world.events.push(`🏳️ ${cname(w.k)}이(가) 항복했습니다! 전쟁에서 승리했습니다.`); endWar(s, 'victory'); }
+  else if (r.ks >= 75) {
+    // 패전: 게임 오버 대신 굴욕적 강화
+    report.world.events.push(`📜 전선 붕괴. ${cname(w.k)} 진영에 굴욕적인 조건으로 강화했습니다.`);
+    endWar(s, 'concede');
+    s.stats.security -= 8; s.mods.security -= 3; s.mods.gdp -= 0.15; s.stats.debt += 6;
+    s.approval = clamp(s.approval - 12, 0, 100); s.scoreBonus = (s.scoreBonus || 0) - 8;
+    addLog(s, 'bad', '📜 굴욕적 강화: 배상금·군비 제한·영토 협상. 국민적 분노가 들끓습니다.');
+  }
+  else if (w.turns >= 12) { report.world.events.push('장기전 끝에 국제 사회 중재로 정전협정이 맺어졌습니다.'); endWar(s, 'white'); }
+}
+
 function worldEvents(s, report, newCrises) {
   for (let i = newCrises.length - 1; i >= 0; i--) {
     const c = newCrises[i];
@@ -5161,6 +5275,7 @@ HOOKS.migrate.push(s => {
   if (!s.annexed) s.annexed = {};
   if (s.war === undefined) s.war = null;
   if (s.war && !s.war.enemyAllies) s.war.enemyAllies = [];
+  if (s.war && !s.war.theater && typeof initTheater === 'function' && typeof MAP_DATA !== 'undefined') initTheater(s);
   // 전 세계 나라 관계 초기화
   for (const k of allCountryKeys()) {
     if (s.rel[k] == null) s.rel[k] = baseRel(k);
@@ -5169,6 +5284,247 @@ HOOKS.migrate.push(s => {
 });
 HOOKS.postMacro.push(worldTurn);
 HOOKS.events.push(worldEvents);
+
+</script>
+<script>
+/* js/military.js */
+/* =========================================================
+ *  군사·전역(戰域) 시뮬레이션 — 하츠 오브 아이언식
+ *  - 양측 군대: 사단·질·장비·조직력·병력 예비·공군·해군 (동맹군·적 동맹군 합류)
+ *  - 시·도 단위 전역: 남북한·일본·대만은 실제 시·도, 그 밖의 나라는 가상 작전 지역
+ *  - 하루 단위 전투: 접경마다 전투 진행도, 지형·요새·제공권 반영, 점령 시 소유 변경
+ *  - 태세(방어/공세/총공세), 특수 작전(전략 폭격·미사일·상륙·봉쇄·총동원)
+ *  - 승점(수도 등) 상실 비율 = 항복 진행도, 75%면 항복
+ * ========================================================= */
+
+const QUALITY = { kr: 1.0, us: 1.25, jp: 0.95, cn: 0.85, ru: 0.8, nk: 0.45, tw: 0.8, gbr: 1.1, fra: 1.05, deu: 0.95, isr: 1.1, ind: 0.7, tur: 0.8, vnm: 0.65, pak: 0.6, irn: 0.55 };
+const AIR = { kr: 60, us: 160, jp: 70, cn: 95, ru: 80, nk: 18, tw: 45, gbr: 55, fra: 55, isr: 60, ind: 55 };
+const NAVY = { kr: 55, us: 170, jp: 80, cn: 90, ru: 50, nk: 14, tw: 35, gbr: 60, fra: 50, ind: 45 };
+const MOUNTAIN = new Set(['강원도', '경상북도', '충청북도', '함경남도', '함경북도', '량강도', '자강도', '평안북도']);
+const PROV_VP = { '서울특별시': 10, '부산광역시': 4, '인천광역시': 3, '대구광역시': 3, '대전광역시': 2, '광주광역시': 2, '울산광역시': 2, '세종특별자치시': 2, '평양직할시': 10, '라선특별시': 2, '도쿄도': 10, '오사카부': 4, '아이치현': 2, '가나가와현': 2, '후쿠오카현': 2, '타이베이시': 10, '신베이시': 3, '가오슝시': 3, '타이중 시티': 3 };
+const STANCES = { hold: { name: '방어', atk: 0, org: 2 }, attack: { name: '공세', atk: 1, org: -1.2 }, all: { name: '총공세', atk: 1.35, org: -2.4 } };
+
+/* ---------------- 군대 ---------------- */
+function ourForces(s) {
+  const p = s.policies;
+  let divs = 30 + (s.stats.security - 68) * 0.25 + ({ up35: 4, up5: 9, down2: -4 }[p.def_budget] || 0) + ({ both: 8, m24: 4, volunteer: -6 }[p.conscript] || 0);
+  const ship = (s.buildings?.ship || 0);
+  const air = AIR.kr + ({ up35: 10, up5: 25, down2: -8 }[p.def_budget] || 0) + (s.stats.innovation - 72) * 0.4;
+  const navy = NAVY.kr + ({ up35: 8, up5: 20, down2: -6 }[p.def_budget] || 0) + ship * 5;
+  if (s.annexed?.nk) divs += 10;
+  return { divs: Math.max(8, divs), quality: QUALITY.kr + (s.stats.innovation - 72) * 0.004, air, navy };
+}
+function foreignForces(k) {
+  const c = cinfo(k);
+  return { divs: c.mil * (k === 'nk' ? 1.3 : 0.9), quality: QUALITY[k] ?? clamp(0.35 + c.eco / 160, 0.4, 0.95), air: AIR[k] ?? c.mil * 0.6, navy: NAVY[k] ?? c.mil * 0.45 };
+}
+// 동맹군은 본국 전력 일부만 투입(원정)
+const expedition = (k, f) => ({ divs: f.divs * (k === 'us' ? 0.16 : 0.18), quality: f.quality, air: f.air * (k === 'us' ? 0.55 : 0.3), navy: f.navy * (k === 'us' ? 0.5 : 0.3) });
+function sideForces(s, side) {
+  const w = s.war, T = w.theater;
+  const base = side === 'kr' ? ourForces(s) : foreignForces(w.k);
+  const helpers = (side === 'kr' ? w.allies : w.enemyAllies).filter(a => cinfo(a));
+  let divs = base.divs * (side === 'kr' && T.mobilized ? 1.25 : 1), q = base.quality * divs, air = base.air, navy = base.navy;
+  for (const a of helpers) { const f = expedition(a, foreignForces(a)); divs += f.divs; q += f.quality * f.divs; air += f.air; navy += f.navy; }
+  const st = T[side];
+  return { divs: divs * (st.mp / 100), rawDivs: divs, quality: q / Math.max(1, divs), air: air * (st.airLeft / 100), navy: navy * (st.navyLeft / 100), equip: st.equip, org: st.org, helpers };
+}
+
+/* ---------------- 전역 만들기 ---------------- */
+function provAdj(list) {
+  const d = (a, b) => Math.hypot(a.c[0] - b.c[0], a.c[1] - b.c[1]), links = new Set();
+  for (const a of list) {
+    const near = list.filter(b => b !== a).sort((x, y) => d(a, x) - d(a, y)); const n0 = d(a, near[0]);
+    for (const b of near.slice(0, 5)) if (d(a, b) <= Math.max(n0 * 1.9, 2.2)) links.add([a.id, b.id].sort().join('|'));
+  }
+  return [...links].map(l => l.split('|'));
+}
+function initTheater(s) {
+  const w = s.war, k = w.k;
+  const provs = [];
+  const add = (key, owner) => (MAP_DATA.prov[key] || []).forEach(p => provs.push({ id: p.id, n: p.n, c: p.c, home: key, owner, vp: PROV_VP[p.n] || 1, terrain: MOUNTAIN.has(p.n) ? 1.3 : 1 }));
+  add('kr', 'kr');
+  let landLinked = false;
+  if (MAP_DATA.prov[k]) { add(k, k); landLinked = k === 'nk'; }
+  else {
+    // 시·도 데이터가 없는 나라: 수도를 포함한 가상 작전 지역 6곳 (일렬로 연결)
+    // 한국 쪽 해안에서 수도(중심) 방향으로 늘어놓음
+    const mc = MAP_DATA.countries[k] || {}, c = mc.c || [0, 0], kc = MAP_DATA.countries.kr.c;
+    const R = clamp(Math.sqrt(mc.a || 20) * 0.9, 3, 40);
+    const dx = kc[0] - c[0], dy = kc[1] - c[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    const names = ['해안 거점', '항만 도시', '산업 지대', '내륙 요충지', '방어선', '수도권'];
+    names.forEach((n, i) => { const t = R * (1 - i / 5), side = (i % 2 ? 1 : -1) * R * 0.12;
+      provs.push({ id: `${k}-v${i}`, n: `${cname(k)} ${n}`, c: [c[0] + ux * t - uy * side, c[1] + uy * t + ux * side], home: k, owner: k, vp: i === 5 ? 10 : 1 + (i === 2 ? 2 : 0), terrain: i === 4 ? 1.3 : 1, virtual: true }); });
+  }
+  let links;
+  if (k === 'nk') links = provAdj(provs);
+  else {
+    links = provAdj(provs.filter(p => p.home === 'kr'));
+    if (MAP_DATA.prov[k]) links = links.concat(provAdj(provs.filter(p => p.home === k)));
+    else for (let i = 0; i < 5; i++) links.push([`${k}-v${i}`, `${k}-v${i + 1}`]);
+  }
+  // DMZ 요새: 남북 접경 시·도는 수비가 유리
+  const byId = Object.fromEntries(provs.map(p => [p.id, p]));
+  for (const [a, b] of links) if (byId[a].home !== byId[b].home) { byId[a].fort = 1.4; byId[b].fort = 1.4; }
+  const side = () => ({ org: 85, equip: 1, mp: 100, airLeft: 100, navyLeft: 100, cas: 0, stance: 'hold' });
+  w.theater = { provs, links, edges: {}, kr: side(), en: side(), landLinked, days: 0, daysThisQ: 0, ops: {}, log: [], blockade: 0, mobilized: false, exhaustion: 0, enemyStanceDays: 0 };
+  w.theater.kr.stance = w.aggressor === 'kr' ? 'attack' : 'hold';
+}
+
+/* ---------------- 하루 전투 ---------------- */
+function supremacy(s) {
+  const a = sideForces(s, 'kr'), b = sideForces(s, 'en');
+  return { air: a.air / Math.max(1, a.air + b.air), navy: a.navy / Math.max(1, a.navy + b.navy), a, b };
+}
+function landPower(f, airShare) { return f.divs * f.quality * (0.4 + 0.6 * f.equip) * (0.45 + 0.55 * f.org / 100) * (0.75 + airShare * 0.5); }
+function frontEdges(T) {
+  const byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  return T.links.filter(([a, b]) => (byId[a].owner === 'kr') !== (byId[b].owner === 'kr')).map(([a, b]) => byId[a].owner === 'kr' ? [a, b] : [b, a]);
+}
+function warLog(s, text, type = 'info') {
+  const T = s.war.theater, t = turnLabel(s.turn), d = Math.min(89, Math.floor(T.daysThisQ));
+  T.log.unshift({ text: `${t.year}년 ${(t.q - 1) * 3 + 1 + Math.floor(d / 30)}월 ${(d % 30) + 1}일 ${text}`, type });
+  if (T.log.length > 40) T.log.length = 40;
+  if (typeof worldNews === 'function' && type !== 'info') worldNews(s, `⚔️ ${text}`, type);
+}
+function warDay(s) {
+  const w = s.war, T = w?.theater; if (!T || !w) return;
+  T.days++; T.daysThisQ++;
+  const sup = supremacy(s), A = sup.a, B = sup.b;
+  const edges = frontEdges(T);
+  const byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  // 적 AI 태세
+  const pA = landPower(A, sup.air), pB = landPower(B, 1 - sup.air);
+  const enSurr = surrender(s, 'en'), krSurr = surrender(s, 'kr');
+  T.en.stance = enSurr > 55 ? 'all' : pB > pA * 0.95 ? 'attack' : 'hold';
+  if (edges.length) {
+    const share = 1 / edges.length; var dayKr = 0, dayEn = 0;
+    for (const [ourId, enId] of edges) {
+      const key = ourId + '>' + enId, e = T.edges[key] = T.edges[key] || { prog: 0 };
+      const ours = byId[ourId], theirs = byId[enId];
+      const atkK = STANCES[T.kr.stance].atk, atkE = STANCES[T.en.stance].atk;
+      let delta = 0;
+      // 방어 측은 지형·요새·참호(방어 태세) 보너스
+      const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
+      if (atkK) delta += (pA * atkK - pB * dE * 0.9) / (pA + pB * dE * 0.9 + 1) * 8 + 0.8;
+      if (atkE) delta -= (pB * atkE - pA * dK * 0.9) / (pB + pA * dK * 0.9 + 1) * 8 + 0.8;
+      delta += gauss() * 1.6;
+      if (!atkK && !atkE) delta = 0;
+      e.prog = clamp(e.prog + delta, -100, 100);
+      e.active = !!(atkK || atkE);
+      // 사상자 (명)
+      if (e.active) {
+        const fight = (atkK + atkE) * share;
+        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8)), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
+        T.kr.cas += krC; T.en.cas += enC; dayKr += krC; dayEn += enC;
+      }
+      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); break; }
+      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); break; }
+    }
+  }
+  T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
+  // 조직력·장비·병력
+  for (const side of ['kr', 'en']) {
+    const st = T[side];
+    st.org = clamp(st.org + STANCES[st.stance].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6, 15, 100);
+    const prod = side === 'kr' ? 0.004 + (s.buildings?.ship || 0) * 0.001 + (s.policies.def_budget === 'up5' ? 0.003 : s.policies.def_budget === 'up35' ? 0.0015 : 0) : 0.004 * (T.blockade > 0 ? 0.4 : 1);
+    st.equip = clamp(st.equip - (edges.length && st.stance !== 'hold' ? 0.006 : 0.002) + prod, 0.15, 1);
+    st.mp = clamp(st.mp - (side === 'kr' ? T.dayKr : T.dayEn) / 4000 + 0.05, 25, 100);
+  }
+  if (T.blockade > 0) T.blockade--;
+  T.exhaustion = clamp(T.kr.cas / 6000 + T.days / 40, 0, 100);
+  // 바다 건너 침공: 제해권이 압도적인 쪽이 상륙 시도
+  if (!T.landLinked && !frontEdges(T).length && Math.random() < 0.01 && sup.navy < 0.3) enemyLanding(s);
+}
+function clearEdges(T, id) { for (const key of Object.keys(T.edges)) if (key.split('>').includes(id)) delete T.edges[key]; }
+function surrender(s, side) {
+  const T = s.war?.theater; if (!T) return 0;
+  const home = side === 'kr' ? 'kr' : s.war.k;
+  const mine = T.provs.filter(p => p.home === home), total = mine.reduce((a, p) => a + p.vp, 0);
+  const lost = mine.filter(p => p.owner !== home).reduce((a, p) => a + p.vp, 0);
+  const st = T[side];
+  return clamp(lost / total * 100 + (100 - st.mp) * 0.3 + (1 - st.equip) * 15, 0, 100);
+}
+function enemyLanding(s) {
+  const T = s.war.theater, coast = T.provs.filter(p => p.home === 'kr' && p.owner === 'kr' && ['부산광역시', '경상남도', '전라남도', '울산광역시', '인천광역시', '강원도', '제주특별자치도'].includes(p.n));
+  const t = coast[Math.floor(Math.random() * coast.length)]; if (!t) return;
+  t.owner = s.war.k; T.landLinked = true;
+  warLog(s, `적군이 ${t.n}에 상륙했습니다!`, 'bad');
+}
+function runWarDays(s, n) { for (let i = 0; i < n && s.war?.theater; i++) warDay(s); }
+
+/* ---------------- 명령 ---------------- */
+const OPS = [
+  { id: 'bomb', name: '전략 폭격', icon: '✈️', cost: 15, cd: 30, desc: '적 공장·보급선을 폭격합니다. 제공권 50% 이상 필요. 적 장비 -12%, 조직력 -10.',
+    can: s => supremacy(s).air < 0.5 ? '제공권이 50% 미만입니다.' : null,
+    run: s => { const T = s.war.theater; T.en.equip = clamp(T.en.equip - 0.12, 0.15, 1); T.en.org -= 10; T.kr.airLeft = clamp(T.kr.airLeft - 4, 20, 100); return '전략 폭격으로 적 군수 시설을 타격했습니다.'; } },
+  { id: 'missile', name: '미사일 정밀 타격', icon: '🚀', cost: 20, cd: 20, desc: '적 지휘부·포병 진지를 정밀 타격. 적 조직력 -18, 장비 -5%.',
+    run: s => { const T = s.war.theater; T.en.org = clamp(T.en.org - 18, 5, 100); T.en.equip = clamp(T.en.equip - 0.05, 0.15, 1); T.en.airLeft = clamp(T.en.airLeft - 6, 10, 100); return '현무 미사일이 적 지휘부를 타격했습니다.'; } },
+  { id: 'landing', name: '상륙 작전', icon: '⚓', cost: 30, cd: 45, desc: '적 해안에 상륙해 교두보를 만듭니다. 제해권이 높을수록 성공률↑. 바다 건너 전쟁에서는 필수.',
+    run: s => { const T = s.war.theater, sup = supremacy(s);
+      const targets = T.provs.filter(p => p.home === s.war.k && p.owner !== 'kr');
+      const kc = MAP_DATA.countries.kr.c, dd = p => (p.c[0] - kc[0]) ** 2 + (p.c[1] - kc[1]) ** 2;
+      const target = T.provs.find(p => p.virtual && p.home === s.war.k && p.owner !== 'kr') || targets.sort((a, b) => dd(a) - dd(b))[0];
+      if (!target) return '상륙할 곳이 없습니다.';
+      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0), 0.05, 0.92);
+      if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id); warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
+      T.kr.mp = clamp(T.kr.mp - 4, 30, 100); T.kr.navyLeft = clamp(T.kr.navyLeft - 10, 10, 100); warLog(s, `${target.n} 상륙 실패. 큰 피해를 입었습니다.`, 'bad'); return `상륙이 실패했습니다. (성공률 ${Math.round(p * 100)}%)`; } },
+  { id: 'blockade', name: '해상 봉쇄', icon: '🚢', cost: 10, cd: 60, desc: '적 항구를 봉쇄해 60일간 적 장비 보충을 크게 줄입니다. 제해권 40% 이상.',
+    can: s => supremacy(s).navy < 0.4 ? '제해권이 40% 미만입니다.' : null,
+    run: s => { s.war.theater.blockade = 60; return '해군이 적 항구 봉쇄에 들어갔습니다.'; } },
+  { id: 'mobilize', name: '총동원령', icon: '📯', cost: 25, cd: 9999, desc: '예비군 동원. 사단 +25%. 지지율 -4, 경제 위축.',
+    can: s => s.war.theater.mobilized ? '이미 총동원 중입니다.' : null,
+    run: s => { const T = s.war.theater; T.mobilized = true; T.kr.mp = clamp(T.kr.mp + 15, 30, 100); s.approval = clamp(s.approval - 4, 0, 100); s.mods.gdp -= 0.2; s.factions.youth = clamp(s.factions.youth - 6, 0, 100); return '총동원령을 선포했습니다. 예비군이 전선으로 향합니다.'; } },
+];
+function setStance(s, st) { if (!s.war?.theater) return { ok: false }; s.war.theater.kr.stance = st; warLog(s, `아군 태세 전환: ${STANCES[st].name}`); return { ok: true }; }
+function warOp(s, id) {
+  const T = s.war?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  const o = OPS.find(x => x.id === id);
+  if ((T.ops[id] || 0) > T.days) return { ok: false, msg: `${T.ops[id] - T.days}일 뒤에 다시 할 수 있습니다.` };
+  const why = o.can?.(s); if (why) return { ok: false, msg: why };
+  if (s.pcap < o.cost) return { ok: false, msg: `국고 ${won(o.cost)}이(가) 필요합니다.` };
+  s.pcap -= o.cost; T.ops[id] = T.days + o.cd;
+  const msg = o.run(s); warLog(s, `${o.icon} ${msg}`);
+  return { ok: true, msg };
+}
+
+/* ---------------- 분기 결산과 연결 ---------------- */
+// 분기 동안 실시간으로 흐르지 않은 날은 결산 때 몰아서 진행
+function warQuarter(s, report) {
+  const w = s.war, T = w.theater;
+  runWarDays(s, Math.max(0, 90 - T.daysThisQ));
+  T.daysThisQ = 0;
+  const es = surrender(s, 'en'), ks = surrender(s, 'kr');
+  w.score = clamp((es - ks) * 1.3, -100, 100);
+  const cas = n => n >= 10000 ? `${(n / 10000).toFixed(1)}만` : n.toLocaleString('ko-KR');
+  return { es, ks, line: `전황: 적 항복 진행도 ${es.toFixed(0)}% · 아군 ${ks.toFixed(0)}% · 사상자 아군 ${cas(T.kr.cas)}명 / 적군 ${cas(T.en.cas)}명` };
+}
+// 핵 공격: 게임 오버 대신 극한 위기
+function nuclearStrike(s) {
+  const w = s.war, T = w.theater;
+  const target = T ? (T.provs.find(p => p.home === 'kr' && p.owner === 'kr' && p.vp >= 3 && p.n !== '서울특별시') || T.provs.find(p => p.home === 'kr' && p.owner === 'kr')) : null;
+  if (target) target.nuked = true;
+  s.stats.gdp -= 6; s.stats.happiness -= 25; s.stats.safety -= 30; s.stats.security -= 10; s.stats.debt += 15; s.mods.gdp -= 0.5;
+  s.approval = clamp(s.approval + 6, 0, 100); // 결집
+  if (s.world) s.world.tension = 100;
+  s.nukePending = { k: w.k, city: target?.n || '남부 도시' };
+  addLog(s, 'bad', `☢️ ${cname(w.k)} 진영이 ${s.nukePending.city}에 핵무기를 사용했습니다.`);
+  if (typeof worldNews === 'function') worldNews(s, `☢️ 속보: ${cname(w.k)}, 대한민국 ${s.nukePending.city}에 핵 공격`, 'bad');
+}
+function nukeResponse(s, choice) {
+  const k = s.nukePending?.k; s.nukePending = null; if (!s.war) return '전쟁은 이미 끝났습니다.';
+  if (choice === 'retaliate') {
+    const can = hasNukes(s, 'kr') || s.war.allies.includes('us');
+    if (!can) return '보복할 핵 수단이 없습니다.';
+    const T = s.war.theater; if (T) { T.en.mp -= 30; T.en.equip = 0.3; T.en.org = 10; }
+    for (const o of Object.keys(RELATIONS)) if (o !== k) relBump(s, o, -10, -6);
+    s.scoreBonus = (s.scoreBonus || 0) - 5;
+    return `${s.war.allies.includes('us') && !hasNukes(s, 'kr') ? '미국이' : '대한민국이'} 핵으로 보복했습니다. 적군이 붕괴 직전입니다. 세계가 경악했습니다.`;
+  }
+  if (choice === 'ceasefire') { endWar(s, 'white'); s.approval = clamp(s.approval - 8, 0, 100); return '현 전선에서 즉시 휴전했습니다. 더 이상의 핵 공격은 막았습니다.'; }
+  if (Math.random() < 0.6) { endWar(s, 'white'); relBump(s, 'us', 5, 3); relBump(s, 'eu', 5, 3); return '유엔 안보리 긴급 중재로 휴전이 성립했습니다. 국제 사회가 재건 지원을 약속했습니다.'; }
+  return '중재가 실패했습니다. 전쟁이 계속됩니다.';
+}
 
 </script>
 <script>
@@ -6770,6 +7126,7 @@ ClaudeAI.whenReady(() => { if (S) renderCrises(); });
 function renderSystemsTabs() {
   if (!S) return;
   renderPolitics(); renderEconomy(); renderWorld();
+  if (typeof renderWarHud === 'function') renderWarHud();
   const wb = $('war-badge'); if (wb) wb.classList.toggle('hidden', !S.war);
   const bb = $('bill-badge'); if (bb) { bb.textContent = S.bills.length; bb.classList.toggle('hidden', !S.bills.length); }
 }
@@ -6926,16 +7283,19 @@ function buildGeoMap(container) {
       <defs>
         <radialGradient id="seaGrad" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1d3e5b"></stop><stop offset="1" stop-color="#0b1622"></stop></radialGradient>
         <pattern id="hatch-kr" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--enemy-fill)"></rect><rect width="1.5" height="3" style="fill:var(--kr-fill)"></rect></pattern>
+        <marker id="arr-kr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4c8dff"></path></marker>
+        <marker id="arr-en" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ff4b4b"></path></marker>
         <pattern id="hatch-enemy" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" style="fill:var(--kr-fill)"></rect><rect width="1.5" height="3" style="fill:var(--enemy-fill)"></rect></pattern>
       </defs>
       <path d="${M.sphere}" class="sea"></path>
       <g class="g-land">${land}</g><g class="g-prov">${provs}</g>
       <g class="g-front"></g><g class="g-city">${cities}</g><g class="g-lbl">${labels}</g>
+      <g class="g-war"></g>
       <g class="eu-mark" data-c="eu"><circle cx="${bx}" cy="${by}"></circle><text x="${bx}" y="${by}" dx="0.7em" dy="0.35em">🇪🇺 EU</text></g>
     </svg>
     <div class="map-legend" id="map-legend"><span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth</span></div>`;
   const svg = container.querySelector('#geo');
-  mapBuilt = { svg, land: [...svg.querySelectorAll('.land[data-c]')], prov: [...svg.querySelectorAll('.prov')], lbl: [...svg.querySelectorAll('.clbl')], front: svg.querySelector('.g-front') };
+  mapBuilt = { svg, land: [...svg.querySelectorAll('.land[data-c]')], prov: [...svg.querySelectorAll('.prov')], lbl: [...svg.querySelectorAll('.clbl')], front: svg.querySelector('.g-front'), war: svg.querySelector('.g-war') };
   bindMapInteraction(container, svg);
 }
 
@@ -7055,7 +7415,7 @@ function updateMap() {
     + `<span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth · 지도자는 가상 인물</span>`;
   // 전쟁 중이면 서울과 상대 수도를 잇는 전선 화살표
   let front = '';
-  if (S.war) {
+  if (S.war && !S.war.theater) {
     const a = MAP_DATA.cities['서울'], b = MAP_DATA.cities[CAPITAL[S.war.k]] || MAP_DATA.countries[S.war.k]?.c;
     if (b) front = `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="front"></line>`;
   }
@@ -7064,6 +7424,7 @@ function updateMap() {
   for (const c of (S.world?.conflicts || [])) if (c.type !== 'cyber') front += hot(c.type === 'civil' ? c.a : c.b, c.type);
   if (S.war) front += hot(S.war.k, 'war') + hot('kr', 'war');
   mapBuilt.front.innerHTML = front;
+  mapBuilt.war.innerHTML = S.war?.theater ? warOverlay(S) : '';
   if (mapView) applyView(mapBuilt.svg);
 }
 
@@ -7078,18 +7439,100 @@ function renderWorld() {
   renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }
 
-function renderWarPanel() {
+/* ---------------- 하츠식 전선 표시: 전선·부대·전투·공세 화살표 ---------------- */
+// 부대 마커는 화면에서 같은 크기로 보이도록 --u 배율을 씀
+const unitG = (x, y, cls, inner) => `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><g class="${cls}">${inner}</g></g>`;
+function warOverlay(s) {
+  const w = s.war, T = w.theater, byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  const edges = frontEdges(T);
+  const A = sideForces(s, 'kr'), B = sideForces(s, 'en'), share = 1 / Math.max(1, edges.length);
+  let lines = '', arrows = '', units = '', fights = '', virt = '';
+  const fp = {}; // 전선에 닿은 시·도 → 그곳에 배치된 부대
+  // 가상 작전 지역(시·도 데이터가 없는 나라)
+  const vs = T.provs.filter(p => p.virtual);
+  for (let i = 0; i < vs.length - 1; i++) virt += `<line class="vlink" x1="${vs[i].c[0]}" y1="${vs[i].c[1]}" x2="${vs[i + 1].c[0]}" y2="${vs[i + 1].c[1]}"></line>`;
+  for (const p of vs) virt += unitG(p.c[0], p.c[1], `vreg ${p.owner === 'kr' ? 'kr' : 'en'}`, `<circle r="${p.vp >= 5 ? 8 : 6}"></circle>${p.vp >= 5 ? '<text y="-11">★ 수도권</text>' : ''}<title>${esc(p.n)}</title>`);
+  for (const [ourId, enId] of edges) {
+    const a = byId[ourId], b = byId[enId], e = T.edges[ourId + '>' + enId] || { prog: 0 };
+    const mx = (a.c[0] + b.c[0]) / 2, my = (a.c[1] + b.c[1]) / 2, dx = b.c[0] - a.c[0], dy = b.c[1] - a.c[1], L = Math.hypot(dx, dy) || 1;
+    // 전선은 전투 진행도만큼 밀려 있음
+    const sh = (e.prog / 100) * 0.35, fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
+    lines += `<line class="fline" x1="${(fx + px).toFixed(2)}" y1="${(fy + py).toFixed(2)}" x2="${(fx - px).toFixed(2)}" y2="${(fy - py).toFixed(2)}"></line>`;
+    if (STANCES[T.kr.stance].atk) arrows += `<line class="farrow kr" x1="${(a.c[0] + dx * 0.15).toFixed(2)}" y1="${(a.c[1] + dy * 0.15).toFixed(2)}" x2="${(fx + dx * 0.14).toFixed(2)}" y2="${(fy + dy * 0.14).toFixed(2)}" marker-end="url(#arr-kr)"></line>`;
+    if (STANCES[T.en.stance].atk) arrows += `<line class="farrow en" x1="${(b.c[0] - dx * 0.15).toFixed(2)}" y1="${(b.c[1] - dy * 0.15).toFixed(2)}" x2="${(fx - dx * 0.14).toFixed(2)}" y2="${(fy - dy * 0.14).toFixed(2)}" marker-end="url(#arr-en)"></line>`;
+    for (const [id, side, o] of [[ourId, 'kr', b], [enId, 'en', a]]) { const u = fp[id] = fp[id] || { side, n: 0, tx: 0, ty: 0 }; u.n++; u.tx += o.c[0]; u.ty += o.c[1]; }
+    if (e.active) {
+      const pct = Math.abs(e.prog), good = e.prog >= 0;
+      fights += unitG(fx, fy, 'battle', `<circle class="ring" r="9"></circle><text class="ic" y="4">⚔</text><rect class="pbg" x="-12" y="11" width="24" height="4"></rect><rect class="pfg ${good ? 'kr' : 'en'}" x="-12" y="11" width="${(24 * pct / 100).toFixed(1)}" height="4"></rect>`);
+    }
+  }
+  // 시·도마다 부대 마커 하나 (전선 쪽으로 약간 치우치게), 숫자는 배치된 사단 수
+  const nK = Object.values(fp).filter(u => u.side === 'kr').reduce((x, u) => x + u.n, 0) || 1, nE = Object.values(fp).filter(u => u.side === 'en').reduce((x, u) => x + u.n, 0) || 1;
+  for (const [id, u] of Object.entries(fp)) {
+    const p = byId[id], tx = u.tx / u.n, ty = u.ty / u.n, x = p.c[0] + (tx - p.c[0]) * 0.22, y = p.c[1] + (ty - p.c[1]) * 0.22;
+    const n = Math.max(1, Math.round((u.side === 'kr' ? A.divs / nK : B.divs / nE) * u.n));
+    units += unitG(x, y, `unit ${u.side}`, `<rect x="-11" y="-7" width="22" height="14" rx="1.5"></rect><path d="M-11 -7 L11 7 M-11 7 L11 -7"></path><text y="18">${n}</text>`);
+  }
+  const nuked = T.provs.filter(p => p.nuked).map(p => unitG(p.c[0], p.c[1], 'nuked', `<circle r="10"></circle><text y="5">☢</text>`)).join('');
+  return virt + lines + arrows + units + fights + nuked;
+}
+
+/* ---------------- 전쟁 대시보드 ---------------- */
+const fmtCas = n => n >= 10000 ? `${(n / 10000).toFixed(1)}만` : Math.round(n).toLocaleString('ko-KR');
+const meter = (v, cls = '', mark) => `<span class="meter ${cls}"><i style="width:${clamp(v, 0, 100).toFixed(0)}%"></i>${mark ? `<b style="left:${mark}%"></b>` : ''}</span>`;
+let warPanelAt = 0;
+function renderWarPanel(force) {
   const w = S.war, slot = $('war-slot'); if (!slot) return;
-  slot.innerHTML = w ? `<div class="warbox">
-    <h3>⚔️ 전쟁 중: ${cflag(w.k)} ${esc(cname(w.k))} (${w.turns}분기째) · 목표 ${GOAL_NAMES[w.goal]}</h3>
-    <div class="warbar"><i style="left:${50 + w.score / 2}%"></i><span>패전 -100</span><span>0</span><span>승리 +100</span></div>
-    <div>전황 점수 <b>${w.score.toFixed(0)}</b> · 우리 편 ${['대한민국', ...w.allies.map(cname)].join(', ')} · 상대 편 ${[cname(w.k), ...w.enemyAllies.map(cname)].join(', ')}</div>
-    <div class="muted small">분기마다 성장률·행복도·재정이 깎이고 채무가 늘어납니다. 점령당한 시·도만큼 피해가 커집니다. 10분기가 지나면 국제 중재로 정전됩니다.${nukeRisk(S) > 0 ? ` <b style="color:var(--bad)">☢️ 핵 사용 위험 분기당 ${(nukeRisk(S) * 100).toFixed(1)}%</b>` : ''}</div>
-    ${w.log.length ? `<div class="muted small">${esc(w.log[w.log.length - 1])}</div>` : ''}
-    <div class="row-btns"><button class="btn sm danger" data-war="offensive">🎖️ 총공세 ${won(15)}</button><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
-  </div>` : '';
+  if (!w) { slot.innerHTML = ''; return; }
+  if (!w.theater) { slot.innerHTML = `<div class="warbox"><h3>⚔️ 전쟁 중: ${cflag(w.k)} ${esc(cname(w.k))}</h3><div class="row-btns"><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button></div></div>`; slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war)); return; }
+  const T = w.theater, sup = supremacy(S), A = sup.a, B = sup.b, es = surrender(S, 'en'), ks = surrender(S, 'kr');
+  const side = (name, flags, f, st, cas, day, sur) => `<div class="wside">
+      <div class="wname">${flags} <b>${name}</b> <span class="stance ${st.stance}">${STANCES[st.stance].name}</span></div>
+      <div class="wstat"><span>사단</span><b>${Math.round(f.divs)}</b><span>질</span><b>${f.quality.toFixed(2)}</b></div>
+      <div class="wrow"><span>조직력</span>${meter(st.org, 'org')}<em>${st.org.toFixed(0)}</em></div>
+      <div class="wrow"><span>장비</span>${meter(st.equip * 100, 'eq')}<em>${(st.equip * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>병력</span>${meter(st.mp, 'mp')}<em>${st.mp.toFixed(0)}%</em></div>
+      <div class="wrow"><span>항복</span>${meter(sur, 'sur', 75)}<em>${sur.toFixed(0)}%</em></div>
+      <div class="wcas">사상자 <b>${fmtCas(cas)}</b>명 ${day ? `<span class="muted">(+${fmtCas(day)}/일)</span>` : ''}</div>
+    </div>`;
+  const ours = ['kr', ...w.allies].map(cflag).join(''), theirs = [w.k, ...w.enemyAllies].map(cflag).join('');
+  const front = frontEdges(T).length, nr = nukeRisk(S);
+  const ops = OPS.map(o => { const cd = (T.ops[o.id] || 0) - T.days, why = cd > 0 ? `${cd}일 뒤` : o.can?.(S) || (S.pcap < o.cost ? '국고 부족' : '');
+    return `<button class="wop" data-op="${o.id}" ${why ? 'disabled' : ''} title="${esc(o.desc)}"><span class="ic">${o.icon}</span><b>${o.name}</b><small>${won(o.cost)}${why ? ` · ${esc(why)}` : ''}</small></button>`; }).join('');
+  slot.innerHTML = `<div class="warbox hoi">
+    <div class="whead"><h3>⚔️ ${esc(cname(w.k))} 전쟁</h3><span class="muted small">개전 ${T.days}일째 · 목표 ${GOAL_NAMES[w.goal]} · ${front ? `전선 ${front}곳` : T.landLinked ? '전선 정리 중' : '바다 건너 대치 — 상륙 작전 필요'}</span></div>
+    <div class="wsides">${side('대한민국 측', ours, A, T.kr, T.kr.cas, T.dayKr, ks)}<div class="wvs">VS</div>${side(`${esc(cname(w.k))} 측`, theirs, B, T.en, T.en.cas, T.dayEn, es)}</div>
+    <div class="wsup">
+      <div class="wrow"><span>✈️ 제공권</span>${meter(sup.air * 100, 'air', 50)}<em>${(sup.air * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>🚢 제해권</span>${meter(sup.navy * 100, 'navy', 50)}<em>${(sup.navy * 100).toFixed(0)}%</em></div>
+      <div class="wrow"><span>😮‍💨 전쟁 피로</span>${meter(T.exhaustion, 'exh')}<em>${T.exhaustion.toFixed(0)}</em></div>
+    </div>
+    <div class="wlabel">태세</div>
+    <div class="wstances">${Object.entries(STANCES).map(([k, v]) => `<button class="btn sm ${T.kr.stance === k ? 'primary' : ''}" data-st="${k}">${{ hold: '🛡️', attack: '➡️', all: '⏩' }[k]} ${v.name}</button>`).join('')}</div>
+    <div class="wlabel">작전 명령</div>
+    <div class="wops">${ops}</div>
+    ${nr > 0 ? `<div class="wnuke">☢️ 적 핵 사용 위험 분기당 ${(nr * 100).toFixed(1)}% — 적이 궁지에 몰릴수록 커집니다</div>` : ''}
+    <div class="row-btns"><button class="btn sm" data-war="peace">🕊️ 휴전·강화 제안</button><button class="btn sm ghost" data-wfocus="1">🗺️ 전선 보기</button></div>
+    <div class="wlabel">전황 일지</div>
+    <div class="wlog">${T.log.slice(0, 8).map(l => `<div class="${l.type}">${esc(l.text)}</div>`).join('') || '<div class="muted">아직 큰 전투가 없습니다.</div>'}</div>
+  </div>`;
   slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
+  slot.querySelectorAll('[data-st]').forEach(b => b.onclick = () => act(setStance)(S, b.dataset.st));
+  slot.querySelectorAll('[data-op]').forEach(b => b.onclick = () => act(warOp)(S, b.dataset.op));
   slot.querySelectorAll('[data-wfocus]').forEach(b => b.onclick = () => zoomTo(S.war.k));
+}
+// 화면 위 전쟁 HUD (어느 화면에서든 보임)
+function renderWarHud() {
+  let h = $('war-hud');
+  const w = S?.war;
+  if (!w?.theater) { if (h) h.remove(); return; }
+  if (!h) { h = document.createElement('button'); h.id = 'war-hud'; h.className = 'war-hud'; h.onclick = () => { showTab('world'); zoomTo(S.war.k); }; document.querySelector('.stage')?.appendChild(h); }
+  const T = w.theater, es = surrender(S, 'en'), ks = surrender(S, 'kr');
+  const last = T.log[0];
+  h.innerHTML = `<span class="t">⚔️ ${cflag(w.k)} ${esc(cname(w.k))} 전쟁 · ${T.days}일째 · ${STANCES[T.kr.stance].name}</span>
+    <span class="b"><i class="kr" style="width:${es}%"></i></span><span class="n">적 항복 ${es.toFixed(0)}%</span>
+    <span class="b"><i class="en" style="width:${ks}%"></i></span><span class="n">아군 ${ks.toFixed(0)}%</span>
+    ${last ? `<span class="l ${last.type}">${esc(last.text)}</span>` : ''}`;
 }
 
 function renderCountryPanel() {
@@ -7259,7 +7702,14 @@ setInterval(() => {
   if (!S || S.over || busy || !gameSpeed || $('game').classList.contains('hidden')) return;
   if (S.pendingSuccession) { setSpeed(0); return openPresidentialCard(); }
   if (!$('modal').classList.contains('hidden')) return;      // 사건 카드·대화 중에는 시간이 멈춤
+  const before = Math.floor(S.day || 0);
   S.day = (S.day || 0) + DAY_RATE[gameSpeed];
+  // 전쟁 중이면 하루하루 전투가 실시간으로 진행
+  if (S.war?.theater) {
+    const days = Math.min(Math.floor(S.day), QUARTER_DAYS) - before;
+    if (days > 0) { runWarDays(S, days); warTick(); }
+  }
+  if (S.nukePending) { setSpeed(0); return openNukeCard(); }
   if (S.day >= QUARTER_DAYS) { S.day = 0; endQuarter(); return; }
   $('hdr-date').textContent = gameDateText();
   $('day-prog').style.width = `${(S.day / QUARTER_DAYS) * 100}%`;
@@ -7276,6 +7726,7 @@ function afterQuarter(report, recs, newCrises) {
   const blocking = [];
   if (report.presElection) blocking.push(() => openPresidentialCard());
   if (report.imf) blocking.push(() => openImfCard());
+  if (S.nukePending) blocking.push(() => openNukeCard());
   if (report.elections?.length) blocking.push(() => openElectionCard(report));
   for (const id of (report.domEvents || [])) blocking.push(() => openDomEventCard(id));
   for (const p of (S.world?.proposals || []).filter(p => p.turn === report.turn)) blocking.push(() => openProposalCard(p.id));
@@ -7442,6 +7893,32 @@ function renderAlerts() {
   el.innerHTML = list.map((x, i) => `<div class="alert ${x.red ? 'red' : ''}" data-i="${i}" style="${alertSeen.has(x.k) ? 'animation:none' : ''}">${x.icon}${x.n ? `<b>${x.n}</b>` : ''}<span class="tip">${esc(x.tip)}</span></div>`).join('');
   el.querySelectorAll('.alert').forEach(a => a.onclick = () => list[+a.dataset.i].go());
   alertSeen = new Set(list.map(x => x.k));
+}
+
+/* ---------------- 전쟁: 실시간 갱신, 핵 위기 카드 ---------------- */
+let warTickAt = 0;
+function warTick() {
+  const now = Date.now(); if (now - warTickAt < 350) return; warTickAt = now;
+  if (typeof updateMap === 'function') updateMap();
+  // 버튼 위에 마우스가 있으면 덜 자주 다시 그려 클릭이 끊기지 않게
+  const slot = $('war-slot'), hov = slot?.matches(':hover');
+  if (openPanelName === 'world' && slot && (!hov || now - warPanelAt > 2500)) { warPanelAt = now; renderWarPanel(); }
+  if (typeof renderWarHud === 'function') renderWarHud();
+}
+function openNukeCard() {
+  const P = S.nukePending; if (!P || !$('modal').classList.contains('hidden')) return;
+  const canRet = hasNukes(S, 'kr') || S.war?.allies.includes('us');
+  const resolve = choice => { const msg = nukeResponse(S, choice); saveGame(S); closeModal(); toast(esc(msg), 5000); addLog(S, 'info', `☢️ ${msg}`); renderAll(); };
+  openModal(`<div class="event nuke">
+    <div class="ev-banner ev-nuke"><span class="ev-art">☢️</span><span class="ev-kind">국가 존망의 위기</span></div>
+    <h2>${esc(P.city)} 핵 피격</h2>
+    <p class="ev-desc">${esc(cname(P.k))} 진영이 ${esc(P.city)}에 핵무기를 사용했습니다. 도시 기능이 마비되고 대규모 사상자가 발생했습니다. 성장률·행복도·안전이 폭락했고 국가채무가 급증했습니다. 그러나 국민은 정부를 중심으로 결집하고 있습니다. 대한민국은 무너지지 않았습니다. 대통령의 결단이 필요합니다.</p>
+    <div class="ev-opts">
+      <button class="ev-opt" data-nk="retaliate" ${canRet ? '' : 'disabled'}><b>☢️ 핵 보복</b><span>${canRet ? (hasNukes(S, 'kr') ? '자체 핵전력으로 보복. 적군이 붕괴하지만 세계가 등을 돌립니다.' : '미국에 확장억제(핵우산) 발동을 요청합니다. 적군 붕괴, 국제 여론 악화.') : '핵무기도, 참전한 미국도 없어 불가능합니다.'}</span></button>
+      <button class="ev-opt" data-nk="ceasefire"><b>🏳️ 즉시 휴전</b><span>현 전선에서 전쟁을 멈춥니다. 추가 핵 공격은 막지만 지지율이 떨어집니다.</span></button>
+      <button class="ev-opt" data-nk="un"><b>🇺🇳 유엔 안보리 중재</b><span>60% 확률로 휴전과 국제 재건 지원. 실패하면 전쟁이 계속됩니다.</span></button>
+    </div></div>`);
+  document.querySelectorAll('[data-nk]').forEach(b => b.onclick = () => resolve(b.dataset.nk));
 }
 
 </script>
