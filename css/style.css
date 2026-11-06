@@ -836,3 +836,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .tseg > div { display: flex; flex-wrap: wrap; gap: 4px; }
 .chip.on { border-color: var(--accent); background: rgba(201, 164, 76, .18); color: var(--text); }
 @media (max-width: 760px) { .ttree { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tech-run { grid-template-columns: 1fr 1fr; } }
+.debt-box { display: grid; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 12px; margin: 10px 0; }
+.db-h { display: grid; gap: 3px; } .db-h > span { font-weight: 800; } .db-h b { font-size: 16px; } .db-h small { font-size: 11.5px; color: var(--muted); }
+.db-btns { display: flex; flex-wrap: wrap; gap: 6px; } .db-btns .btn small { opacity: .75; font-size: 10.5px; margin-left: 3px; }
+.db-auto { display: grid; gap: 5px; font-size: 12px; } .db-auto > div { display: flex; flex-wrap: wrap; gap: 5px; }

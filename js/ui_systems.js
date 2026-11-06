@@ -94,6 +94,14 @@ function renderEconomy() {
       </div>
     </div>
     <h3 class="sec">💵 재원 마련</h3><div class="pacts">${fin}</div>
+    ${(() => { const dr = debtDrift(S), maxPts = Math.min(Math.floor(S.stats.debt), Math.floor(S.pcap / REPAY_UNIT)); return `<div class="debt-box">
+      <div class="db-h"><span>🏦 나랏빚 갚기</span><b class="${S.stats.debt > 90 ? 'bad-t' : S.stats.debt > 60 ? '' : 'good-t'}">국가채무비율 ${S.stats.debt.toFixed(1)}%</b>
+        <small>그냥 두면 분기마다 <b class="${dr > 0 ? 'bad-t' : 'good-t'}">${dr >= 0 ? '+' : ''}${dr.toFixed(2)}%p</b> (재정수지 ${S.stats.fiscal.toFixed(1)}% · 성장+물가 ${(S.stats.gdp + S.stats.infl).toFixed(1)}%)${S.repaidTotal ? ` · 지금까지 ${S.repaidTotal}%p 상환` : ''}</small></div>
+      <div class="db-btns">${[1, 5, 10, 25].map(n => `<button class="btn sm" data-repay="${n}" ${n > maxPts ? 'disabled' : ''}>-${n}%p <small>${won(n * REPAY_UNIT)}</small></button>`).join('')}
+        <button class="btn sm primary" data-repay="${maxPts}" ${maxPts < 1 ? 'disabled' : ''}>국고로 최대 상환 -${maxPts}%p <small>${won(maxPts * REPAY_UNIT)}</small></button></div>
+      <div class="db-auto"><span>🔁 자동 상환 (분기 결산 때 국고가 기준을 넘는 만큼 갚음, 전쟁 중엔 멈춤)</span><div>${AUTO_REPAY.map(a => `<button class="chip ${(S.autoRepay || 0) === a.v ? 'on' : ''}" data-autorepay="${a.v}">${a.name}</button>`).join('')}</div></div>
+      <div class="muted small">₩5조 = 1%p. 갚을수록 이자가 줄어 채무가 덜 불어납니다. 근본적으로는 재정수지를 흑자로(지출 정책 되돌리기·세입 정책), 성장률을 높이세요. 합병·전쟁·국채 발행은 채무를 크게 늘립니다.</div>
+    </div>`; })()}
     <h3 class="sec">🏭 산업 시설 <span class="muted small">공장을 지으면 그 산업의 성장률(+0.6%p/단계)과 국고 수입(+${won(12)}/분기)이 오르고 일자리가 늘어납니다. 동시 공사 3곳.</span></h3>
     <div class="fac-grid">${cards}</div>
     <div class="sys-head" style="margin-top:12px">
@@ -101,6 +109,8 @@ function renderEconomy() {
       <div class="big-kpi"><span>실업률</span><b>${fmtStat('unemp', S.stats.unemp)}</b><small>산업 고용 기여 ${(S.econUnemp || 0) >= 0 ? '+' : ''}${(S.econUnemp || 0).toFixed(2)}%p</small></div>
     </div>`;
   el.querySelectorAll('[data-build]').forEach(b => b.onclick = () => act(buildFactory)(S, b.dataset.build));
+  el.querySelectorAll('[data-repay]').forEach(b => b.onclick = () => act(repayDebt)(S, +b.dataset.repay));
+  el.querySelectorAll('[data-autorepay]').forEach(b => b.onclick = () => { S.autoRepay = +b.dataset.autorepay; saveGame(S); renderAll(); toast(S.autoRepay ? `자동 상환: 국고 ${won(S.autoRepay)} 초과분을 매 분기 갚습니다.` : '자동 상환을 껐습니다.'); });
   el.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => act(financeAction)(S, b.dataset.fin));
 }
 

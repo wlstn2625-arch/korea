@@ -842,6 +842,10 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .tseg > div { display: flex; flex-wrap: wrap; gap: 4px; }
 .chip.on { border-color: var(--accent); background: rgba(201, 164, 76, .18); color: var(--text); }
 @media (max-width: 760px) { .ttree { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tech-run { grid-template-columns: 1fr 1fr; } }
+.debt-box { display: grid; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 12px; margin: 10px 0; }
+.db-h { display: grid; gap: 3px; } .db-h > span { font-weight: 800; } .db-h b { font-size: 16px; } .db-h small { font-size: 11.5px; color: var(--muted); }
+.db-btns { display: flex; flex-wrap: wrap; gap: 6px; } .db-btns .btn small { opacity: .75; font-size: 10.5px; margin-left: 3px; }
+.db-auto { display: grid; gap: 5px; font-size: 12px; } .db-auto > div { display: flex; flex-wrap: wrap; gap: 5px; }
 
 </style>
 <!-- 시작 화면 -->
@@ -5157,11 +5161,32 @@ const FINANCE_ACTIONS = [
     run: s => { s.pcap += 30; s.approval = clamp(s.approval - 2.5, 0, 100); s.factions.biz = clamp(s.factions.biz - 4, 0, 100); s.factions.labor = clamp(s.factions.labor - 2, 0, 100); return '한시적 특별세를 걷어 국고 ₩3조를 확보했습니다.'; } },
   { id: 'bond', name: '국채 발행', icon: '📜', cd: 0, desc: '국고 +₩5조. 국가채무비율 +0.5%p, 이자 부담 증가.',
     run: s => { s.pcap += 50; s.stats.debt += 0.5; s.mods.debt += 0.3; return '국채를 발행해 국고 ₩5조를 마련했습니다.'; } },
-  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 1, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소.',
-    run: s => { s.pcap -= 50; s.stats.debt = Math.max(0, s.stats.debt - 1); s.mods.debt -= 0.2; return '국고 ₩5조로 국채를 조기 상환했습니다.'; } },
+  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 0, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소. 아래 "나랏빚 갚기"에서 한꺼번에 갚을 수 있습니다.',
+    run: s => repayDebt(s, 1).msg },
   { id: 'sell', name: '국유재산 매각', icon: '🏢', cd: 4, desc: '국고 +₩4조. 공공 자산 감소, 진보층 반발.',
     run: s => { s.pcap += 40; s.factions.lib = clamp(s.factions.lib - 3, 0, 100); s.stats.welfare -= 0.5; return '유휴 국유지와 공기업 지분 일부를 매각했습니다.'; } },
 ];
+// 나랏빚 상환: ₩5조당 국가채무비율 1%p. 갚은 만큼 이자 부담(채무 자연 증가)도 줄어듦
+const REPAY_UNIT = 50;
+function repayDebt(s, pts) {
+  pts = Math.min(pts, Math.floor(s.stats.debt), Math.floor(s.pcap / REPAY_UNIT));
+  if (pts <= 0) return { ok: false, msg: s.stats.debt < 1 ? '갚을 나랏빚이 없습니다.' : `국고 ${won(REPAY_UNIT)} 이상이 필요합니다.` };
+  s.pcap -= pts * REPAY_UNIT; s.stats.debt = Math.max(0, s.stats.debt - pts);
+  s.mods.debt = Math.max(-4, s.mods.debt - 0.05 * pts);
+  s.repaidTotal = (s.repaidTotal || 0) + pts;
+  addLog(s, 'good', `🏦 국고 ${won(pts * REPAY_UNIT)}로 국채를 상환했습니다. 국가채무비율 -${pts}%p`);
+  return { ok: true, msg: `🏦 국채 ${won(pts * REPAY_UNIT)} 상환 — 국가채무비율 ${s.stats.debt.toFixed(1)}% (-${pts}%p)` };
+}
+// 자동 상환: 분기 결산 때 국고가 기준을 넘는 만큼 갚음
+const AUTO_REPAY = [{ v: 0, name: '끔' }, { v: 300, name: '₩30조 초과분' }, { v: 150, name: '₩15조 초과분' }, { v: 50, name: '₩5조 초과분' }];
+function autoRepayTurn(s, report) {
+  if (!s.autoRepay || s.war) return;
+  const pts = Math.floor((s.pcap - s.autoRepay) / REPAY_UNIT);
+  if (pts > 0) { const r = repayDebt(s, pts); if (r.ok) report.autoRepaid = pts; }
+}
+HOOKS.postTurn.push(autoRepayTurn);
+// 아무것도 안 할 때 다음 분기 채무비율 변화 (재정 적자 - 경제 성장 효과 + 이자)
+function debtDrift(s) { const st = s.stats; return (-st.fiscal - (st.gdp + st.infl) * st.debt / 100) / 4 + s.mods.debt / 8; }
 function financeAction(s, id) {
   const a = FINANCE_ACTIONS.find(x => x.id === id); s.finCd = s.finCd || {};
   if ((s.finCd[id] || 0) > s.turn) return { ok: false, msg: `${s.finCd[id] - s.turn}분기 후에 다시 할 수 있습니다.` };
@@ -7821,6 +7846,14 @@ function renderEconomy() {
       </div>
     </div>
     <h3 class="sec">💵 재원 마련</h3><div class="pacts">${fin}</div>
+    ${(() => { const dr = debtDrift(S), maxPts = Math.min(Math.floor(S.stats.debt), Math.floor(S.pcap / REPAY_UNIT)); return `<div class="debt-box">
+      <div class="db-h"><span>🏦 나랏빚 갚기</span><b class="${S.stats.debt > 90 ? 'bad-t' : S.stats.debt > 60 ? '' : 'good-t'}">국가채무비율 ${S.stats.debt.toFixed(1)}%</b>
+        <small>그냥 두면 분기마다 <b class="${dr > 0 ? 'bad-t' : 'good-t'}">${dr >= 0 ? '+' : ''}${dr.toFixed(2)}%p</b> (재정수지 ${S.stats.fiscal.toFixed(1)}% · 성장+물가 ${(S.stats.gdp + S.stats.infl).toFixed(1)}%)${S.repaidTotal ? ` · 지금까지 ${S.repaidTotal}%p 상환` : ''}</small></div>
+      <div class="db-btns">${[1, 5, 10, 25].map(n => `<button class="btn sm" data-repay="${n}" ${n > maxPts ? 'disabled' : ''}>-${n}%p <small>${won(n * REPAY_UNIT)}</small></button>`).join('')}
+        <button class="btn sm primary" data-repay="${maxPts}" ${maxPts < 1 ? 'disabled' : ''}>국고로 최대 상환 -${maxPts}%p <small>${won(maxPts * REPAY_UNIT)}</small></button></div>
+      <div class="db-auto"><span>🔁 자동 상환 (분기 결산 때 국고가 기준을 넘는 만큼 갚음, 전쟁 중엔 멈춤)</span><div>${AUTO_REPAY.map(a => `<button class="chip ${(S.autoRepay || 0) === a.v ? 'on' : ''}" data-autorepay="${a.v}">${a.name}</button>`).join('')}</div></div>
+      <div class="muted small">₩5조 = 1%p. 갚을수록 이자가 줄어 채무가 덜 불어납니다. 근본적으로는 재정수지를 흑자로(지출 정책 되돌리기·세입 정책), 성장률을 높이세요. 합병·전쟁·국채 발행은 채무를 크게 늘립니다.</div>
+    </div>`; })()}
     <h3 class="sec">🏭 산업 시설 <span class="muted small">공장을 지으면 그 산업의 성장률(+0.6%p/단계)과 국고 수입(+${won(12)}/분기)이 오르고 일자리가 늘어납니다. 동시 공사 3곳.</span></h3>
     <div class="fac-grid">${cards}</div>
     <div class="sys-head" style="margin-top:12px">
@@ -7828,6 +7861,8 @@ function renderEconomy() {
       <div class="big-kpi"><span>실업률</span><b>${fmtStat('unemp', S.stats.unemp)}</b><small>산업 고용 기여 ${(S.econUnemp || 0) >= 0 ? '+' : ''}${(S.econUnemp || 0).toFixed(2)}%p</small></div>
     </div>`;
   el.querySelectorAll('[data-build]').forEach(b => b.onclick = () => act(buildFactory)(S, b.dataset.build));
+  el.querySelectorAll('[data-repay]').forEach(b => b.onclick = () => act(repayDebt)(S, +b.dataset.repay));
+  el.querySelectorAll('[data-autorepay]').forEach(b => b.onclick = () => { S.autoRepay = +b.dataset.autorepay; saveGame(S); renderAll(); toast(S.autoRepay ? `자동 상환: 국고 ${won(S.autoRepay)} 초과분을 매 분기 갚습니다.` : '자동 상환을 껐습니다.'); });
   el.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => act(financeAction)(S, b.dataset.fin));
 }
 
@@ -8368,6 +8403,7 @@ function showQuarterCard(report, recs) {
     <div class="qc-appr">지지율 <b class="${ap >= 0 ? 'good-t' : 'bad-t'}">${ap >= 0 ? '▲' : '▼'} ${Math.abs(ap).toFixed(1)}%p</b> → ${S.approval.toFixed(1)}%</div>
     <div class="qc-moves">${moves.map(m => `<span class="${m.good ? 'good-t' : 'bad-t'}">${STATS[m.k].name} ${fmtStat(m.k, m.d, true)}</span>`).join('') || '<span class="muted">큰 변화 없음</span>'}</div>
     ${passed.length ? `<div class="small">🏛️ 국회 통과: ${passed.map(esc).join(', ')}</div>` : ''}
+    ${report.autoRepaid ? `<div class="small">🏦 자동 상환: 국가채무비율 -${report.autoRepaid}%p</div>` : ''}
     ${report.built?.length ? `<div class="small">🏭 완공: ${report.built.map(esc).join(', ')}</div>` : ''}
     ${recs.length ? `<div class="small">🚨 위기 ${recs.length}건 처리 (${recs.filter(r => r.success).length}건 성공)</div>` : ''}
     ${headline ? `<div class="small qc-news">🌐 ${esc(headline.text)}</div>` : ''}
@@ -8767,7 +8803,8 @@ const ADVICE = {
       { t: `국채 이자 분기 ${won(-budgetIncome(s).interest)}`, good: s.stats.debt < 60 },
       ...(s.war ? [{ t: '전쟁 비용', good: false }] : []),
     ],
-    actions: s => [finRec('repay'), ...topPolicies(s, d => (d.e.fiscal || 0) - (d.e.debt || 0) * 0.3, 3).map(r => polRec(r, `재정수지 ${(r.pv.diff.e.fiscal || 0) >= 0 ? '+' : ''}${(r.pv.diff.e.fiscal || 0).toFixed(2)}%p`)),
+    actions: s => [{ icon: '🏦', label: `국고로 최대 상환 (-${Math.min(Math.floor(s.stats.debt), Math.floor(s.pcap / REPAY_UNIT))}%p)`, desc: '쓰고 남는 국고로 나랏빚을 한꺼번에 갚습니다. ₩5조 = 1%p.', run: () => repayDebt(S, 999) },
+      { icon: '🔁', label: '자동 상환 켜기 (₩15조 초과분)', desc: '매 분기 결산 때 국고가 ₩15조를 넘는 만큼 자동으로 갚습니다.', run: () => { S.autoRepay = 150; return { ok: true, msg: '자동 상환을 켰습니다.' }; } }, ...topPolicies(s, d => (d.e.fiscal || 0) - (d.e.debt || 0) * 0.3, 3).map(r => polRec(r, `재정수지 ${(r.pv.diff.e.fiscal || 0) >= 0 ? '+' : ''}${(r.pv.diff.e.fiscal || 0).toFixed(2)}%p`)),
       { icon: '🚫', label: '국채 발행은 피하기', desc: '찍을수록 채무가 늘고 이자 부담이 커집니다. 국고가 0 밑으로 떨어져도 자동 발행됩니다.', go: () => { closeModal(); showTab('economy'); } }] },
   tension: {
     name: '세계 긴장도', icon: '🌐', value: s => (s.world?.tension || 0).toFixed(0),

@@ -85,6 +85,7 @@ function showQuarterCard(report, recs) {
     <div class="qc-appr">지지율 <b class="${ap >= 0 ? 'good-t' : 'bad-t'}">${ap >= 0 ? '▲' : '▼'} ${Math.abs(ap).toFixed(1)}%p</b> → ${S.approval.toFixed(1)}%</div>
     <div class="qc-moves">${moves.map(m => `<span class="${m.good ? 'good-t' : 'bad-t'}">${STATS[m.k].name} ${fmtStat(m.k, m.d, true)}</span>`).join('') || '<span class="muted">큰 변화 없음</span>'}</div>
     ${passed.length ? `<div class="small">🏛️ 국회 통과: ${passed.map(esc).join(', ')}</div>` : ''}
+    ${report.autoRepaid ? `<div class="small">🏦 자동 상환: 국가채무비율 -${report.autoRepaid}%p</div>` : ''}
     ${report.built?.length ? `<div class="small">🏭 완공: ${report.built.map(esc).join(', ')}</div>` : ''}
     ${recs.length ? `<div class="small">🚨 위기 ${recs.length}건 처리 (${recs.filter(r => r.success).length}건 성공)</div>` : ''}
     ${headline ? `<div class="small qc-news">🌐 ${esc(headline.text)}</div>` : ''}

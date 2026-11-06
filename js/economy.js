@@ -164,11 +164,32 @@ const FINANCE_ACTIONS = [
     run: s => { s.pcap += 30; s.approval = clamp(s.approval - 2.5, 0, 100); s.factions.biz = clamp(s.factions.biz - 4, 0, 100); s.factions.labor = clamp(s.factions.labor - 2, 0, 100); return '한시적 특별세를 걷어 국고 ₩3조를 확보했습니다.'; } },
   { id: 'bond', name: '국채 발행', icon: '📜', cd: 0, desc: '국고 +₩5조. 국가채무비율 +0.5%p, 이자 부담 증가.',
     run: s => { s.pcap += 50; s.stats.debt += 0.5; s.mods.debt += 0.3; return '국채를 발행해 국고 ₩5조를 마련했습니다.'; } },
-  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 1, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소.',
-    run: s => { s.pcap -= 50; s.stats.debt = Math.max(0, s.stats.debt - 1); s.mods.debt -= 0.2; return '국고 ₩5조로 국채를 조기 상환했습니다.'; } },
+  { id: 'repay', name: '국채 상환', icon: '🏦', cd: 0, cost: 50, desc: '국고 ₩5조로 나랏빚을 갚습니다. 국가채무비율 -1%p, 이자 부담 감소. 아래 "나랏빚 갚기"에서 한꺼번에 갚을 수 있습니다.',
+    run: s => repayDebt(s, 1).msg },
   { id: 'sell', name: '국유재산 매각', icon: '🏢', cd: 4, desc: '국고 +₩4조. 공공 자산 감소, 진보층 반발.',
     run: s => { s.pcap += 40; s.factions.lib = clamp(s.factions.lib - 3, 0, 100); s.stats.welfare -= 0.5; return '유휴 국유지와 공기업 지분 일부를 매각했습니다.'; } },
 ];
+// 나랏빚 상환: ₩5조당 국가채무비율 1%p. 갚은 만큼 이자 부담(채무 자연 증가)도 줄어듦
+const REPAY_UNIT = 50;
+function repayDebt(s, pts) {
+  pts = Math.min(pts, Math.floor(s.stats.debt), Math.floor(s.pcap / REPAY_UNIT));
+  if (pts <= 0) return { ok: false, msg: s.stats.debt < 1 ? '갚을 나랏빚이 없습니다.' : `국고 ${won(REPAY_UNIT)} 이상이 필요합니다.` };
+  s.pcap -= pts * REPAY_UNIT; s.stats.debt = Math.max(0, s.stats.debt - pts);
+  s.mods.debt = Math.max(-4, s.mods.debt - 0.05 * pts);
+  s.repaidTotal = (s.repaidTotal || 0) + pts;
+  addLog(s, 'good', `🏦 국고 ${won(pts * REPAY_UNIT)}로 국채를 상환했습니다. 국가채무비율 -${pts}%p`);
+  return { ok: true, msg: `🏦 국채 ${won(pts * REPAY_UNIT)} 상환 — 국가채무비율 ${s.stats.debt.toFixed(1)}% (-${pts}%p)` };
+}
+// 자동 상환: 분기 결산 때 국고가 기준을 넘는 만큼 갚음
+const AUTO_REPAY = [{ v: 0, name: '끔' }, { v: 300, name: '₩30조 초과분' }, { v: 150, name: '₩15조 초과분' }, { v: 50, name: '₩5조 초과분' }];
+function autoRepayTurn(s, report) {
+  if (!s.autoRepay || s.war) return;
+  const pts = Math.floor((s.pcap - s.autoRepay) / REPAY_UNIT);
+  if (pts > 0) { const r = repayDebt(s, pts); if (r.ok) report.autoRepaid = pts; }
+}
+HOOKS.postTurn.push(autoRepayTurn);
+// 아무것도 안 할 때 다음 분기 채무비율 변화 (재정 적자 - 경제 성장 효과 + 이자)
+function debtDrift(s) { const st = s.stats; return (-st.fiscal - (st.gdp + st.infl) * st.debt / 100) / 4 + s.mods.debt / 8; }
 function financeAction(s, id) {
   const a = FINANCE_ACTIONS.find(x => x.id === id); s.finCd = s.finCd || {};
   if ((s.finCd[id] || 0) > s.turn) return { ok: false, msg: `${s.finCd[id] - s.turn}분기 후에 다시 할 수 있습니다.` };

@@ -99,7 +99,8 @@ const ADVICE = {
       { t: `국채 이자 분기 ${won(-budgetIncome(s).interest)}`, good: s.stats.debt < 60 },
       ...(s.war ? [{ t: '전쟁 비용', good: false }] : []),
     ],
-    actions: s => [finRec('repay'), ...topPolicies(s, d => (d.e.fiscal || 0) - (d.e.debt || 0) * 0.3, 3).map(r => polRec(r, `재정수지 ${(r.pv.diff.e.fiscal || 0) >= 0 ? '+' : ''}${(r.pv.diff.e.fiscal || 0).toFixed(2)}%p`)),
+    actions: s => [{ icon: '🏦', label: `국고로 최대 상환 (-${Math.min(Math.floor(s.stats.debt), Math.floor(s.pcap / REPAY_UNIT))}%p)`, desc: '쓰고 남는 국고로 나랏빚을 한꺼번에 갚습니다. ₩5조 = 1%p.', run: () => repayDebt(S, 999) },
+      { icon: '🔁', label: '자동 상환 켜기 (₩15조 초과분)', desc: '매 분기 결산 때 국고가 ₩15조를 넘는 만큼 자동으로 갚습니다.', run: () => { S.autoRepay = 150; return { ok: true, msg: '자동 상환을 켰습니다.' }; } }, ...topPolicies(s, d => (d.e.fiscal || 0) - (d.e.debt || 0) * 0.3, 3).map(r => polRec(r, `재정수지 ${(r.pv.diff.e.fiscal || 0) >= 0 ? '+' : ''}${(r.pv.diff.e.fiscal || 0).toFixed(2)}%p`)),
       { icon: '🚫', label: '국채 발행은 피하기', desc: '찍을수록 채무가 늘고 이자 부담이 커집니다. 국고가 0 밑으로 떨어져도 자동 발행됩니다.', go: () => { closeModal(); showTab('economy'); } }] },
   tension: {
     name: '세계 긴장도', icon: '🌐', value: s => (s.world?.tension || 0).toFixed(0),
