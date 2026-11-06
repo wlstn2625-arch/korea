@@ -28,7 +28,8 @@ function ourForces(s) {
 }
 function foreignForces(k) {
   const c = cinfo(k);
-  return { divs: c.mil * (k === 'nk' ? 1.3 : 0.9), quality: QUALITY[k] ?? clamp(0.35 + c.eco / 160, 0.4, 0.95), air: AIR[k] ?? c.mil * 0.6, navy: NAVY[k] ?? c.mil * 0.45 };
+  const boost = typeof geoBoost === 'function' ? geoBoost(k) : 0;
+  return { divs: (c.mil + boost) * (k === 'nk' ? 1.3 : 0.9), quality: QUALITY[k] ?? clamp(0.35 + c.eco / 160, 0.4, 0.95), air: AIR[k] ?? c.mil * 0.6, navy: NAVY[k] ?? c.mil * 0.45 };
 }
 // 동맹군은 본국 전력 일부만 투입(원정)
 const expedition = (k, f) => ({ divs: f.divs * (k === 'us' ? 0.16 : 0.18), quality: f.quality, air: f.air * (k === 'us' ? 0.55 : 0.3), navy: f.navy * (k === 'us' ? 0.5 : 0.3) });

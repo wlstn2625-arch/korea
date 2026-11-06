@@ -41,7 +41,7 @@ function worldNews(s, text, type = 'info') {
 const ownerOf = (s, k) => s.world?.owner?.[k] || null;
 const alive = (s, k) => !s.annexed[k] && !ownerOf(s, k) && !!s.leaders?.[k];
 function power(s, k) {
-  let p = cinfo(k).mil;
+  let p = cinfo(k).mil + (s.geo?.boost?.[k] || 0); // 반한 연합의 군비 증강
   for (const [o, by] of Object.entries(s.world?.owner || {})) if (by === k) p += cinfo(o).mil * 0.4;
   const civil = s.world?.conflicts.find(c => c.type === 'civil' && c.a === k);
   return civil ? p * 0.6 : p;

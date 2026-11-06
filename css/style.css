@@ -906,3 +906,11 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @keyframes coin { from { transform: translate(-50%, -50%) rotate(var(--a)) translateY(0); opacity: 1; } to { transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(-1 * var(--d))); opacity: 0; } }
 @keyframes popIn { 0% { opacity: 0; transform: translate(-50%, -40%) scale(.6); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 20% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60%); } }
 @media (max-width: 760px) { .quest { left: 8px; top: 200px; width: 230px; } .quest.closed { width: auto; } }
+
+/* 국제 사회의 반응 */
+.geo-box { display: grid; gap: 7px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 12px; }
+.geo-box h3 { font-size: 15px; }
+.geo-counts { display: flex; flex-wrap: wrap; gap: 5px; }
+.geo-counts span { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; background: var(--card2); border: 1px solid var(--line); border-left: 4px solid var(--c); }
+.geo-counts b { margin-left: 3px; }
+.geo-coal { display: flex; flex-wrap: wrap; gap: 5px; } .geo-coal small { color: #ff8b8b; font-size: 10px; }

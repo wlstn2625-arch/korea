@@ -14,6 +14,7 @@ function landFill(k) {
   if (S.terr?.[k]?.rule === 'puppet') return 'var(--puppet-fill, #8a6fd1)';
   if (mapMode === 'camp') return CAMPS[campOf(S, k)].color;
   if (mapMode === 'ideo') { const L = S.leaders?.[k]; return L ? IDEOLOGIES[L.gov].color : 'var(--land-neutral)'; }
+  if (mapMode === 'stance' && typeof stanceOf === 'function') return STANCE[stanceOf(S, k)].color;
   if (mapMode === 'conflict') { const c = S.world?.conflicts.find(x => x.a === k || x.b === k); return c ? CONFLICT_COLOR[c.type] : 'var(--land-neutral)'; }
   if (S.war && (S.war.k === k || S.war.enemyAllies.includes(k))) return 'var(--enemy-fill)';
   if (S.war && S.war.allies.includes(k)) return 'var(--ally-fill)';
@@ -36,7 +37,7 @@ function buildGeoMap(container) {
       <input id="map-search" list="map-countries" placeholder="🔍 나라 검색 (예: 독일, 브라질)" autocomplete="off">
       <datalist id="map-countries">${allCountryKeys().map(k => `<option value="${esc(cname(k))}">`).join('')}</datalist>
       <div class="map-btns"><button class="btn sm" data-z="in" aria-label="확대">＋</button><button class="btn sm" data-z="out" aria-label="축소">－</button><button class="btn sm" data-z="asia">🇰🇷 동아시아</button><button class="btn sm" data-z="world">🌍 세계</button></div>
-      <div class="map-btns mode-btns">${[['rel', '관계'], ['camp', '진영'], ['ideo', '이념'], ['conflict', '분쟁']].map(([m, n]) => `<button class="btn sm ${m === mapMode ? 'primary' : ''}" data-mode="${m}">${n}</button>`).join('')}</div>
+      <div class="map-btns mode-btns">${[['rel', '관계'], ['camp', '진영'], ['ideo', '이념'], ['conflict', '분쟁'], ['stance', '대한 태도']].map(([m, n]) => `<button class="btn sm ${m === mapMode ? 'primary' : ''}" data-mode="${m}">${n}</button>`).join('')}</div>
     </div>
     <div class="quick">${QUICK.map(k => `<button class="chip" data-q="${k}">${cflag(k)} ${esc(cname(k))}</button>`).join('')}</div>
     <svg id="geo" class="geo" viewBox="0 0 ${M.w} ${M.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="세계 외교 지도">
@@ -170,6 +171,7 @@ function updateMap() {
   const lg = $('map-legend');
   if (lg) lg.innerHTML = (mapMode === 'camp' ? Object.values(CAMPS).map(c => `<span><i style="background:${c.color}"></i>${c.name}</span>`).join('')
     : mapMode === 'ideo' ? Object.values(IDEOLOGIES).map(c => `<span><i style="background:${c.color}"></i>${c.name}</span>`).join('')
+    : mapMode === 'stance' ? Object.values(STANCE).map(c => `<span><i style="background:${c.color}"></i>${c.icon} ${c.name}</span>`).join('')
     : mapMode === 'conflict' ? Object.entries(CONFLICT_TYPES).map(([t, c]) => `<span><i style="background:${CONFLICT_COLOR[t]}"></i>${c.name}</span>`).join('')
     : `<span><i style="background:hsl(120 var(--land-s) var(--land-l))"></i>우호</span><span><i style="background:hsl(60 var(--land-s) var(--land-l))"></i>보통</span><span><i style="background:hsl(0 var(--land-s) var(--land-l))"></i>적대</span><span><i style="background:var(--enemy-fill)"></i>교전국</span><span><i style="background:var(--ally-fill)"></i>참전 우방</span>`)
     + `<span><i style="background:var(--kr-fill)"></i>대한민국·편입</span><span>휠·드래그·두 손가락으로 확대/이동, 나라를 누르세요</span><span class="credit">지도: Natural Earth · 지도자는 가상 인물</span>`;
@@ -194,9 +196,9 @@ function renderWorld() {
   if (typeof MAP_DATA === 'undefined') { el.innerHTML = '<div class="empty">지도 데이터를 불러오지 못했습니다.</div>'; return; }
   // 지도는 화면 무대(stage)에 항상 깔려 있고, 외교 패널에는 정세·국가 정보만
   if (!$('geo')) buildGeoMap($('stage-map'));
-  if (!el.querySelector('#situation-slot')) el.innerHTML = `<div id="war-slot"></div><div id="situation-slot"></div><div id="cpanel-slot"></div>`;
+  if (!el.querySelector('#situation-slot')) el.innerHTML = `<div id="war-slot"></div><div id="geo-slot"></div><div id="situation-slot"></div><div id="cpanel-slot"></div>`;
   if (!mapView && mapBuilt.svg.clientWidth) mapView = viewAsia();
-  renderWarPanel(); renderSituation(); updateMap(); renderCountryPanel();
+  renderWarPanel(); if (typeof renderGeoPanel === 'function') renderGeoPanel(); renderSituation(); updateMap(); renderCountryPanel();
 }
 
 /* ---------------- 하츠식 전선 표시: 전선·부대·전투·공세 화살표 ---------------- */
