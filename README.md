@@ -66,7 +66,7 @@ https://claude.ai/artifact/1hQDme9GwVtEEd22LTyRQv — claude.ai에서 열면 API
 
 ```
 index.html              화면 구조
-css/style.css           스타일 (다크/라이트 테마, 모바일 대응)
+css/style.css           스타일 (다크 테마, 휴대폰·폴드(접은/펼친)·가로 모드·태블릿 대응)
 js/data.js              지표·세력·정책(현행 제도)·부작용·돌발 사건 데이터
 js/details/*.js         제도별 해설(배경·쟁점·찬반·사례)과 추가 선택지
 js/engine.js            시뮬레이션 엔진, 국회 표결, 규칙 기반 AI 판단

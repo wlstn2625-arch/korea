@@ -947,6 +947,76 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .hact:hover:not(:disabled) { border-color: var(--accent); } .hact:disabled { opacity: .45; cursor: not-allowed; }
 .hact b { font-size: 12px; } .hact small { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
 
+/* ===================== 기기별 최적화 (폴드·작은 폰·가로 모드·태블릿) ===================== */
+/* 접은 폴드·작은 폰 (≤400px) */
+@media (max-width: 400px) {
+  .hud { gap: 5px; padding-left: 8px; padding-right: 8px; }
+  .hud-date { min-width: 0; } .hud-date b { font-size: 13px; white-space: nowrap; } .hud-date span { font-size: 10px; }
+  .speed button { padding: 5px 6px; font-size: 11px; }
+  .speed button[data-speed="3"] { display: none; }
+  .hud-right .btn { padding: 5px 7px; font-size: 12px; }
+  .res { padding: 2px 4px; } .res .ri { font-size: 13px; } .res b { font-size: 12px; } .res small { font-size: 9px; }
+  .dock button { min-width: 54px; font-size: 9.5px; }
+  .panel-wrap { width: 100vw; }
+  .tr-main { grid-template-columns: auto 1fr auto; } .tr-main .tr-m, .tr-main .tr-caret { display: none; }
+  .hacts, .tprojs, .trules { grid-template-columns: 1fr; }
+  .wsides { grid-template-columns: 1fr; } .wvs { display: none; }
+  .quest { width: calc(100vw - 16px); }
+  .cap-banner { width: 90vw; padding: 10px 12px; } .cap-banner b { font-size: 16px; }
+}
+/* 펼친 폴드·태블릿 세로 (761~1180px): 자원 표시줄을 한 줄 6칸으로 */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .hud-res { order: 3; flex: 1 0 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .res { min-width: 0; }
+  .hud-right { margin-left: auto; }
+  .quest { top: 100px; }
+}
+/* 가로 모드 폰 (높이가 낮을 때): 상단 한 줄, 왼쪽 세로 메뉴, 속보 자막 숨김 → 지도를 최대로 */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud { gap: 6px; padding-top: 3px; padding-bottom: 3px; flex-wrap: nowrap; }
+  .seal, .hud-date span, .dayprog { display: none; }
+  .hud-date { min-width: 0; } .hud-date b { font-size: 12px; white-space: nowrap; }
+  .hud-res { order: 0; flex: 1 1 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; overflow: visible; }
+  .res { padding: 1px 4px; min-width: 0; } .res small { display: none; } .res .ri { font-size: 12px; } .res b { font-size: 11.5px; }
+  .speed button { padding: 4px 6px; }
+  .hud-right .btn { padding: 4px 7px; font-size: 11.5px; }
+  .ticker { display: none; }
+  .stage-map { inset: 0 0 0 54px; }
+  .stage-map .map-tools, .stage-map .quick { padding-left: 8px; }
+  .stage-map .quick, .stage-map .map-legend { display: none; }
+  .dock { top: 0; bottom: 0; left: 0; right: auto; width: 54px; transform: none; flex-direction: column; overflow-y: auto; gap: 0; background: var(--card); border-right: 1px solid var(--line); border-top: none; }
+  .dock button { width: 54px; min-width: 0; flex: 0 0 auto; font-size: 0; padding: 7px 0; border-radius: 0; border: none; }
+  .dock button span { font-size: 19px; }
+  .dock .badge { top: 1px; right: 2px; font-size: 9px; }
+  .panel-wrap { bottom: 0; width: min(560px, 70vw); }
+  .quest { left: 62px; top: 92px; width: 220px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  .war-hud { left: 62px; bottom: 8px; }
+  #alerts { top: 44px; }
+  .modal-card { max-height: 92vh; overflow-y: auto; }
+  .ev-banner { height: 70px; } .ev-banner .ev-art { font-size: 34px; }
+}
+/* 노치·홈 바 안전 영역 */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .ticker { padding-bottom: env(safe-area-inset-bottom); }
+  .hud { padding-top: max(6px, env(safe-area-inset-top)); }
+}
+.q-auto { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 5px 6px; border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.q-auto b { font-size: 11.5px; width: 100%; color: var(--accent); }
+/* 상단 시계 영역이 밀려 잘리지 않게 */
+@media (max-width: 400px) {
+  .hud-time { flex: 1 1 auto; min-width: 0; gap: 6px; }
+  .speed { flex: 0 0 auto; }
+  #hdr-term { display: none; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud-time { flex: 0 0 auto; gap: 5px; }
+  .hud-res { flex: 1 1 0; min-width: 0; }
+  .speed { flex: 0 0 auto; }
+  .speed button[data-speed="3"] { display: none; }
+  .hud-date b { font-size: 11px; }
+  .hud-right { flex: 0 0 auto; margin-left: 0; }
+}
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -6447,6 +6517,7 @@ if (typeof DOM_EVENTS !== 'undefined') DOM_EVENTS.govProposal = {
   ] };
 // 새 점령지는 기본으로 총독부 위임(설정에 따라)
 (function () { const f = createTerritory; createTerritory = function (s, k, rule, peaceful) { const t = f(s, k, rule, peaceful); if (govSettings(s).autoNew !== false) { t.auto = true; t.dir = govSettings(s).defDir || (k === 'nk' ? 'integrate' : 'balance'); } return t; }; })();
+HOOKS.migrate.push(s => { if (!s.govMigrated) { s.govMigrated = true; for (const [k, t] of Object.entries(s.terr || {})) if (t.auto == null) { t.auto = true; t.dir = t.dir || (k === 'nk' ? 'integrate' : 'balance'); } } });
 HOOKS.postTurn.push(autoGovern);
 HOOKS.postTurn.push(territoryTurn);
 
@@ -9168,6 +9239,8 @@ function renderAlerts() {
   if (S.pcap >= 200) list.push({ k: 'cash', icon: '💰', tip: `쓰지 않은 국고 ${won(S.pcap)} — 공장을 짓거나 정책에 투자하세요`, go: () => showTab('economy') });
   if (S.pcap < 15) list.push({ k: 'broke', icon: '🪙', red: true, tip: '국고가 바닥났습니다 — 눌러서 참모 조언 보기', go: () => openAdvisor('pcap') });
   if ((S.construction || []).length < 3 && S.pcap >= 60 && !list.some(x => x.k === 'cash')) list.push({ k: 'build', icon: '🏗️', tip: '공사할 수 있는 자리가 남았습니다', go: () => showTab('economy') });
+  const manual = Object.values(S.terr || {}).filter(t => !t.auto);
+  if (manual.length) list.push({ k: 'gov', icon: '🤖', tip: `직접 관리 중인 점령지 ${manual.length}곳 — 눌러서 총독부에 한 번에 맡기기`, go: () => { setGov(S, '*', 'auto', true); saveGame(S); renderAll(); toast('🤖 모든 점령지를 총독부에 맡겼습니다. 통치 방식 변경·봉기 같은 중요한 결정만 카드로 올라옵니다.', 4500); } });
   if (S.world?.tension >= 70) list.push({ k: 'tension', icon: '🌐', red: true, tip: `세계 긴장도 ${S.world.tension.toFixed(0)} — 위험. 눌러서 낮추는 방법 보기`, go: () => openAdvisor('tension') });
   const um = typeof urgentMetric === 'function' ? urgentMetric(S) : null;
   if (um && !(um === 'tension' && list.some(x => x.k === 'tension')) && !(um === 'pcap' && list.some(x => x.k === 'broke'))) list.push({ k: 'adv-' + um, icon: '💡', red: true, tip: `AI 참모: ${ADV_TIP[um]}`, go: () => openAdvisor(um) });
@@ -9671,7 +9744,7 @@ function openPeaceCard() {
   document.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => {
     const r = applyPeace(S, b.dataset.pt); if (r.ok === false) return toast(esc(r.msg));
     saveGame(S); closeModal(); toast(esc(r.msg), 4000); renderAll();
-    if (S.terr?.[k]) { defView = 'terr'; showTab('defense'); }
+    if (S.terr?.[k]) { defView = 'terr'; showTab('defense'); if (S.terr[k].auto) setTimeout(() => toast(`🤖 ${esc(cname(k))}은(는) 총독부가 운영합니다. 중요한 결정만 카드로 올라옵니다. 직접 하려면 표에서 '✋ 직접'으로 바꾸세요.`, 5000), 600); }
   });
 }
 
@@ -9903,6 +9976,11 @@ function renderQuest() {
       ${(() => { if (typeof eraOf !== 'function') return ''; const E = ERAS[eraOf(S) - 1], p = eraProgress(S);
         return `<div class="q-era"><b>${E.icon} ${E.name}</b>${p ? `<small>다음: ${p.next.icon} ${p.next.name} — Lv.${p.next.need.lv} ${p.lvOk ? '✅' : ''} · 국력 ${p.next.need.rank}위 이내 ${p.rankOk ? '✅' : `(현재 ${p.rank}위)`}</small>` : '<small>최고 단계</small>'}
           ${eraOf(S) >= 2 ? `<button class="chip ${S.pmAuto ? 'on' : ''}" id="q-pm">🧑‍💼 내정 총리 위임 ${S.pmAuto ? 'ON' : 'OFF'}</button>` : ''}</div>`; })()}
+      ${(() => { const ks = Object.keys(S.terr || {}); if (!ks.length && !(typeof eraOf === 'function' && eraOf(S) >= 2)) return '';
+        const nA = ks.filter(k => S.terr[k].auto).length;
+        return `<div class="q-auto"><b>⚙️ 자동 운영</b>
+          ${ks.length ? `<button class="chip ${nA === ks.length ? 'on' : ''}" id="q-gov">🤖 점령지 ${nA}/${ks.length} 위임${nA < ks.length ? ' · 전체 맡기기' : ''}</button>` : ''}
+          <button class="chip ${S.autoAI ? 'on' : ''}" id="q-crisis">🚨 위기 AI 참모 ${S.autoAI ? 'ON' : 'OFF'}</button></div>`; })()}
       <div class="q-title">📋 임무 <span class="muted">완료하면 국고·경험치</span></div>
       ${S.missions.map((ms, i) => { const p = missionProg(S, ms); if (!p.m) return '';
         const pct = p.pct != null ? p.pct : p.cur / p.goal;
@@ -9913,6 +9991,8 @@ function renderQuest() {
       <button class="q-ach" id="q-ach">🏆 업적 ${Object.keys(S.ach || {}).length}/${ACHIEVEMENTS.length} · 국력 점수 ${r.score.toFixed(0)}</button>
     </div>` : ''}`;
   $('q-toggle').onclick = () => { questOpen = !questOpen; renderQuest(); };
+  if ($('q-gov')) $('q-gov').onclick = () => { if (typeof defView !== 'undefined') { defView = 'terr'; } setGov(S, '*', 'auto', true); saveGame(S); renderAll(); showTab('defense'); toast('🤖 모든 점령지를 총독부에 맡겼습니다. 방침·예산은 이 화면에서 정하세요.', 4000); };
+  if ($('q-crisis')) $('q-crisis').onclick = () => { S.autoAI = !S.autoAI; if ($('auto-ai')) $('auto-ai').checked = S.autoAI; saveGame(S); renderQuest(); toast(S.autoAI ? '🚨 돌발 위기는 AI 참모가 해결하고 보고합니다.' : '돌발 위기를 직접 결정합니다.'); };
   if ($('q-pm')) $('q-pm').onclick = () => { S.pmAuto = !S.pmAuto; saveGame(S); renderQuest(); toast(S.pmAuto ? '🧑‍💼 국내 정치 현안은 국무총리가 처리합니다. 국가 비상·점령지 카드는 계속 대통령에게 옵니다.' : '국내 현안을 직접 결정합니다.', 4000); };
   q.querySelectorAll('[data-rr]').forEach(b => b.onclick = () => { const r = rerollMission(S, +b.dataset.rr); toast(esc(r.msg || '')); saveGame(S); renderQuest(); });
   if ($('q-ach')) $('q-ach').onclick = openAchievements;

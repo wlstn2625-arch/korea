@@ -284,5 +284,6 @@ if (typeof DOM_EVENTS !== 'undefined') DOM_EVENTS.govProposal = {
   ] };
 // 새 점령지는 기본으로 총독부 위임(설정에 따라)
 (function () { const f = createTerritory; createTerritory = function (s, k, rule, peaceful) { const t = f(s, k, rule, peaceful); if (govSettings(s).autoNew !== false) { t.auto = true; t.dir = govSettings(s).defDir || (k === 'nk' ? 'integrate' : 'balance'); } return t; }; })();
+HOOKS.migrate.push(s => { if (!s.govMigrated) { s.govMigrated = true; for (const [k, t] of Object.entries(s.terr || {})) if (t.auto == null) { t.auto = true; t.dir = t.dir || (k === 'nk' ? 'integrate' : 'balance'); } } });
 HOOKS.postTurn.push(autoGovern);
 HOOKS.postTurn.push(territoryTurn);

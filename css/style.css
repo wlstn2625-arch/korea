@@ -940,3 +940,73 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .hact { display: grid; gap: 2px; text-align: left; font: inherit; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; cursor: pointer; }
 .hact:hover:not(:disabled) { border-color: var(--accent); } .hact:disabled { opacity: .45; cursor: not-allowed; }
 .hact b { font-size: 12px; } .hact small { font-size: 10.5px; color: var(--muted); line-height: 1.35; }
+
+/* ===================== 기기별 최적화 (폴드·작은 폰·가로 모드·태블릿) ===================== */
+/* 접은 폴드·작은 폰 (≤400px) */
+@media (max-width: 400px) {
+  .hud { gap: 5px; padding-left: 8px; padding-right: 8px; }
+  .hud-date { min-width: 0; } .hud-date b { font-size: 13px; white-space: nowrap; } .hud-date span { font-size: 10px; }
+  .speed button { padding: 5px 6px; font-size: 11px; }
+  .speed button[data-speed="3"] { display: none; }
+  .hud-right .btn { padding: 5px 7px; font-size: 12px; }
+  .res { padding: 2px 4px; } .res .ri { font-size: 13px; } .res b { font-size: 12px; } .res small { font-size: 9px; }
+  .dock button { min-width: 54px; font-size: 9.5px; }
+  .panel-wrap { width: 100vw; }
+  .tr-main { grid-template-columns: auto 1fr auto; } .tr-main .tr-m, .tr-main .tr-caret { display: none; }
+  .hacts, .tprojs, .trules { grid-template-columns: 1fr; }
+  .wsides { grid-template-columns: 1fr; } .wvs { display: none; }
+  .quest { width: calc(100vw - 16px); }
+  .cap-banner { width: 90vw; padding: 10px 12px; } .cap-banner b { font-size: 16px; }
+}
+/* 펼친 폴드·태블릿 세로 (761~1180px): 자원 표시줄을 한 줄 6칸으로 */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .hud-res { order: 3; flex: 1 0 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .res { min-width: 0; }
+  .hud-right { margin-left: auto; }
+  .quest { top: 100px; }
+}
+/* 가로 모드 폰 (높이가 낮을 때): 상단 한 줄, 왼쪽 세로 메뉴, 속보 자막 숨김 → 지도를 최대로 */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud { gap: 6px; padding-top: 3px; padding-bottom: 3px; flex-wrap: nowrap; }
+  .seal, .hud-date span, .dayprog { display: none; }
+  .hud-date { min-width: 0; } .hud-date b { font-size: 12px; white-space: nowrap; }
+  .hud-res { order: 0; flex: 1 1 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; overflow: visible; }
+  .res { padding: 1px 4px; min-width: 0; } .res small { display: none; } .res .ri { font-size: 12px; } .res b { font-size: 11.5px; }
+  .speed button { padding: 4px 6px; }
+  .hud-right .btn { padding: 4px 7px; font-size: 11.5px; }
+  .ticker { display: none; }
+  .stage-map { inset: 0 0 0 54px; }
+  .stage-map .map-tools, .stage-map .quick { padding-left: 8px; }
+  .stage-map .quick, .stage-map .map-legend { display: none; }
+  .dock { top: 0; bottom: 0; left: 0; right: auto; width: 54px; transform: none; flex-direction: column; overflow-y: auto; gap: 0; background: var(--card); border-right: 1px solid var(--line); border-top: none; }
+  .dock button { width: 54px; min-width: 0; flex: 0 0 auto; font-size: 0; padding: 7px 0; border-radius: 0; border: none; }
+  .dock button span { font-size: 19px; }
+  .dock .badge { top: 1px; right: 2px; font-size: 9px; }
+  .panel-wrap { bottom: 0; width: min(560px, 70vw); }
+  .quest { left: 62px; top: 92px; width: 220px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  .war-hud { left: 62px; bottom: 8px; }
+  #alerts { top: 44px; }
+  .modal-card { max-height: 92vh; overflow-y: auto; }
+  .ev-banner { height: 70px; } .ev-banner .ev-art { font-size: 34px; }
+}
+/* 노치·홈 바 안전 영역 */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .ticker { padding-bottom: env(safe-area-inset-bottom); }
+  .hud { padding-top: max(6px, env(safe-area-inset-top)); }
+}
+.q-auto { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 5px 6px; border-radius: 8px; background: rgba(255, 255, 255, .04); }
+.q-auto b { font-size: 11.5px; width: 100%; color: var(--accent); }
+/* 상단 시계 영역이 밀려 잘리지 않게 */
+@media (max-width: 400px) {
+  .hud-time { flex: 1 1 auto; min-width: 0; gap: 6px; }
+  .speed { flex: 0 0 auto; }
+  #hdr-term { display: none; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud-time { flex: 0 0 auto; gap: 5px; }
+  .hud-res { flex: 1 1 0; min-width: 0; }
+  .speed { flex: 0 0 auto; }
+  .speed button[data-speed="3"] { display: none; }
+  .hud-date b { font-size: 11px; }
+  .hud-right { flex: 0 0 auto; margin-left: 0; }
+}

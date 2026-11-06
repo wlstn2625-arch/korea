@@ -152,6 +152,6 @@ function openPeaceCard() {
   document.querySelectorAll('[data-pt]').forEach(b => b.onclick = () => {
     const r = applyPeace(S, b.dataset.pt); if (r.ok === false) return toast(esc(r.msg));
     saveGame(S); closeModal(); toast(esc(r.msg), 4000); renderAll();
-    if (S.terr?.[k]) { defView = 'terr'; showTab('defense'); }
+    if (S.terr?.[k]) { defView = 'terr'; showTab('defense'); if (S.terr[k].auto) setTimeout(() => toast(`🤖 ${esc(cname(k))}은(는) 총독부가 운영합니다. 중요한 결정만 카드로 올라옵니다. 직접 하려면 표에서 '✋ 직접'으로 바꾸세요.`, 5000), 600); }
   });
 }

@@ -218,6 +218,8 @@ function renderAlerts() {
   if (S.pcap >= 200) list.push({ k: 'cash', icon: '💰', tip: `쓰지 않은 국고 ${won(S.pcap)} — 공장을 짓거나 정책에 투자하세요`, go: () => showTab('economy') });
   if (S.pcap < 15) list.push({ k: 'broke', icon: '🪙', red: true, tip: '국고가 바닥났습니다 — 눌러서 참모 조언 보기', go: () => openAdvisor('pcap') });
   if ((S.construction || []).length < 3 && S.pcap >= 60 && !list.some(x => x.k === 'cash')) list.push({ k: 'build', icon: '🏗️', tip: '공사할 수 있는 자리가 남았습니다', go: () => showTab('economy') });
+  const manual = Object.values(S.terr || {}).filter(t => !t.auto);
+  if (manual.length) list.push({ k: 'gov', icon: '🤖', tip: `직접 관리 중인 점령지 ${manual.length}곳 — 눌러서 총독부에 한 번에 맡기기`, go: () => { setGov(S, '*', 'auto', true); saveGame(S); renderAll(); toast('🤖 모든 점령지를 총독부에 맡겼습니다. 통치 방식 변경·봉기 같은 중요한 결정만 카드로 올라옵니다.', 4500); } });
   if (S.world?.tension >= 70) list.push({ k: 'tension', icon: '🌐', red: true, tip: `세계 긴장도 ${S.world.tension.toFixed(0)} — 위험. 눌러서 낮추는 방법 보기`, go: () => openAdvisor('tension') });
   const um = typeof urgentMetric === 'function' ? urgentMetric(S) : null;
   if (um && !(um === 'tension' && list.some(x => x.k === 'tension')) && !(um === 'pcap' && list.some(x => x.k === 'broke'))) list.push({ k: 'adv-' + um, icon: '💡', red: true, tip: `AI 참모: ${ADV_TIP[um]}`, go: () => openAdvisor(um) });
