@@ -41,8 +41,10 @@ const TERR_POLICIES = [
 ];
 const projCost = (k, id, lv) => Math.round((15 + cinfo(k).eco * 0.25 + terrPop(k) / 1e7) * (1 + lv * 0.6));
 // 개발 사업·현지 정책 효과 합
-function terrMods(t) {
+function terrMods(t, s) {
   const m = { cap: 0, gdp: 0, mil: 0, divs: 0, upkeep: 0, resist: 0, integ: 0, dev: 0 };
+  const G = s && typeof govMods === 'function' ? govMods(s, t.k) : null; // 지역 총독
+  if (G) for (const k in G) m[k] += G[k];
   for (const p of TERR_PROJECTS) { const lv = t.lv?.[p.id] || 0; for (const k in p.fx) m[k] += p.fx[k] * lv; }
   for (const p of TERR_POLICIES) if (t.pol?.[p.id]) for (const k in p.fx) m[k] += p.fx[k];
   return m;
@@ -79,7 +81,7 @@ function terrOutput(s, k) {
   const t = s.terr[k], c = cinfo(k), R = RULES[t.rule];
   const calm = 1 - t.resist / 130, full = t.integ >= 100;
   const ext = (full ? 0.9 : R.ext) * LEVELS.extract.mul[t.extract];
-  const M = terrMods(t);
+  const M = terrMods(t, s);
   const capital = (c.eco * 0.35 + 2) * (t.dev / 50) * ext * calm * Math.max(0.2, 1 + M.cap);
   const upkeep = R.upkeep * (c.eco * 0.5 + 6) * Math.max(0.3, 1 + M.upkeep) + LEVELS.invest.cost[t.invest];
   const divs = R.puppet ? terrPop(k) / 1e6 * 0.08 * LEVELS.conscript.mul[Math.min(1, t.conscript)] : terrPop(k) / 1e6 * 0.2 * Math.max(LEVELS.conscript.mul[t.conscript], full ? 0.4 : 0) * calm;
@@ -143,7 +145,7 @@ function territoryTurn(s, report) {
     const t = s.terr[k], R = RULES[t.rule], o = terrOutput(s, k);
     gdp += o.gdp; // 자본(국고)은 budgetIncome의 점령지 항목으로 들어옴
     // 저항·통합·개발
-    const inv = t.invest, M = terrMods(t);
+    const inv = t.invest, M = terrMods(t, s);
     // 개발 사업 공사 진행
     for (const pj of [...(t.proj || [])]) if (--pj.left <= 0) { t.proj = t.proj.filter(x => x !== pj); t.lv = t.lv || {}; t.lv[pj.id] = (t.lv[pj.id] || 0) + 1; const P = TERR_PROJECTS.find(x => x.id === pj.id); report.terr.push(`${P.icon} ${cname(k)} ${P.name} ${t.lv[pj.id]}단계 완공`); addLog(s, 'good', `${P.icon} ${cname(k)} ${P.name} ${t.lv[pj.id]}단계 완공`); }
     const years = (s.turn - t.since) / 4; // 세월이 흐르면 저항이 조금씩 체념으로

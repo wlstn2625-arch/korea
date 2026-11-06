@@ -142,10 +142,13 @@ function renderQuest() {
     ${questOpen ? `<div class="q-body">
       ${(() => { if (typeof eraOf !== 'function') return ''; const E = ERAS[eraOf(S) - 1], p = eraProgress(S);
         return `<div class="q-era"><b>${E.icon} ${E.name}</b>${p ? `<small>다음: ${p.next.icon} ${p.next.name} — Lv.${p.next.need.lv} ${p.lvOk ? '✅' : ''} · 국력 ${p.next.need.rank}위 이내 ${p.rankOk ? '✅' : `(현재 ${p.rank}위)`}</small>` : '<small>최고 단계</small>'}
-          ${eraOf(S) >= 2 ? `<button class="chip ${S.pmAuto ? 'on' : ''}" id="q-pm">🧑‍💼 내정 총리 위임 ${S.pmAuto ? 'ON' : 'OFF'}</button>` : ''}</div>`; })()}
-      ${(() => { const ks = Object.keys(S.terr || {}); if (!ks.length && !(typeof eraOf === 'function' && eraOf(S) >= 2)) return '';
+</div>`; })()}
+      ${(() => { const ks = Object.keys(S.terr || {});
         const nA = ks.filter(k => S.terr[k].auto).length;
         return `<div class="q-auto"><b>⚙️ 자동 운영</b>
+          <button class="chip big ${S.autoMode ? 'on' : ''}" id="q-automode">⚙️ 자동 국정 모드 ${S.autoMode ? 'ON' : 'OFF'}</button>
+          <button class="chip ${S.pmAuto ? 'on' : ''}" id="q-pm">🧑‍💼 내정 총리 ${S.pmAuto ? 'ON' : 'OFF'}</button>
+          <button class="chip ${S.briefMode !== false ? 'on' : ''}" id="q-brief">📋 결재판 ${S.briefMode !== false ? 'ON' : 'OFF'}</button>
           ${ks.length ? `<button class="chip ${nA === ks.length ? 'on' : ''}" id="q-gov">🤖 점령지 ${nA}/${ks.length} 위임${nA < ks.length ? ' · 전체 맡기기' : ''}</button>` : ''}
           <button class="chip ${S.autoAI ? 'on' : ''}" id="q-crisis">🚨 위기 AI 참모 ${S.autoAI ? 'ON' : 'OFF'}</button></div>`; })()}
       <div class="q-title">📋 임무 <span class="muted">완료하면 국고·경험치</span></div>
@@ -158,6 +161,8 @@ function renderQuest() {
       <button class="q-ach" id="q-ach">🏆 업적 ${Object.keys(S.ach || {}).length}/${ACHIEVEMENTS.length} · 국력 점수 ${r.score.toFixed(0)}</button>
     </div>` : ''}`;
   $('q-toggle').onclick = () => { questOpen = !questOpen; renderQuest(); };
+  if ($('q-automode')) $('q-automode').onclick = () => { const r = setAutoMode(S, !S.autoMode); saveGame(S); renderAll(); toast(r.msg, 5000); };
+  if ($('q-brief')) $('q-brief').onclick = () => { S.briefMode = S.briefMode === false; saveGame(S); renderQuest(); toast(S.briefMode ? '📋 분기마다 결재판 한 장으로 모아 보여줍니다.' : '사건 카드를 하나씩 바로 띄웁니다.'); };
   if ($('q-gov')) $('q-gov').onclick = () => { if (typeof defView !== 'undefined') { defView = 'terr'; } setGov(S, '*', 'auto', true); saveGame(S); renderAll(); showTab('defense'); toast('🤖 모든 점령지를 총독부에 맡겼습니다. 방침·예산은 이 화면에서 정하세요.', 4000); };
   if ($('q-crisis')) $('q-crisis').onclick = () => { S.autoAI = !S.autoAI; if ($('auto-ai')) $('auto-ai').checked = S.autoAI; saveGame(S); renderQuest(); toast(S.autoAI ? '🚨 돌발 위기는 AI 참모가 해결하고 보고합니다.' : '돌발 위기를 직접 결정합니다.'); };
   if ($('q-pm')) $('q-pm').onclick = () => { S.pmAuto = !S.pmAuto; saveGame(S); renderQuest(); toast(S.pmAuto ? '🧑‍💼 국내 정치 현안은 국무총리가 처리합니다. 국가 비상·점령지 카드는 계속 대통령에게 옵니다.' : '국내 현안을 직접 결정합니다.', 4000); };

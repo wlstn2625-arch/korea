@@ -5,7 +5,7 @@
  * ========================================================= */
 const ERAS = [
   { n: 1, name: '국가 기반 다지기', icon: '🏗️', need: null, desc: '국내 정치·경제의 기반을 다지는 시기.' },
-  { n: 2, name: '지역 강국', icon: '🌏', need: { lv: 4, rank: 12 }, desc: '동아시아 질서를 주도합니다. 지역 정책, 안보 보장·압박 외교, 국무총리 내정 위임이 열립니다.' },
+  { n: 2, name: '지역 강국', icon: '🌏', need: { lv: 4, rank: 12 }, desc: '동아시아 질서를 주도합니다. 지역 정책, 안보 보장·압박 외교가 열립니다.' },
   { n: 3, name: '세계 강국', icon: '🌐', need: { lv: 8, rank: 6 }, desc: '세계 질서의 한 축. 정권 교체 공작, 세력권 선언, 기축통화·우주 정책이 열립니다.' },
   { n: 4, name: '초강대국', icon: '👑', need: { lv: 12, rank: 2 }, desc: '팍스 코리아나. 국제 질서를 새로 씁니다.' },
 ];
@@ -98,7 +98,7 @@ function pmPick(s, ev) {
   return best < 0 ? def.choices.findIndex(c => !c.pc) : best;
 }
 function pmAutoResolve(s) {
-  if (!s.pmAuto || eraOf(s) < 2) return [];
+  if (!s.pmAuto) return [];
   const out = [];
   for (const ev of [...(s.dom?.pending || [])]) {
     const def = DOM_EVENTS[ev.key]; if (!def || def.extreme || ['govProposal', 'terrRevolt', 'protectRequest'].includes(ev.key)) continue;
@@ -116,7 +116,7 @@ HOOKS.migrate.push(s => { for (const p of POLICIES) if (s.policies[p.id] == null
 function openEraCard(n) {
   const E = ERAS[n - 1]; if (typeof setSpeed === 'function') setSpeed(0);
   const pols = ERA_POLICIES.filter(p => p.era === n).map(p => `<li>📜 ${esc(p.name)}</li>`).join('');
-  const acts = { 2: ['🛡️ 약소국 안보 보장(세력권)', '👑 압박 요구(시장 개방·기지·자원·진영 합류)', '🚫 동맹국 제재 동참 요청', '🧑‍💼 국무총리 내정 위임'], 3: ['🕶️ 정권 교체 공작'], 4: [] }[n] || [];
+  const acts = { 2: ['🛡️ 약소국 안보 보장(세력권)', '👑 압박 요구(시장 개방·기지·자원·진영 합류)', '🚫 동맹국 제재 동참 요청'], 3: ['🕶️ 정권 교체 공작'], 4: [] }[n] || [];
   openModal(`<div class="event era-up">
     <div class="ev-banner ev-good"><span class="ev-art">${E.icon}</span><span class="ev-kind">국가 발전 단계 승격</span><span class="ev-date">${n}단계</span></div>
     <h2>대한민국, ${E.name}으로</h2><p class="ev-desc">${esc(E.desc)} 국고 +${won(50 * n)}.</p>
