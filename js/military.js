@@ -110,6 +110,12 @@ function warDay(s) {
   const pA = landPower(A, sup.air), pB = landPower(B, 1 - sup.air);
   const enSurr = surrender(s, 'en'), krSurr = surrender(s, 'kr');
   T.en.stance = enSurr > 55 ? 'all' : pB > pA * 0.95 ? 'attack' : 'hold';
+  // 주공 목표: 목표 도시에 가장 가까운 전선에 병력 집중(×1.6), 나머지는 조공(×0.85). 적은 서울을 노림
+  const focus = (goal, side) => { const tg = goal && byId[goal]; if (!tg || (side === 'kr' ? tg.owner === 'kr' : tg.owner !== 'kr') || edges.length < 2) return () => 1; // 전선이 하나면 집중할 것도 없음
+    const d = p => Math.hypot(p.c[0] - tg.c[0], p.c[1] - tg.c[1]); const min = Math.min(...edges.map(e => d(byId[side === 'kr' ? e[1] : e[0]])));
+    return p => d(p) <= min + 0.01 ? (side === 'kr' ? 1.6 : 1.3) : (side === 'kr' ? 0.85 : 0.95); };
+  if (T.target && byId[T.target]?.owner === 'kr') { warLog(s, `🎯 목표 ${byId[T.target].n} 확보!`, 'good'); T.target = null; }
+  const fK = focus(T.target, 'kr'), fE = focus(T.provs.find(p => p.n === '서울특별시' && p.owner === 'kr')?.id, 'en');
   if (edges.length) {
     const share = 1 / edges.length; var dayKr = 0, dayEn = 0;
     for (const [ourId, enId] of edges) {
@@ -119,8 +125,9 @@ function warDay(s) {
       let delta = 0;
       // 방어 측은 지형·요새·참호(방어 태세) 보너스
       const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
-      if (atkK) delta += (pA * atkK - pB * dE * 0.9) / (pA + pB * dE * 0.9 + 1) * 8 + 0.8;
-      if (atkE) delta -= (pB * atkE - pA * dK * 0.9) / (pB + pA * dK * 0.9 + 1) * 8 + 0.8;
+      const fk = fK(theirs), fe = fE(ours);
+      if (atkK) delta += ((pA * atkK * fk - pB * dE * 0.9) / (pA * fk + pB * dE * 0.9 + 1) * 8 + 0.8) * (fk > 1 ? 1.15 : fk < 1 ? 0.8 : 1);
+      if (atkE) delta -= ((pB * atkE * fe - pA * dK * 0.9) / (pB * fe + pA * dK * 0.9 + 1) * 8 + 0.8) * (fe > 1 ? 1.1 : 1);
       delta += gauss() * 1.6;
       if (!atkK && !atkE) delta = 0;
       e.prog = clamp(e.prog + delta, -100, 100);
@@ -131,8 +138,8 @@ function warDay(s) {
         const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
         T.kr.cas += krC; T.en.cas += enC; dayKr += krC; dayEn += enC;
       }
-      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); break; }
-      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); break; }
+      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); warFx(T, { type: 'capture', side: 'kr', name: theirs.n, vp: theirs.vp, c: theirs.c }); s.cnt = s.cnt || {}; s.cnt.capture = (s.cnt.capture || 0) + 1; break; }
+      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: ours.n, vp: ours.vp, c: ours.c }); break; }
     }
   }
   T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
@@ -192,6 +199,16 @@ const OPS = [
     can: s => s.war.theater.mobilized ? '이미 총동원 중입니다.' : null,
     run: s => { const T = s.war.theater; T.mobilized = true; T.kr.mp = clamp(T.kr.mp + 15, 30, 100); s.approval = clamp(s.approval - 4, 0, 100); s.mods.gdp -= 0.2; s.factions.youth = clamp(s.factions.youth - 6, 0, 100); return '총동원령을 선포했습니다. 예비군이 전선으로 향합니다.'; } },
 ];
+// 화면 연출용 사건 기록 (지도 폭발·함락 배너). 화면이 읽고 지움
+function warFx(T, ev) { (T.fx = T.fx || []).push(ev); if (T.fx.length > 8) T.fx.shift(); }
+function setTarget(s, id) {
+  const T = s.war?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  const p = T.provs.find(x => x.id === id);
+  if (!id || !p) { T.target = null; return { ok: true, msg: '주공 목표를 해제했습니다.' }; }
+  if (p.owner === 'kr') return { ok: false, msg: '이미 아군이 장악한 곳입니다.' };
+  T.target = id; warLog(s, `🎯 주공 목표 지정: ${p.n}`);
+  return { ok: true, msg: `🎯 주공 목표: ${p.n} — 가장 가까운 전선에 병력을 집중합니다.` };
+}
 function setStance(s, st) { if (!s.war?.theater) return { ok: false }; s.war.theater.kr.stance = st; warLog(s, `아군 태세 전환: ${STANCES[st].name}`); return { ok: true }; }
 function warOp(s, id) {
   const T = s.war?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
@@ -201,6 +218,9 @@ function warOp(s, id) {
   if (s.pcap < o.cost) return { ok: false, msg: `국고 ${won(o.cost)}이(가) 필요합니다.` };
   s.pcap -= o.cost; T.ops[id] = T.days + o.cd;
   const msg = o.run(s); warLog(s, `${o.icon} ${msg}`);
+  const tgt = T.provs.find(p => p.id === T.target) || T.provs.filter(p => p.home === s.war.k && p.owner !== 'kr').sort((a, b) => b.vp - a.vp)[0];
+  warFx(T, { type: 'op', id, c: tgt?.c, ok: !/실패/.test(msg) });
+  s.cnt = s.cnt || {}; s.cnt.ops = (s.cnt.ops || 0) + 1;
   return { ok: true, msg };
 }
 

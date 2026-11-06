@@ -17,6 +17,56 @@ const LEVELS = {
   invest: { name: '재건 투자', opts: ['없음', '보통', '대규모'], cost: [0, 10, 25], dev: [0, 1.5, 4], resist: [0, -1.5, -3.5], integ: [0, 1, 2] },
 };
 
+// 점령지 개발 사업 (최대 3단계, 단계마다 효과 누적)
+//  cap: 자본 배율, gdp: 성장 배율, mil: 국방력 배율, divs: 사단, upkeep: 유지비 배율, resist/integ/dev: 분기 변화
+const TERR_PROJECTS = [
+  { id: 'rail', name: '도로·철도망', icon: '🛤️', time: 2, fx: { cap: 0.05, dev: 0.8, integ: 0.5 }, desc: '물자가 돌고 사람이 오갑니다. 개발·통합의 기본.' },
+  { id: 'port', name: '무역항·물류기지', icon: '⚓', time: 2, fx: { cap: 0.12, gdp: 0.1 }, desc: '본토와의 교역으로 자본 수입 증가.' },
+  { id: 'mine', name: '광산·자원 개발', icon: '⛏️', time: 2, fx: { gdp: 0.25, cap: 0.08, resist: 0.4 }, desc: '희토류·광물을 캐 본토 산업에 공급(성장률↑). 주민 반발.' },
+  { id: 'ind', name: '산업단지·공장', icon: '🏭', time: 3, fx: { cap: 0.18, dev: 0.5, resist: -0.2 }, desc: '일자리가 생기고 세수가 늘어납니다.' },
+  { id: 'school', name: '학교·한국어 교육', icon: '🏫', time: 2, fx: { integ: 1.2, resist: -0.4 }, desc: '다음 세대가 대한민국 시민으로 자랍니다.' },
+  { id: 'hospital', name: '병원·보건소', icon: '🏥', time: 2, fx: { resist: -0.7, dev: 0.3 }, desc: '민심을 얻는 가장 확실한 길.' },
+  { id: 'base', name: '군사기지', icon: '🪖', time: 2, fx: { mil: 0.25, divs: 1.5, resist: 0.3 }, desc: '현지 주둔군과 전진기지. 국방력↑, 반감↑.' },
+  { id: 'police', name: '경찰·정보망', icon: '🕵️', time: 1, fx: { resist: -0.9 }, desc: '저항 조직을 미리 색출합니다.' },
+  { id: 'admin', name: '행정청·세무서', icon: '🏛️', time: 2, fx: { cap: 0.08, upkeep: -0.15 }, desc: '징수 효율↑, 통치 비용↓.' },
+];
+// 현지 정책 (켜고 끌 수 있음, 켤 때 국고)
+const TERR_POLICIES = [
+  { id: 'land', name: '토지 개혁', icon: '🌾', cost: 12, fx: { resist: -0.8, cap: -0.1, dev: 0.3 }, desc: '지주 땅을 소작농에게. 민심↑, 수입 조금↓.' },
+  { id: 'settle', name: '한국인 이주 장려', icon: '🧳', cost: 15, fx: { integ: 1.5, resist: 0.8, dev: 0.4 }, desc: '본토 주민 이주로 통합 가속. 원주민 반발.' },
+  { id: 'elite', name: '현지 엘리트 등용', icon: '🤝', cost: 10, fx: { resist: -1, cap: -0.08 }, desc: '현지 유력층에게 자리를 줍니다.' },
+  { id: 'culture', name: '언어·문화 동화 정책', icon: '📖', cost: 10, fx: { integ: 2, resist: 1.2 }, desc: '한국어 공용화. 통합은 빠르지만 반감이 큽니다.' },
+  { id: 'fta', name: '자유무역지대', icon: '💹', cost: 20, fx: { cap: 0.2, gdp: 0.15, dev: 0.4 }, desc: '외국 자본 유치. 자본·성장 모두↑.' },
+  { id: 'martial', name: '계엄·통행 금지', icon: '⛔', cost: 8, fx: { resist: -1.8, dev: -0.6, cap: -0.15 }, desc: '저항을 짓누르지만 경제가 멈춥니다. 국제 비난.', intl: true },
+];
+const projCost = (k, id, lv) => Math.round((15 + cinfo(k).eco * 0.25 + terrPop(k) / 1e7) * (1 + lv * 0.6));
+// 개발 사업·현지 정책 효과 합
+function terrMods(t) {
+  const m = { cap: 0, gdp: 0, mil: 0, divs: 0, upkeep: 0, resist: 0, integ: 0, dev: 0 };
+  for (const p of TERR_PROJECTS) { const lv = t.lv?.[p.id] || 0; for (const k in p.fx) m[k] += p.fx[k] * lv; }
+  for (const p of TERR_POLICIES) if (t.pol?.[p.id]) for (const k in p.fx) m[k] += p.fx[k];
+  return m;
+}
+function terrBuild(s, k, id) {
+  const t = s.terr?.[k], p = TERR_PROJECTS.find(x => x.id === id); if (!t || !p) return { ok: false, msg: '알 수 없는 사업입니다.' };
+  t.lv = t.lv || {}; t.proj = t.proj || [];
+  const lv = (t.lv[id] || 0) + t.proj.filter(x => x.id === id).length;
+  if (lv >= 3) return { ok: false, msg: `${p.name}은(는) 최대 3단계입니다.` };
+  if (t.proj.length >= 2) return { ok: false, msg: '점령지마다 동시에 2개 사업까지 진행할 수 있습니다.' };
+  const cost = projCost(k, id, lv); if (s.pcap < cost) return { ok: false, msg: `국고 ${won(cost)}이(가) 필요합니다.` };
+  s.pcap -= cost; t.proj.push({ id, left: p.time });
+  s.cnt = s.cnt || {}; s.cnt.terrBuild = (s.cnt.terrBuild || 0) + 1;
+  addLog(s, 'info', `${p.icon} ${cname(k)} ${p.name} ${lv + 1}단계 착공 (${won(cost)})`);
+  return { ok: true, msg: `${p.icon} ${cname(k)} ${p.name} ${lv + 1}단계 착공! ${p.time}분기 뒤 완공` };
+}
+function terrPolicy(s, k, id) {
+  const t = s.terr?.[k], p = TERR_POLICIES.find(x => x.id === id); if (!t || !p) return { ok: false };
+  t.pol = t.pol || {};
+  if (t.pol[id]) { delete t.pol[id]; return { ok: true, msg: `${p.icon} ${p.name} 폐지` }; }
+  if (s.pcap < p.cost) return { ok: false, msg: `국고 ${won(p.cost)}이(가) 필요합니다.` };
+  s.pcap -= p.cost; t.pol[id] = s.turn;
+  return { ok: true, msg: `${p.icon} ${cname(k)}: ${p.name} 시행` };
+}
 function terrPop(k) { return (typeof MAP_DATA !== 'undefined' && MAP_DATA.countries[k]?.pop) || cinfo(k).pop || 5e6; }
 function createTerritory(s, k, rule, peaceful) {
   s.terr = s.terr || {};
@@ -29,13 +79,14 @@ function terrOutput(s, k) {
   const t = s.terr[k], c = cinfo(k), R = RULES[t.rule];
   const calm = 1 - t.resist / 130, full = t.integ >= 100;
   const ext = (full ? 0.9 : R.ext) * LEVELS.extract.mul[t.extract];
-  const capital = (c.eco * 0.35 + 2) * (t.dev / 50) * ext * calm;
-  const upkeep = R.upkeep * (c.eco * 0.5 + 6) + LEVELS.invest.cost[t.invest];
+  const M = terrMods(t);
+  const capital = (c.eco * 0.35 + 2) * (t.dev / 50) * ext * calm * Math.max(0.2, 1 + M.cap);
+  const upkeep = R.upkeep * (c.eco * 0.5 + 6) * Math.max(0.3, 1 + M.upkeep) + LEVELS.invest.cost[t.invest];
   const divs = R.puppet ? terrPop(k) / 1e6 * 0.08 * LEVELS.conscript.mul[Math.min(1, t.conscript)] : terrPop(k) / 1e6 * 0.2 * Math.max(LEVELS.conscript.mul[t.conscript], full ? 0.4 : 0) * calm;
   const milShare = R.puppet ? 0.08 : t.rule === 'autonomy' ? 0.08 : 0.15;
-  const mil = c.mil * milShare * calm;
-  const gdp = ecoK(k) * 0.12 * (t.dev / 50) * (t.extract > 0 ? 1 : 0.6) * calm * (R.puppet ? 0.5 : 1);
-  return { capital, upkeep, divs: Math.min(divs, 25), air: mil * 0.5, navy: mil * 0.4, mil, gdp };
+  const mil = c.mil * milShare * calm * (1 + M.mil);
+  const gdp = ecoK(k) * 0.12 * (t.dev / 50) * (t.extract > 0 ? 1 : 0.6) * calm * (R.puppet ? 0.5 : 1) * (1 + M.gdp);
+  return { capital, upkeep, divs: Math.min(divs + M.divs, 30), air: mil * 0.5, navy: mil * 0.4, mil, gdp };
 }
 function terrForces(s) {
   const r = { divs: 0, air: 0, navy: 0, mil: 0 };
@@ -92,11 +143,14 @@ function territoryTurn(s, report) {
     const t = s.terr[k], R = RULES[t.rule], o = terrOutput(s, k);
     gdp += o.gdp; // 자본(국고)은 budgetIncome의 점령지 항목으로 들어옴
     // 저항·통합·개발
-    const inv = t.invest;
+    const inv = t.invest, M = terrMods(t);
+    // 개발 사업 공사 진행
+    for (const pj of [...(t.proj || [])]) if (--pj.left <= 0) { t.proj = t.proj.filter(x => x !== pj); t.lv = t.lv || {}; t.lv[pj.id] = (t.lv[pj.id] || 0) + 1; const P = TERR_PROJECTS.find(x => x.id === pj.id); report.terr.push(`${P.icon} ${cname(k)} ${P.name} ${t.lv[pj.id]}단계 완공`); addLog(s, 'good', `${P.icon} ${cname(k)} ${P.name} ${t.lv[pj.id]}단계 완공`); }
     const years = (s.turn - t.since) / 4; // 세월이 흐르면 저항이 조금씩 체념으로
-    t.resist = clamp(t.resist + R.resist + LEVELS.extract.resist[t.extract] + LEVELS.conscript.resist[t.conscript] + LEVELS.invest.resist[inv] - t.integ / 60 - Math.min(1.5, years * 0.3) + gauss() * 1.2, 0, 100);
-    t.integ = clamp(t.integ + Math.max(0, R.integ + LEVELS.invest.integ[inv]) * (1 - t.resist / 150), 0, 100);
-    t.dev = clamp(t.dev + LEVELS.invest.dev[inv] - (t.resist > 70 ? 1 : 0) + 0.3, 5, 100);
+    t.resist = clamp(t.resist + R.resist + LEVELS.extract.resist[t.extract] + LEVELS.conscript.resist[t.conscript] + LEVELS.invest.resist[inv] - t.integ / 60 - Math.min(1.5, years * 0.3) + M.resist + gauss() * 1.2, 0, 100);
+    t.integ = clamp(t.integ + Math.max(0, R.integ + LEVELS.invest.integ[inv] + M.integ) * (1 - t.resist / 150), 0, 100);
+    t.dev = clamp(t.dev + LEVELS.invest.dev[inv] + M.dev - (t.resist > 70 ? 1 : 0) + 0.3, 5, 100);
+    if (t.pol?.martial) for (const x of ['us', 'eu']) s.rel[x] = clamp(s.rel[x] - 0.4, 0, 100);
     if (t.integ >= 100 && !t.full) { t.full = true; t.resist = Math.min(t.resist, 10); report.terr.push(`🇰🇷 ${cname(k)}이(가) 완전히 통합되어 본토가 되었습니다!`); addLog(s, 'good', `🇰🇷 ${cname(k)} 완전 통합 달성`); }
     // 치안·국제 여론
     if (!R.puppet) s.stats.safety -= t.resist / 100 * 0.5;

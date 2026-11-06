@@ -211,7 +211,7 @@ function warOverlay(s) {
   // 가상 작전 지역(시·도 데이터가 없는 나라)
   const vs = T.provs.filter(p => p.virtual);
   for (let i = 0; i < vs.length - 1; i++) virt += `<line class="vlink" x1="${vs[i].c[0]}" y1="${vs[i].c[1]}" x2="${vs[i + 1].c[0]}" y2="${vs[i + 1].c[1]}"></line>`;
-  for (const p of vs) virt += unitG(p.c[0], p.c[1], `vreg ${p.owner === 'kr' ? 'kr' : 'en'}`, `<circle r="${p.vp >= 5 ? 8 : 6}"></circle>${p.vp >= 5 ? '<text y="-11">★ 수도권</text>' : ''}<title>${esc(p.n)}</title>`);
+  for (const p of vs) virt += unitG(p.c[0], p.c[1], `vreg ${p.owner === 'kr' ? 'kr' : 'en'}`, `<circle class="vreg-hit" data-vp="${p.id}" r="${p.vp >= 5 ? 8 : 6}"></circle>${p.vp >= 5 ? '<text y="-11">★ 수도권</text>' : ''}<title>${esc(p.n)}</title>`);
   for (const [ourId, enId] of edges) {
     const a = byId[ourId], b = byId[enId], e = T.edges[ourId + '>' + enId] || { prog: 0 };
     const mx = (a.c[0] + b.c[0]) / 2, my = (a.c[1] + b.c[1]) / 2, dx = b.c[0] - a.c[0], dy = b.c[1] - a.c[1], L = Math.hypot(dx, dy) || 1;
@@ -233,8 +233,10 @@ function warOverlay(s) {
     const n = Math.max(1, Math.round((u.side === 'kr' ? A.divs / nK : B.divs / nE) * u.n));
     units += unitG(x, y, `unit ${u.side}`, `<rect x="-11" y="-7" width="22" height="14" rx="1.5"></rect><path d="M-11 -7 L11 7 M-11 7 L11 -7"></path><text y="18">${n}</text>`);
   }
+  const tg = T.target && byId[T.target];
+  const target = tg && tg.owner !== 'kr' ? unitG(tg.c[0], tg.c[1], 'target', `<circle class="t1" r="13"></circle><circle class="t2" r="7"></circle><text y="-16">🎯 ${esc(tg.n)}</text>`) : '';
   const nuked = T.provs.filter(p => p.nuked).map(p => unitG(p.c[0], p.c[1], 'nuked', `<circle r="10"></circle><text y="5">☢</text>`)).join('');
-  return virt + lines + arrows + units + fights + nuked;
+  return virt + lines + arrows + units + fights + nuked + target;
 }
 
 /* ---------------- 전쟁 대시보드 ---------------- */
@@ -269,6 +271,8 @@ function renderWarPanel(force) {
     </div>
     <div class="wlabel">태세</div>
     <div class="wstances">${Object.entries(STANCES).map(([k, v]) => `<button class="btn sm ${T.kr.stance === k ? 'primary' : ''}" data-st="${k}">${{ hold: '🛡️', attack: '➡️', all: '⏩' }[k]} ${v.name}</button>`).join('')}</div>
+    <div class="wlabel">🎯 주공 목표 <span class="muted">(지도에서 적 도시를 눌러도 됩니다 · 목표 쪽 전선 ×1.6 집중)</span></div>
+    <div class="wtargets">${T.provs.filter(p => p.owner !== 'kr' && p.home !== 'kr' || p.home === 'kr' && p.owner !== 'kr').sort((a, b) => b.vp - a.vp).slice(0, 8).map(p => `<button class="chip ${T.target === p.id ? 'on' : ''}" data-tg="${p.id}">${p.vp >= 5 ? '★ ' : ''}${esc(p.n.replace(cname(w.k) + ' ', ''))}</button>`).join('')}${T.target ? '<button class="chip" data-tg="">해제</button>' : ''}</div>
     <div class="wlabel">작전 명령</div>
     <div class="wops">${ops}</div>
     ${nr > 0 ? `<div class="wnuke">☢️ 적 핵 사용 위험 분기당 ${(nr * 100).toFixed(1)}% — 적이 궁지에 몰릴수록 커집니다</div>` : ''}
@@ -278,7 +282,8 @@ function renderWarPanel(force) {
   </div>`;
   slot.querySelectorAll('[data-war]').forEach(b => b.onclick = () => act(warAction)(S, b.dataset.war));
   slot.querySelectorAll('[data-st]').forEach(b => b.onclick = () => act(setStance)(S, b.dataset.st));
-  slot.querySelectorAll('[data-op]').forEach(b => b.onclick = () => act(warOp)(S, b.dataset.op));
+  slot.querySelectorAll('[data-op]').forEach(b => b.onclick = () => { act(warOp)(S, b.dataset.op); if (typeof consumeWarFx === 'function') consumeWarFx(); });
+  slot.querySelectorAll('[data-tg]').forEach(b => b.onclick = () => act(setTarget)(S, b.dataset.tg));
   slot.querySelectorAll('[data-wfocus]').forEach(b => b.onclick = () => zoomTo(S.war.k));
 }
 // 화면 위 전쟁 HUD (어느 화면에서든 보임)

@@ -6,26 +6,30 @@ const BONUS_TXT = { divs: v => `사단 +${v}`, quality: v => `전투력(질) +${
   equip: v => `장비 보충 +${(v * 1000).toFixed(0)}‰/일`, org: v => `조직력 회복 +${v}/일`, landing: v => `상륙 성공률 +${Math.round(v * 100)}%p`, missile: v => `미사일 위력 +${Math.round(v * 100)}%`,
   cas: v => `아군 사상자 -${Math.round((1 - v) * 100)}%`, enemyAir: v => `적 공군력 -${Math.round((1 - v) * 100)}%`, nuke: v => `피핵 위험 -${Math.round((1 - v) * 100)}%`, mobilize: v => `총동원 사단 +${Math.round(v * 100)}%p`,
   income: v => `국고 +${won(v)}/분기` };
-const bonusList = b => Object.entries(b || {}).filter(([k]) => k !== 'mil' && BONUS_TXT[k]).map(([k, v]) => BONUS_TXT[k](v)).join(' · ');
+const bonusList = (b, fx) => [...Object.entries(fx || {}).map(([k, v]) => `${STATS[k].name} ${['gdp', 'unemp', 'infl', 'fiscal', 'tfr'].includes(k) ? `${v > 0 ? '+' : ''}${v.toFixed(2)}${k === 'tfr' ? '명' : '%p'}` : fmtStat(k, v, true)}`), ...Object.entries(b || {}).filter(([k]) => k !== 'mil' && BONUS_TXT[k]).map(([k, v]) => BONUS_TXT[k](v))].join(' · ');
 
 function renderDefense() {
   const el = $('tab-defense'); if (!el || !S) return;
   const nT = Object.keys(S.terr || {}).length;
   const badge = $('terr-badge'); if (badge) { const hot = Object.values(S.terr || {}).filter(t => t.resist >= 70).length; badge.textContent = hot || nT; badge.classList.toggle('hidden', !nT); badge.classList.toggle('info', !hot); }
-  el.innerHTML = `<div class="def-tabs"><button class="btn sm ${defView === 'tech' ? 'primary' : ''}" data-dv="tech">🪖 무기 개발</button><button class="btn sm ${defView === 'terr' ? 'primary' : ''}" data-dv="terr">🏴 점령지 통치 ${nT ? `(${nT})` : ''}</button></div>
-    <div id="def-body">${defView === 'tech' ? techHTML() : terrHTML()}</div>`;
+  el.innerHTML = `<div class="def-tabs"><button class="btn sm ${defView === 'tech' ? 'primary' : ''}" data-dv="tech">🪖 무기 개발</button><button class="btn sm ${defView === 'eco' ? 'primary' : ''}" data-dv="eco">📈 경제 발전</button><button class="btn sm ${defView === 'terr' ? 'primary' : ''}" data-dv="terr">🏴 점령지 통치 ${nT ? `(${nT})` : ''}</button></div>
+    <div id="def-body">${defView === 'tech' ? techHTML('mil') : defView === 'eco' ? techHTML('eco') : terrHTML()}</div>`;
   el.querySelectorAll('[data-dv]').forEach(b => b.onclick = () => { defView = b.dataset.dv; renderDefense(); });
   el.querySelectorAll('[data-tech]').forEach(b => b.onclick = () => act(startTech)(S, b.dataset.tech));
   el.querySelectorAll('[data-tcancel]').forEach(b => b.onclick = () => act(cancelTech)(S, b.dataset.tcancel));
   el.querySelectorAll('[data-tset]').forEach(b => b.onclick = () => { const [k, f, v] = b.dataset.tset.split('|'); act(setTerr)(S, k, f, f === 'rule' ? v : +v); });
   el.querySelectorAll('[data-trel]').forEach(b => b.onclick = () => { if (b.dataset.armed) act(releaseTerritory)(S, b.dataset.trel, false); else { b.dataset.armed = 1; b.textContent = '한 번 더 누르면 독립 승인'; } });
+  el.querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.tb.split('|'); act(terrBuild)(S, k, id); });
+  el.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.tp.split('|'); act(terrPolicy)(S, k, id); });
   el.querySelectorAll('[data-tsup]').forEach(b => b.onclick = () => act(suppressTerritory)(S, b.dataset.tsup));
   el.querySelectorAll('[data-tfocus]').forEach(b => b.onclick = () => { showTab('world'); zoomTo(b.dataset.tfocus); });
 }
 
-function techHTML() {
+function techHTML(tree) {
   const T = techState(S), tb = techBonus(S), f = ourForces(S);
-  const active = T.active.map(a => { const t = techById(a.id); return `<div class="tech-run"><span>${t.icon} <b>${esc(t.name)}</b></span>${meter((t.time - a.left) / t.time * 100, 'eq')}<span class="muted small">${a.left}분기 남음</span><button class="btn sm ghost" data-tcancel="${t.id}">중단</button></div>`; }).join('');
+  const inTree = t => treeOf(t) === tree;
+  const myActive = T.active.filter(a => inTree(techById(a.id)));
+  const active = myActive.map(a => { const t = techById(a.id); return `<div class="tech-run"><span>${t.icon} <b>${esc(t.name)}</b></span>${meter((t.time - a.left) / t.time * 100, 'eq')}<span class="muted small">${a.left}분기 남음</span><button class="btn sm ghost" data-tcancel="${t.id}">중단</button></div>`; }).join('');
   const col = br => {
     const list = TECHS.filter(t => t.br === br.id).sort((a, b) => a.tier - b.tier);
     return `<div class="tcol"><div class="tcol-h">${br.icon} ${br.name}</div>${list.map(t => {
@@ -33,20 +37,30 @@ function techHTML() {
       const st = done ? 'done' : run ? 'run' : why && /선행/.test(why) ? 'locked' : 'open';
       return `<div class="tnode ${st}" title="${esc(t.desc)}">
         <div class="tn-h"><span class="tn-ic">${t.icon}</span><b>${esc(t.name)}</b></div>
-        <div class="tn-b">${esc(bonusList(t.b))}</div>
+        <div class="tn-b">${esc(bonusList(t.b, t.fx))}</div>
         <div class="tn-d muted">${esc(t.desc)}</div>
         ${done ? '<div class="tn-s">✅ 실전 배치</div>' : run ? `<div class="tn-s">${meter((t.time - run.left) / t.time * 100, 'eq')} ${run.left}분기</div>`
           : `<button class="btn sm ${why ? '' : 'primary'}" data-tech="${t.id}" ${why ? 'disabled' : ''}>${why && !/국고/.test(why) ? esc(why) : `개발 ${won(t.cost)} · ${t.time}분기`}</button>`}
       </div>`; }).join('')}</div>`;
   };
+  const doneN = TECHS.filter(t => inTree(t) && T.done.includes(t.id)).length, totalN = TECHS.filter(inTree).length;
+  const branches = TECH_BRANCHES.filter(b => (b.tree || 'mil') === tree);
+  if (tree === 'eco') return `<div class="def-sum">
+      <div><span>성장률</span><b>${fmtStat('gdp', S.stats.gdp)}</b></div><div><span>혁신 지수</span><b>${S.stats.innovation.toFixed(0)}</b></div>
+      <div><span>기술 국고 수입</span><b>+${won(TECHS.filter(t => inTree(t) && T.done.includes(t.id)).reduce((a, t) => a + (t.b?.income || 0), 0))}/분기</b></div>
+      <div><span>개발 완료</span><b>${doneN}/${totalN}</b></div>
+    </div>
+    <p class="muted small">국고로 경제 기술을 개발하면 성장률·혁신·고용 등이 오래도록 오르고, 일부는 매 분기 국고 수입을 늘립니다. 국방 무기와 별도로 동시에 ${TECH_SLOTS}개까지.</p>
+    ${active ? `<div class="tech-active"><div class="wlabel">개발 중 (${myActive.length}/${TECH_SLOTS})</div>${active}</div>` : ''}
+    <div class="ttree">${branches.map(col).join('')}</div>`;
   return `<div class="def-sum">
       <div><span>사단</span><b>${Math.round(f.divs)}</b></div><div><span>전투력</span><b>${f.quality.toFixed(2)}</b></div>
       <div><span>공군력</span><b>${Math.round(f.air)}</b></div><div><span>해군력</span><b>${Math.round(f.navy)}</b></div>
       <div><span>군사력 점수</span><b>${Math.round(milPower(S))}</b></div><div><span>핵</span><b>${hasNukes(S, 'kr') ? '보유' : '없음'}</b></div>
     </div>
-    <p class="muted small">국고로 무기를 개발하면 완료된 분기부터 전쟁의 전력·작전에 바로 반영됩니다. 동시에 ${TECH_SLOTS}개까지, 중단하면 40% 환불. 개발 완료 ${T.done.length}/${TECHS.length}</p>
-    ${active ? `<div class="tech-active"><div class="wlabel">개발 중 (${T.active.length}/${TECH_SLOTS})</div>${active}</div>` : ''}
-    <div class="ttree">${TECH_BRANCHES.map(col).join('')}</div>`;
+    <p class="muted small">국고로 무기를 개발하면 완료된 분기부터 전쟁의 전력·작전에 바로 반영됩니다. 동시에 ${TECH_SLOTS}개까지, 중단하면 40% 환불. 개발 완료 ${doneN}/${totalN}</p>
+    ${active ? `<div class="tech-active"><div class="wlabel">개발 중 (${myActive.length}/${TECH_SLOTS})</div>${active}</div>` : ''}
+    <div class="ttree">${branches.map(col).join('')}</div>`;
 }
 
 function terrHTML() {
@@ -78,6 +92,15 @@ function terrHTML() {
         <div class="wlabel">통치 방식 <span class="muted">(바꾸면 ${won(15)}, 2분기 쿨타임)</span></div>
         <div class="trules">${Object.entries(RULES).map(([id, r]) => `<button class="trule ${t.rule === id ? 'on' : ''}" data-tset="${k}|rule|${id}" title="${esc(r.desc)}"><b>${r.icon} ${r.name}</b><small>${esc(r.desc)}</small></button>`).join('')}</div>
         ${seg('extract')}${seg('conscript')}${seg('invest')}
+        <div class="wlabel">🏗️ 개발 사업 <span class="muted">(동시 2개, 최대 3단계 · 진행 중: ${(t.proj || []).map(pj => { const P = TERR_PROJECTS.find(x => x.id === pj.id); return `${P.icon}${P.name} ${pj.left}분기`; }).join(', ') || '없음'})</span></div>
+        <div class="tprojs">${TERR_PROJECTS.map(P => { const lv = t.lv?.[P.id] || 0, busy = (t.proj || []).filter(x => x.id === P.id).length, nx = lv + busy, cost = projCost(k, P.id, nx);
+          return `<button class="tproj" data-tb="${k}|${P.id}" ${nx >= 3 || (t.proj || []).length >= 2 || S.pcap < cost ? 'disabled' : ''} title="${esc(P.desc)}">
+            <span class="ic">${P.icon}</span><span class="tx"><b>${P.name}</b><small>${esc(P.desc)}</small></span>
+            <span class="lv">${[0, 1, 2].map(i => `<i class="${i < lv ? 'on' : i < nx ? 'run' : ''}"></i>`).join('')}</span>
+            <span class="cost">${nx >= 3 ? '최대' : won(cost)}</span></button>`; }).join('')}</div>
+        <div class="wlabel">📜 현지 정책 <span class="muted">(누르면 시행/폐지)</span></div>
+        <div class="tpols">${TERR_POLICIES.map(P => `<button class="chip ${t.pol?.[P.id] ? 'on' : ''}" data-tp="${k}|${P.id}" title="${esc(P.desc)}">${P.icon} ${P.name}${t.pol?.[P.id] ? ' ✓' : ` ${won(P.cost)}`}</button>`).join('')}</div>
+        <div class="muted small">${TERR_POLICIES.filter(P => t.pol?.[P.id]).map(P => `${P.icon} ${P.desc}`).join(' / ') || '시행 중인 현지 정책이 없습니다. 칩에 마우스를 올리면 설명이 나옵니다.'}</div>
         ${t.resist >= 75 ? `<div class="wnuke">✊ 저항이 위험 수준입니다. 2분기 연속 최고치면 독립 봉기로 잃습니다. 징수·징병을 낮추거나 투자·자치로 달래세요.</div>` : ''}
         <div class="row-btns">${R.puppet ? '' : `<button class="btn sm" data-tsup="${k}" ${(t.supCd || 0) > S.turn ? 'disabled' : ''}>🪖 치안 작전 ${won(15)} <span class="muted small">저항 -15</span></button>`}<button class="btn sm ghost" data-trel="${k}">🕊️ 독립 승인</button></div>
       </div>`; }).join('')}`;
