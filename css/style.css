@@ -930,3 +930,13 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .gov-note { font-size: 12px; background: rgba(90, 140, 230, .12); border: 1px solid rgba(90, 140, 230, .4); border-radius: 8px; padding: 6px 8px; }
 @media (max-width: 760px) { .tr-row { grid-template-columns: 1fr auto; } .tr-row select { grid-column: 1 / -1; } .tr-main { grid-template-columns: auto 1fr 54px auto; } .tr-main .tr-m:nth-of-type(2) { display: none; } }
 @media (max-width: 760px) { .reward-pop { width: max-content; max-width: 88vw; padding: 10px 16px; } .reward-pop b, .reward-pop.big b { font-size: 17px; } }
+
+/* 발전 단계·패권 외교 */
+.q-era { display: grid; gap: 3px; padding: 6px 7px; border-radius: 8px; background: rgba(90, 140, 230, .1); border: 1px solid rgba(90, 140, 230, .35); }
+.q-era b { font-size: 12.5px; } .q-era small { font-size: 10.5px; color: var(--muted); }
+.pcard.locked { opacity: .6; border-style: dashed; }
+.heg-box { margin-top: 10px; display: grid; gap: 6px; }
+.hacts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 5px; }
+.hact { display: grid; gap: 2px; text-align: left; font: inherit; color: var(--text); background: var(--card2); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; cursor: pointer; }
+.hact:hover:not(:disabled) { border-color: var(--accent); } .hact:disabled { opacity: .45; cursor: not-allowed; }
+.hact b { font-size: 12px; } .hact small { font-size: 10.5px; color: var(--muted); line-height: 1.35; }

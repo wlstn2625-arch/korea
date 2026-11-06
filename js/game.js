@@ -54,6 +54,8 @@ function afterQuarter(report, recs, newCrises) {
   if (report.imf) blocking.push(() => openImfCard());
   if (S.nukePending) blocking.push(() => openNukeCard());
   if (S.peacePending) blocking.push(() => openPeaceCard());
+  if (report.eraUp) blocking.push(() => openEraCard(report.eraUp));
+  if (report.pmDone?.length) blocking.push(() => { toast(`🧑‍💼 국무총리가 국내 현안 ${report.pmDone.length}건을 처리했습니다.`, 3500); nextEvent(); });
   if (report.elections?.length) blocking.push(() => openElectionCard(report));
   for (const id of (report.domEvents || [])) blocking.push(() => openDomEventCard(id));
   for (const p of (S.world?.proposals || []).filter(p => p.turn === report.turn)) blocking.push(() => openProposalCard(p.id));
@@ -163,7 +165,7 @@ function refreshTicker() {
 
 /* ---------------- 내각 장관 ---------------- */
 const MINISTRY = { const: '대통령실 정무수석', tax: '기획재정부 장관', econ: '산업통상부 장관', labor: '고용노동부 장관', welfare: '보건복지부 장관', house: '국토교통부 장관', edu: '교육부 장관',
-  defense: '국방부 장관', diplo: '외교부 장관', justice: '법무부 장관', civil: '법제처장', env: '환경에너지부 장관', health: '보건의료 차관' };
+  defense: '국방부 장관', diplo: '외교부 장관', justice: '법무부 장관', civil: '법제처장', env: '환경에너지부 장관', health: '보건의료 차관', global: '국가안보실장(국제전략)' };
 const KOR_SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송'];
 const KOR_GIVEN = ['민준', '서연', '도윤', '지우', '현우', '수빈', '정훈', '은영', '성민', '혜진', '재석', '미경', '동현', '유나', '상철', '지혜'];
 function ministerOf(cat) {
@@ -175,7 +177,7 @@ let ministerPick = 0;
 function ministerProposals(cat) {
   const out = [];
   for (const p of allPolicies().filter(x => x.cat === cat)) {
-    if (S.enactedThisTurn.includes(p.id) || S.bills?.some(b => b.pid === p.id)) continue;
+    if (S.enactedThisTurn.includes(p.id) || S.bills?.some(b => b.pid === p.id) || (typeof policyLocked === 'function' && policyLocked(S, p))) continue;
     const cur = currentOption(p, S);
     for (const o of p.options) {
       if (o.id === cur.id || o.cur) continue;

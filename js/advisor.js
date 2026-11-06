@@ -9,7 +9,7 @@
 function topPolicies(s, scoreFn, n = 3) {
   const out = [];
   for (const p of allPolicies()) {
-    if ((s.bills || []).some(b => b.pid === p.id)) continue;
+    if ((s.bills || []).some(b => b.pid === p.id) || (typeof policyLocked === 'function' && policyLocked(s, p))) continue;
     for (const o of p.options) {
       if (o.id === s.policies[p.id] || o.cur) continue;
       let pv; try { pv = previewPolicy(s, p, o); } catch { continue; }

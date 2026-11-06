@@ -140,6 +140,9 @@ function renderQuest() {
   q.classList.toggle('closed', !questOpen);
   q.innerHTML = `<button class="q-head" id="q-toggle"><span class="q-lv">Lv.${lv}</span><span class="q-xp"><i style="width:${(xp / xpNeed(lv) * 100).toFixed(0)}%"></i></span><span class="q-rank">🏆 국력 ${r.rank}위</span><span class="q-caret">${questOpen ? '▾' : '▸'}</span></button>
     ${questOpen ? `<div class="q-body">
+      ${(() => { if (typeof eraOf !== 'function') return ''; const E = ERAS[eraOf(S) - 1], p = eraProgress(S);
+        return `<div class="q-era"><b>${E.icon} ${E.name}</b>${p ? `<small>다음: ${p.next.icon} ${p.next.name} — Lv.${p.next.need.lv} ${p.lvOk ? '✅' : ''} · 국력 ${p.next.need.rank}위 이내 ${p.rankOk ? '✅' : `(현재 ${p.rank}위)`}</small>` : '<small>최고 단계</small>'}
+          ${eraOf(S) >= 2 ? `<button class="chip ${S.pmAuto ? 'on' : ''}" id="q-pm">🧑‍💼 내정 총리 위임 ${S.pmAuto ? 'ON' : 'OFF'}</button>` : ''}</div>`; })()}
       <div class="q-title">📋 임무 <span class="muted">완료하면 국고·경험치</span></div>
       ${S.missions.map((ms, i) => { const p = missionProg(S, ms); if (!p.m) return '';
         const pct = p.pct != null ? p.pct : p.cur / p.goal;
@@ -150,6 +153,7 @@ function renderQuest() {
       <button class="q-ach" id="q-ach">🏆 업적 ${Object.keys(S.ach || {}).length}/${ACHIEVEMENTS.length} · 국력 점수 ${r.score.toFixed(0)}</button>
     </div>` : ''}`;
   $('q-toggle').onclick = () => { questOpen = !questOpen; renderQuest(); };
+  if ($('q-pm')) $('q-pm').onclick = () => { S.pmAuto = !S.pmAuto; saveGame(S); renderQuest(); toast(S.pmAuto ? '🧑‍💼 국내 정치 현안은 국무총리가 처리합니다. 국가 비상·점령지 카드는 계속 대통령에게 옵니다.' : '국내 현안을 직접 결정합니다.', 4000); };
   q.querySelectorAll('[data-rr]').forEach(b => b.onclick = () => { const r = rerollMission(S, +b.dataset.rr); toast(esc(r.msg || '')); saveGame(S); renderQuest(); });
   if ($('q-ach')) $('q-ach').onclick = openAchievements;
 }

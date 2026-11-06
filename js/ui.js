@@ -173,6 +173,7 @@ function renderPolicies() {
   if (typeof renderMinister === 'function') renderMinister();
   const list = allPolicies().filter(p => p.cat === activeCat);
   $('policy-list').innerHTML = list.map(p => {
+    if (typeof policyLocked === 'function' && policyLocked(S, p)) { const E = ERAS[p.era - 1]; return `<div class="pcard locked"><div class="phead"><h4>🔒 ${esc(p.name)}</h4><span class="tag">${E.icon} ${E.name} 단계에 해금</span></div><p class="pdesc">${esc(p.desc)} — 선택지: ${p.options.filter(o => !o.cur).map(o => esc(o.label)).join(' / ')}</p><p class="pdesc muted">조건: 대통령 Lv.${E.need.lv} 이상 · 국력 세계 ${E.need.rank}위 이내</p></div>`; }
     const cur = currentOption(p, S);
     const locked = S.enactedThisTurn.includes(p.id);
     const pend = S.pending.find(x => x.pid === p.id);

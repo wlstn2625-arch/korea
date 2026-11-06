@@ -56,7 +56,7 @@ const theirMight = (s, k) => cinfo(k).eco * 0.55 + (typeof power === 'function' 
 function judge(s, k) {
   const G = geoState(s), rel = relOf(s, k), near = nearness(s, k), ratio = theirMight(s, k) / Math.max(1, krMight(s));
   const agg = typeof leaderAgg === 'function' ? leaderAgg(s, k) : 30, d = dip(s, k);
-  if (d.alliance || s.terr?.[k]) return { stance: 'ours', why: d.alliance ? '대한민국과 동맹' : '대한민국의 보호국' };
+  if (d.alliance || s.terr?.[k] || s.heg?.sphere?.[k] != null) return { stance: 'ours', why: d.alliance ? '대한민국과 동맹' : s.terr?.[k] ? '대한민국의 보호국' : '대한민국 세력권(안보 보장)' };
   const fear = G.threat * near * (1.2 - rel / 120);
   const why = [`위협 체감 ${fear.toFixed(0)}`, `거리 ${near >= 0.85 ? '인접' : near >= 0.6 ? '같은 대륙' : '원거리'}`, `관계 ${rel.toFixed(0)}`, `국력비 ${ratio.toFixed(2)}`];
   const tr = t => typeof hasTrait === 'function' && hasTrait(s, k, t);
@@ -150,7 +150,7 @@ if (typeof DOM_EVENTS !== 'undefined') Object.assign(DOM_EVENTS, {
 });
 
 /* ---------------- 지도·화면 ---------------- */
-function stanceOf(s, k) { const G = geoState(s); if (dip(s, k).alliance || s.terr?.[k]) return 'ours'; return G.stance[k] || (relOf(s, k) >= 62 ? 'friendly' : 'neutral'); }
+function stanceOf(s, k) { const G = geoState(s); if (dip(s, k).alliance || s.terr?.[k] || s.heg?.sphere?.[k] != null) return 'ours'; return G.stance[k] || (relOf(s, k) >= 62 ? 'friendly' : 'neutral'); }
 function renderGeoPanel() {
   const slot = $('geo-slot'); if (!slot || !S) return;
   const G = geoState(S), th = G.threat, col = th >= 60 ? 'var(--bad)' : th >= 35 ? 'var(--mid)' : 'var(--good)';
