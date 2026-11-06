@@ -914,3 +914,19 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .geo-counts span { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; background: var(--card2); border: 1px solid var(--line); border-left: 4px solid var(--c); }
 .geo-counts b { margin-left: 3px; }
 .geo-coal { display: flex; flex-wrap: wrap; gap: 5px; } .geo-coal small { color: #ff8b8b; font-size: 10px; }
+
+/* 총독부 위임·점령지 요약 표 */
+.gov-box { display: grid; gap: 7px; background: linear-gradient(180deg, rgba(90, 120, 200, .12), var(--card)); border: 1px solid #4a5a7a; border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; }
+.gov-h { display: grid; gap: 3px; } .gov-h b { font-size: 14px; }
+.terr-table { display: grid; gap: 5px; margin-bottom: 6px; }
+.tr-row { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 5px 7px; }
+.tr-row.hot { border-color: var(--bad); } .tr-row.open { border-color: var(--accent); }
+.tr-main { display: grid; grid-template-columns: auto minmax(70px, 1fr) 70px 70px auto auto; gap: 8px; align-items: center; font: inherit; color: var(--text); background: none; border: none; text-align: left; cursor: pointer; padding: 0; min-width: 0; }
+.tr-main .tflag { font-size: 22px; } .tr-name { display: grid; min-width: 0; } .tr-name b { font-size: 13px; } .tr-name small { font-size: 10.5px; color: var(--muted); }
+.tr-m { display: grid; gap: 2px; } .tr-m small { font-size: 10px; color: var(--muted); }
+.tr-inc { font-size: 12px; font-weight: 700; white-space: nowrap; } .tr-caret { opacity: .6; }
+.tr-row select { font: inherit; font-size: 11.5px; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 4px; }
+.tr-row select:disabled { opacity: .45; }
+.gov-note { font-size: 12px; background: rgba(90, 140, 230, .12); border: 1px solid rgba(90, 140, 230, .4); border-radius: 8px; padding: 6px 8px; }
+@media (max-width: 760px) { .tr-row { grid-template-columns: 1fr auto; } .tr-row select { grid-column: 1 / -1; } .tr-main { grid-template-columns: auto 1fr 54px auto; } .tr-main .tr-m:nth-of-type(2) { display: none; } }
+@media (max-width: 760px) { .reward-pop { width: max-content; max-width: 88vw; padding: 10px 16px; } .reward-pop b, .reward-pop.big b { font-size: 17px; } }

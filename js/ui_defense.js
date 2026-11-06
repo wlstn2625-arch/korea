@@ -19,6 +19,13 @@ function renderDefense() {
   el.querySelectorAll('[data-tcancel]').forEach(b => b.onclick = () => act(cancelTech)(S, b.dataset.tcancel));
   el.querySelectorAll('[data-tset]').forEach(b => b.onclick = () => { const [k, f, v] = b.dataset.tset.split('|'); act(setTerr)(S, k, f, f === 'rule' ? v : +v); });
   el.querySelectorAll('[data-trel]').forEach(b => b.onclick = () => { if (b.dataset.armed) act(releaseTerritory)(S, b.dataset.trel, false); else { b.dataset.armed = 1; b.textContent = '한 번 더 누르면 독립 승인'; } });
+  el.querySelectorAll('[data-topen]').forEach(b => b.onclick = () => { terrOpen = terrOpen === b.dataset.topen ? null : b.dataset.topen; renderDefense(); });
+  el.querySelectorAll('[data-tauto]').forEach(b => b.onclick = () => act(setGov)(S, b.dataset.tauto, 'auto', !S.terr[b.dataset.tauto].auto));
+  el.querySelectorAll('[data-tdir]').forEach(x => x.onchange = () => act(setGov)(S, x.dataset.tdir, 'dir', x.value));
+  el.querySelectorAll('[data-gall]').forEach(b => b.onclick = () => act(setGov)(S, '*', 'auto', b.dataset.gall === '1'));
+  el.querySelectorAll('[data-gdir]').forEach(b => b.onclick = () => { act(setGov)(S, '*', 'dir', b.dataset.gdir); govSettings(S).defDir = b.dataset.gdir; });
+  el.querySelectorAll('[data-gov]').forEach(b => b.onclick = () => { const [f, v] = b.dataset.gov.split('|'); act(setGov)(S, f, null, +v); });
+  el.querySelectorAll('[data-gnew]').forEach(b => b.onclick = () => { const G = govSettings(S); G.autoNew = G.autoNew === false; saveGame(S); renderDefense(); });
   el.querySelectorAll('[data-tb]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.tb.split('|'); act(terrBuild)(S, k, id); });
   el.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => { const [k, id] = b.dataset.tp.split('|'); act(terrPolicy)(S, k, id); });
   el.querySelectorAll('[data-tsup]').forEach(b => b.onclick = () => act(suppressTerritory)(S, b.dataset.tsup));
@@ -63,6 +70,29 @@ function techHTML(tree) {
     <div class="ttree">${branches.map(col).join('')}</div>`;
 }
 
+let terrOpen = null;
+// 총독부 위임 패널 + 점령지 요약 표 (한 줄씩, 누르면 상세)
+function govPanelHTML(ks) {
+  const G = govSettings(S), nAuto = ks.filter(k => S.terr[k].auto).length;
+  const chips = (field, list) => list.map(([v, n]) => `<button class="chip ${G[field] === v ? 'on' : ''}" data-gov="${field}|${v}">${n}</button>`).join('');
+  return `<div class="gov-box">
+    <div class="gov-h"><b>🤖 총독부 위임</b><span class="muted small">위임한 점령지는 참모가 매 분기 징수·징병·투자·개발 사업·현지 정책·치안 작전을 알아서 정하고, 통치 방식 변경과 봉기 같은 중요한 결정만 대통령에게 카드로 올립니다.</span></div>
+    <div class="row-btns"><button class="btn sm ${nAuto === ks.length ? '' : 'primary'}" data-gall="1">🤖 전체 위임 (${nAuto}/${ks.length})</button><button class="btn sm ghost" data-gall="0">전체 직접 관리</button>
+      <button class="chip ${G.autoNew !== false ? 'on' : ''}" data-gnew="1">새 점령지 자동 위임 ${G.autoNew !== false ? 'ON' : 'OFF'}</button></div>
+    <div class="tseg"><span>전체 방침</span><div>${Object.entries(GOV_DIRECTIVES).map(([id, d]) => `<button class="chip" data-gdir="${id}" title="${esc(d.desc)}">${d.icon} ${d.name}</button>`).join('')}</div></div>
+    <div class="tseg"><span>분기 예산</span><div>${chips('budget', [[10, '₩1조'], [30, '₩3조'], [60, '₩6조'], [120, '₩12조']])}</div></div>
+    <div class="tseg"><span>국고 최소 유지</span><div>${chips('reserve', [[50, '₩5조'], [100, '₩10조'], [200, '₩20조']])}</div></div>
+  </div>
+  <div class="terr-table">${ks.map(k => { const t = S.terr[k], o = terrOutput(S, k), R = RULES[t.rule], net = o.capital - o.upkeep, d = GOV_DIRECTIVES[t.dir || 'balance'];
+    return `<div class="tr-row ${terrOpen === k ? 'open' : ''} ${t.resist >= 75 ? 'hot' : ''}">
+      <button class="tr-main" data-topen="${k}"><span class="tflag">${cflag(k)}</span><span class="tr-name"><b>${esc(cname(k))}</b><small>${R.icon} ${R.name}${t.full ? ' · 본토' : ''}</small></span>
+        <span class="tr-m"><small>저항</small>${meter(t.resist, 'sur', 75)}</span><span class="tr-m"><small>통합</small>${meter(t.integ, 'mp')}</span>
+        <span class="tr-inc ${net >= 0 ? 'good-t' : 'bad-t'}">${net >= 0 ? '+' : ''}${won(net)}</span><span class="tr-caret">${terrOpen === k ? '▾' : '▸'}</span></button>
+      <button class="chip ${t.auto ? 'on' : ''}" data-tauto="${k}">${t.auto ? '🤖 위임' : '✋ 직접'}</button>
+      <select data-tdir="${k}" ${t.auto ? '' : 'disabled'} title="${esc(d.desc)}">${Object.entries(GOV_DIRECTIVES).map(([id, x]) => `<option value="${id}" ${id === (t.dir || 'balance') ? 'selected' : ''}>${x.icon} ${x.name}</option>`).join('')}</select>
+    </div>`; }).join('')}</div>
+  <div class="muted small">줄을 누르면 상세 관리 화면이 열립니다.</div>`;
+}
 function terrHTML() {
   const ks = Object.keys(S.terr || {});
   if (!ks.length) return `<div class="empty">아직 점령지가 없습니다.<br><span class="muted small">전쟁에서 이기면 강화 회의에서 합병하거나 괴뢰 정부를 세울 수 있습니다. 그러면 이곳에서 통치 방식과 징수·징병·투자를 정합니다.</span></div>`;
@@ -73,10 +103,12 @@ function terrHTML() {
       <div><span>🛡️ 국방력</span><b>군사력 +${tot.mil.toFixed(0)}</b></div>
       <div><span>⛏️ 자원</span><b>성장률 +${tot.gdp.toFixed(2)}%p</b></div>
     </div>
-    ${ks.map(k => {
+    ${govPanelHTML(ks)}
+    ${ks.filter(k => terrOpen === k).map(k => {
       const t = S.terr[k], o = terrOutput(S, k), R = RULES[t.rule], c = cinfo(k);
       const seg = (f) => `<div class="tseg"><span>${LEVELS[f].name}</span><div>${LEVELS[f].opts.map((n, i) => `<button class="chip ${t[f] === i ? 'on' : ''}" data-tset="${k}|${f}|${i}">${n}${f === 'invest' && i ? ` ${won(LEVELS.invest.cost[i])}` : ''}</button>`).join('')}</div></div>`;
       return `<div class="terr ${t.resist >= 75 ? 'hot' : ''}">
+        ${t.auto ? `<div class="gov-note">🤖 총독부 위임 중 (${GOV_DIRECTIVES[t.dir || 'balance'].icon} ${GOV_DIRECTIVES[t.dir || 'balance'].name}) — 아래 설정은 다음 분기 참모가 다시 조정합니다. 직접 만지려면 위임을 끄세요.${(t.govLog || []).length ? `<br><span class="muted">최근 조치: ${esc(t.govLog.slice(0, 3).join(' / '))}</span>` : ''}</div>` : ''}
         <div class="terr-h"><span class="tflag">${cflag(k)}</span><div><b>${esc(cname(k))}</b> <span class="tag">${R.icon} ${R.name}</span>${t.full ? ' <span class="tag good">본토 편입 완료</span>' : ''}
           <div class="muted small">인구 ${fmtPop(terrPop(k))} · 경제력 ${c.eco} · 군사력 ${c.mil} · 통치 ${S.turn - t.since}분기째</div></div>
           <button class="btn sm ghost" data-tfocus="${k}">🗺️</button></div>
