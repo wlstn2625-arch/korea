@@ -83,6 +83,7 @@ function initTheater(s) {
   const side = () => ({ org: 85, equip: 1, mp: 100, airLeft: 100, navyLeft: 100, cas: 0, stance: 'hold' });
   w.theater = { provs, links, edges: {}, kr: side(), en: side(), landLinked, days: 0, daysThisQ: 0, ops: {}, log: [], blockade: 0, mobilized: false, exhaustion: 0, enemyStanceDays: 0 };
   w.theater.kr.stance = w.aggressor === 'kr' ? 'attack' : 'hold';
+  if (typeof initArmies === 'function') initArmies(s);
 }
 
 /* ---------------- 하루 전투 ---------------- */
@@ -117,6 +118,9 @@ function warDay(s) {
     return p => d(p) <= min + 0.01 ? (side === 'kr' ? 1.6 : 1.3) : (side === 'kr' ? 0.85 : 0.95); };
   if (T.target && byId[T.target]?.owner === 'kr') { warLog(s, `🎯 목표 ${byId[T.target].n} 확보!`, 'good'); T.target = null; }
   const fK = focus(T.target, 'kr'), fE = focus(T.provs.find(p => p.n === '서울특별시' && p.owner === 'kr')?.id, 'en');
+  // 군단 지휘: 군단이 있는 전선만 공격하고, 수비는 그 자리 군단+수비대
+  const AW = T.armies && typeof armyWeights === 'function' ? armyWeights(s, T, edges) : null;
+  if (T.pendingBattle && !s.uiPeace && typeof applyBattle === 'function') applyBattle(s, 'siege');
   if (edges.length) {
     const share = 1 / edges.length; var dayKr = 0, dayEn = 0;
     for (const [ourId, enId] of edges) {
@@ -126,28 +130,34 @@ function warDay(s) {
       let delta = 0;
       // 방어 측은 지형·요새·참호(방어 태세) 보너스
       const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
-      const fk = fK(theirs), fe = fE(ours);
-      if (atkK) delta += ((pA * atkK * fk - pB * dE * 0.9) / (pA * fk + pB * dE * 0.9 + 1) * 8 + 0.8) * (fk > 1 ? 1.15 : fk < 1 ? 0.8 : 1);
-      if (atkE) delta -= ((pB * atkE * fe - pA * dK * 0.9) / (pB * fe + pA * dK * 0.9 + 1) * 8 + 0.8) * (fe > 1 ? 1.1 : 1);
+      const fk = AW ? 1 : fK(theirs), fe = fE(ours);
+      const aw = AW ? AW.atk(ourId, enId) : { w: 1, prog: 1 }, bm = typeof battleMod === 'function' ? battleMod(T, enId) : { atk: 1, cas: 1, def: 1 };
+      const kAtk = AW ? (aw.w > 0 ? (STANCES[T.kr.stance].atk || 1) : 0) : atkK;
+      const pAk = pA * aw.w * bm.atk, pAd = AW ? pA * AW.def(ourId) : pA;
+      if (kAtk) delta += ((pAk * kAtk * fk - pB * dE * bm.def * 0.9) / (pAk * fk + pB * dE * bm.def * 0.9 + 1) * 8 + 0.8) * (fk > 1 ? 1.15 : fk < 1 ? 0.8 : 1) * aw.prog;
+      if (atkE) delta -= ((pB * atkE * fe - pAd * dK * 0.9) / (pB * fe + pAd * dK * 0.9 + 1) * 8 + 0.8) * (fe > 1 ? 1.1 : 1);
+      if (AW && kAtk && aw.armies) for (const a of aw.armies) a.str = clamp(a.str - 0.04 * bm.cas, 5, 100);
       delta += gauss() * 1.6;
-      if (!atkK && !atkE) delta = 0;
+      if (!kAtk && !atkE) delta = 0;
       e.prog = clamp(e.prog + delta, -100, 100);
-      e.active = !!(atkK || atkE);
+      e.active = !!(kAtk || atkE);
       // 사상자 (명)
       if (e.active) {
-        const fight = (atkK + atkE) * share;
-        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
+        const fight = (kAtk + atkE) * share;
+        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas * bm.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
         T.kr.cas += krC; T.en.cas += enC; dayKr += krC; dayEn += enC;
       }
-      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); warFx(T, { type: 'capture', side: 'kr', name: theirs.n, vp: theirs.vp, c: theirs.c }); s.cnt = s.cnt || {}; s.cnt.capture = (s.cnt.capture || 0) + 1; break; }
-      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: ours.n, vp: ours.vp, c: ours.c }); break; }
+      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); warFx(T, { type: 'capture', side: 'kr', name: theirs.n, vp: theirs.vp, c: theirs.c }); s.cnt = s.cnt || {}; s.cnt.capture = (s.cnt.capture || 0) + 1; if (AW) armiesOnCapture(s, T, ourId, enId); break; }
+      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: ours.n, vp: ours.vp, c: ours.c }); if (AW) armiesOnLoss(s, T, ourId); break; }
     }
   }
   T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
+  if (AW && typeof armiesDay === 'function') armiesDay(s);
   // 조직력·장비·병력
   for (const side of ['kr', 'en']) {
     const st = T[side];
-    st.org = clamp(st.org + STANCES[st.stance].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6 + (side === 'kr' ? TB.org : 0), 15, 100);
+    const stc = side === 'kr' && AW ? (T.armies.some(a => a.order === 'attack' && a.str > 0) ? (st.stance === 'all' ? 'all' : 'attack') : 'hold') : st.stance;
+    st.org = clamp(st.org + STANCES[stc].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6 + (side === 'kr' ? TB.org : 0), 15, 100);
     const prod = side === 'kr' ? 0.004 + TB.equip + (s.buildings?.ship || 0) * 0.001 + (s.policies.def_budget === 'up5' ? 0.003 : s.policies.def_budget === 'up35' ? 0.0015 : 0) : 0.004 * (T.blockade > 0 ? 0.4 : 1);
     st.equip = clamp(st.equip - (edges.length && st.stance !== 'hold' ? 0.006 : 0.002) + prod, 0.15, 1);
     st.mp = clamp(st.mp - (side === 'kr' ? T.dayKr : T.dayEn) / 4000 + 0.05, 25, 100);
@@ -190,8 +200,10 @@ const OPS = [
       const kc = MAP_DATA.countries.kr.c, dd = p => (p.c[0] - kc[0]) ** 2 + (p.c[1] - kc[1]) ** 2;
       const target = T.provs.find(p => p.virtual && p.home === s.war.k && p.owner !== 'kr') || targets.sort((a, b) => dd(a) - dd(b))[0];
       if (!target) return '상륙할 곳이 없습니다.';
-      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0) + (typeof techBonus === 'function' ? techBonus(s).landing : 0), 0.05, 0.95);
-      if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id); warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
+      const marine = (T.armies || []).some(a => a.str > 0 && a.gen.traits.includes('marine')) ? 0.15 : 0;
+      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0) + (typeof techBonus === 'function' ? techBonus(s).landing : 0) + marine, 0.05, 0.95);
+      if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id);
+        if (T.armies) { const ma = T.armies.filter(a => a.str > 0).sort((x, y) => (y.gen.traits.includes('marine') ? 2 : 0) + (y.name.includes('상륙') ? 1 : 0) - (x.gen.traits.includes('marine') ? 2 : 0) - (x.name.includes('상륙') ? 1 : 0))[0]; if (ma) { ma.loc = target.id; ma.order = ma.auto ? 'attack' : 'hold'; ma.path = []; ma.target = null; warLog(s, `⚓ ${ma.name}이(가) ${target.n}에 상륙했습니다.`, 'good'); } } warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
       T.kr.mp = clamp(T.kr.mp - 4, 30, 100); T.kr.navyLeft = clamp(T.kr.navyLeft - 10, 10, 100); warLog(s, `${target.n} 상륙 실패. 큰 피해를 입었습니다.`, 'bad'); return `상륙이 실패했습니다. (성공률 ${Math.round(p * 100)}%)`; } },
   { id: 'blockade', name: '해상 봉쇄', icon: '🚢', cost: 10, cd: 60, desc: '적 항구를 봉쇄해 60일간 적 장비 보충을 크게 줄입니다. 제해권 40% 이상.',
     can: s => supremacy(s).navy < 0.4 ? '제해권이 40% 미만입니다.' : null,

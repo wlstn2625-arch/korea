@@ -1033,6 +1033,28 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .chip.big { font-weight: 800; }
 #modal-x { z-index: 8; }
 
+/* 군단 지휘 */
+.geo .army { transform: scale(var(--u)); }
+.geo .army-hit { pointer-events: all; cursor: pointer; }
+.geo .army rect:first-child { fill: #2f6fe0; stroke: #e2c27a; stroke-width: 2px; }
+.geo .army path { stroke: #0b0f16; stroke-width: 1.5px; }
+.geo .army .an { font-size: 12px; font-weight: 900; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.geo .army .ag { font-size: 9.5px; font-weight: 700; text-anchor: middle; fill: #ffe08a; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.geo .army .sb { fill: rgba(0, 0, 0, .6); } .geo .army .sf { fill: #6fcf7f; }
+.geo .army.attack rect:first-child { fill: #c9452f; }
+.geo .army.move rect:first-child { fill: #6a5acd; }
+.geo .army.sel rect:first-child { stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 6px #ffd22e); animation: selGlow 1s ease-in-out infinite alternate; }
+.geo .aord { fill: none; stroke-width: calc(var(--u) * 4px); stroke-linecap: round; }
+.geo .aord.atk { stroke: #ff7a4a; stroke-dasharray: calc(var(--u) * 8px) calc(var(--u) * 4px); animation: march 0.8s linear infinite; }
+.geo .aord.atk.sel { stroke: #ffd22e; }
+.geo .aord.mv { stroke: #b5a6ff; stroke-dasharray: calc(var(--u) * 3px) calc(var(--u) * 4px); }
+.army-sec { display: grid; gap: 6px; }
+.armies { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.acard { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: var(--card2); border: 1px solid var(--line); font-size: 12px; }
+.acard.sel { border-color: #ffd22e; box-shadow: 0 0 0 1px #ffd22e inset; }
+.acard.dead { opacity: .5; }
+.acard .ah { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; } .acard .ah b { font-size: 13.5px; }
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -5919,6 +5941,7 @@ function initTheater(s) {
   const side = () => ({ org: 85, equip: 1, mp: 100, airLeft: 100, navyLeft: 100, cas: 0, stance: 'hold' });
   w.theater = { provs, links, edges: {}, kr: side(), en: side(), landLinked, days: 0, daysThisQ: 0, ops: {}, log: [], blockade: 0, mobilized: false, exhaustion: 0, enemyStanceDays: 0 };
   w.theater.kr.stance = w.aggressor === 'kr' ? 'attack' : 'hold';
+  if (typeof initArmies === 'function') initArmies(s);
 }
 
 /* ---------------- 하루 전투 ---------------- */
@@ -5953,6 +5976,9 @@ function warDay(s) {
     return p => d(p) <= min + 0.01 ? (side === 'kr' ? 1.6 : 1.3) : (side === 'kr' ? 0.85 : 0.95); };
   if (T.target && byId[T.target]?.owner === 'kr') { warLog(s, `🎯 목표 ${byId[T.target].n} 확보!`, 'good'); T.target = null; }
   const fK = focus(T.target, 'kr'), fE = focus(T.provs.find(p => p.n === '서울특별시' && p.owner === 'kr')?.id, 'en');
+  // 군단 지휘: 군단이 있는 전선만 공격하고, 수비는 그 자리 군단+수비대
+  const AW = T.armies && typeof armyWeights === 'function' ? armyWeights(s, T, edges) : null;
+  if (T.pendingBattle && !s.uiPeace && typeof applyBattle === 'function') applyBattle(s, 'siege');
   if (edges.length) {
     const share = 1 / edges.length; var dayKr = 0, dayEn = 0;
     for (const [ourId, enId] of edges) {
@@ -5962,28 +5988,34 @@ function warDay(s) {
       let delta = 0;
       // 방어 측은 지형·요새·참호(방어 태세) 보너스
       const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
-      const fk = fK(theirs), fe = fE(ours);
-      if (atkK) delta += ((pA * atkK * fk - pB * dE * 0.9) / (pA * fk + pB * dE * 0.9 + 1) * 8 + 0.8) * (fk > 1 ? 1.15 : fk < 1 ? 0.8 : 1);
-      if (atkE) delta -= ((pB * atkE * fe - pA * dK * 0.9) / (pB * fe + pA * dK * 0.9 + 1) * 8 + 0.8) * (fe > 1 ? 1.1 : 1);
+      const fk = AW ? 1 : fK(theirs), fe = fE(ours);
+      const aw = AW ? AW.atk(ourId, enId) : { w: 1, prog: 1 }, bm = typeof battleMod === 'function' ? battleMod(T, enId) : { atk: 1, cas: 1, def: 1 };
+      const kAtk = AW ? (aw.w > 0 ? (STANCES[T.kr.stance].atk || 1) : 0) : atkK;
+      const pAk = pA * aw.w * bm.atk, pAd = AW ? pA * AW.def(ourId) : pA;
+      if (kAtk) delta += ((pAk * kAtk * fk - pB * dE * bm.def * 0.9) / (pAk * fk + pB * dE * bm.def * 0.9 + 1) * 8 + 0.8) * (fk > 1 ? 1.15 : fk < 1 ? 0.8 : 1) * aw.prog;
+      if (atkE) delta -= ((pB * atkE * fe - pAd * dK * 0.9) / (pB * fe + pAd * dK * 0.9 + 1) * 8 + 0.8) * (fe > 1 ? 1.1 : 1);
+      if (AW && kAtk && aw.armies) for (const a of aw.armies) a.str = clamp(a.str - 0.04 * bm.cas, 5, 100);
       delta += gauss() * 1.6;
-      if (!atkK && !atkE) delta = 0;
+      if (!kAtk && !atkE) delta = 0;
       e.prog = clamp(e.prog + delta, -100, 100);
-      e.active = !!(atkK || atkE);
+      e.active = !!(kAtk || atkE);
       // 사상자 (명)
       if (e.active) {
-        const fight = (atkK + atkE) * share;
-        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
+        const fight = (kAtk + atkE) * share;
+        const krC = Math.round(pB * fight * 22 * (0.6 + Math.random() * 0.8) * TB.cas * bm.cas), enC = Math.round(pA * fight * 22 * (0.6 + Math.random() * 0.8) * (1 + sup.air * 0.4));
         T.kr.cas += krC; T.en.cas += enC; dayKr += krC; dayEn += enC;
       }
-      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); warFx(T, { type: 'capture', side: 'kr', name: theirs.n, vp: theirs.vp, c: theirs.c }); s.cnt = s.cnt || {}; s.cnt.capture = (s.cnt.capture || 0) + 1; break; }
-      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: ours.n, vp: ours.vp, c: ours.c }); break; }
+      if (e.prog >= 100) { theirs.owner = 'kr'; theirs.fort = 1; clearEdges(T, enId); T.kr.org = Math.max(10, T.kr.org - 8); warLog(s, `${theirs.n} 점령! 아군이 진격했습니다.`, theirs.vp >= 5 ? 'good' : 'info'); warFx(T, { type: 'capture', side: 'kr', name: theirs.n, vp: theirs.vp, c: theirs.c }); s.cnt = s.cnt || {}; s.cnt.capture = (s.cnt.capture || 0) + 1; if (AW) armiesOnCapture(s, T, ourId, enId); break; }
+      if (e.prog <= -100) { ours.owner = w.k; ours.fort = 1; clearEdges(T, ourId); T.en.org = Math.max(10, T.en.org - 8); warLog(s, `${ours.n} 함락. 적군이 밀고 내려옵니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: ours.n, vp: ours.vp, c: ours.c }); if (AW) armiesOnLoss(s, T, ourId); break; }
     }
   }
   T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
+  if (AW && typeof armiesDay === 'function') armiesDay(s);
   // 조직력·장비·병력
   for (const side of ['kr', 'en']) {
     const st = T[side];
-    st.org = clamp(st.org + STANCES[st.stance].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6 + (side === 'kr' ? TB.org : 0), 15, 100);
+    const stc = side === 'kr' && AW ? (T.armies.some(a => a.order === 'attack' && a.str > 0) ? (st.stance === 'all' ? 'all' : 'attack') : 'hold') : st.stance;
+    st.org = clamp(st.org + STANCES[stc].org * (edges.length ? 1 : 0) + (edges.length ? 0 : 2) + 0.6 + (side === 'kr' ? TB.org : 0), 15, 100);
     const prod = side === 'kr' ? 0.004 + TB.equip + (s.buildings?.ship || 0) * 0.001 + (s.policies.def_budget === 'up5' ? 0.003 : s.policies.def_budget === 'up35' ? 0.0015 : 0) : 0.004 * (T.blockade > 0 ? 0.4 : 1);
     st.equip = clamp(st.equip - (edges.length && st.stance !== 'hold' ? 0.006 : 0.002) + prod, 0.15, 1);
     st.mp = clamp(st.mp - (side === 'kr' ? T.dayKr : T.dayEn) / 4000 + 0.05, 25, 100);
@@ -6026,8 +6058,10 @@ const OPS = [
       const kc = MAP_DATA.countries.kr.c, dd = p => (p.c[0] - kc[0]) ** 2 + (p.c[1] - kc[1]) ** 2;
       const target = T.provs.find(p => p.virtual && p.home === s.war.k && p.owner !== 'kr') || targets.sort((a, b) => dd(a) - dd(b))[0];
       if (!target) return '상륙할 곳이 없습니다.';
-      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0) + (typeof techBonus === 'function' ? techBonus(s).landing : 0), 0.05, 0.95);
-      if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id); warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
+      const marine = (T.armies || []).some(a => a.str > 0 && a.gen.traits.includes('marine')) ? 0.15 : 0;
+      const p = clamp(0.2 + sup.navy * 0.7 + sup.air * 0.1 - (target.fort ? 0.1 : 0) + (typeof techBonus === 'function' ? techBonus(s).landing : 0) + marine, 0.05, 0.95);
+      if (Math.random() < p) { target.owner = 'kr'; T.landLinked = true; clearEdges(T, target.id);
+        if (T.armies) { const ma = T.armies.filter(a => a.str > 0).sort((x, y) => (y.gen.traits.includes('marine') ? 2 : 0) + (y.name.includes('상륙') ? 1 : 0) - (x.gen.traits.includes('marine') ? 2 : 0) - (x.name.includes('상륙') ? 1 : 0))[0]; if (ma) { ma.loc = target.id; ma.order = ma.auto ? 'attack' : 'hold'; ma.path = []; ma.target = null; warLog(s, `⚓ ${ma.name}이(가) ${target.n}에 상륙했습니다.`, 'good'); } } warLog(s, `${target.n} 상륙 성공! 교두보를 확보했습니다.`, 'good'); return `${target.n} 상륙에 성공했습니다. (성공률 ${Math.round(p * 100)}%)`; }
       T.kr.mp = clamp(T.kr.mp - 4, 30, 100); T.kr.navyLeft = clamp(T.kr.navyLeft - 10, 10, 100); warLog(s, `${target.n} 상륙 실패. 큰 피해를 입었습니다.`, 'bad'); return `상륙이 실패했습니다. (성공률 ${Math.round(p * 100)}%)`; } },
   { id: 'blockade', name: '해상 봉쇄', icon: '🚢', cost: 10, cd: 60, desc: '적 항구를 봉쇄해 60일간 적 장비 보충을 크게 줄입니다. 제해권 40% 이상.',
     can: s => supremacy(s).navy < 0.4 ? '제해권이 40% 미만입니다.' : null,
@@ -6097,6 +6131,208 @@ function nukeResponse(s, choice) {
   if (choice === 'ceasefire') { endWar(s, 'white'); s.approval = clamp(s.approval - 8, 0, 100); return '현 전선에서 즉시 휴전했습니다. 더 이상의 핵 공격은 막았습니다.'; }
   if (Math.random() < 0.6) { endWar(s, 'white'); relBump(s, 'us', 5, 3); relBump(s, 'eu', 5, 3); return '유엔 안보리 긴급 중재로 휴전이 성립했습니다. 국제 사회가 재건 지원을 약속했습니다.'; }
   return '중재가 실패했습니다. 전쟁이 계속됩니다.';
+}
+
+</script>
+<script>
+/* js/armies.js */
+/* =========================================================
+ *  군단 지휘 (하츠식): 장군이 이끄는 군단을 지도에서 직접 움직임
+ *  - 전체 병력의 25%는 전선 수비대, 75%를 군단들이 나눠 가짐
+ *  - 군단: 위치(시·도), 명령(방어/공격/이동), 병력 비중, 전투력(str), 장군(특성·경험)
+ *  - 공격은 군단이 있는 곳에서 인접한 적 지역으로만. 점령하면 그 지역으로 진격
+ *  - 포위: 사방이 아군인 적 지역은 항복(포위 섬멸), 사방이 적인 아군 군단은 궤멸
+ *  - 큰 도시·험지 공격 때 전투 결정 카드(정면 돌격·포위 고사·포격 우선)
+ *  - 자동 지휘를 켜면 장군이 알아서 목표를 고름
+ * ========================================================= */
+const GEN_TRAITS = {
+  offense: { name: '공격형', icon: '⚔️', desc: '공격력 +20%', atk: 1.2 },
+  defense: { name: '방어형', icon: '🛡️', desc: '방어력 +25%', def: 1.25 },
+  armor: { name: '기갑', icon: '🛞', desc: '이동이 빠르고 돌파력 +15%', speed: 3, prog: 1.15 },
+  marine: { name: '상륙전', icon: '⚓', desc: '상륙 작전 성공률 +15%p', landing: 0.15 },
+  logistics: { name: '보급', icon: '📦', desc: '병력 회복 2배', regen: 2 },
+  ace: { name: '명장', icon: '🎖️', desc: '공격·방어 +10%', atk: 1.1, def: 1.1 },
+};
+const ARMY_NAMES = ['제1군', '제2군', '제3군', '제5군단', '해병 원정군'];
+function genGeneral() {
+  const ks = Object.keys(GEN_TRAITS), t = [ks[Math.floor(Math.random() * ks.length)]];
+  if (Math.random() < 0.3) { const t2 = ks[Math.floor(Math.random() * ks.length)]; if (!t.includes(t2)) t.push(t2); }
+  return { name: (typeof randName === 'function' ? randName() : '장군'), rank: '대장', skill: 1 + Math.floor(Math.random() * 3), traits: t, xp: 0 };
+}
+const genMul = (g, key) => g.traits.reduce((a, t) => a * (GEN_TRAITS[t][key] || 1), 1) * (key === 'atk' || key === 'def' ? 1 + 0.04 * g.skill : 1);
+function linkMap(T) { if (T._lm && T._lmN === T.links.length) return T._lm; const m = {}; for (const [a, b] of T.links) { (m[a] = m[a] || []).push(b); (m[b] = m[b] || []).push(a); } T._lm = m; T._lmN = T.links.length; return m; }
+function frontProvs(T) { const lm = linkMap(T), by = Object.fromEntries(T.provs.map(p => [p.id, p])); return T.provs.filter(p => p.owner === 'kr' && (lm[p.id] || []).some(n => by[n].owner !== 'kr')).map(p => p.id); }
+// 아군 땅을 따라가는 최단 경로
+function armyPath(T, from, to) {
+  const lm = linkMap(T), by = Object.fromEntries(T.provs.map(p => [p.id, p])), prev = { [from]: null }, q = [from];
+  while (q.length) { const x = q.shift(); if (x === to) break; for (const n of lm[x] || []) if (!(n in prev) && by[n].owner === 'kr') { prev[n] = x; q.push(n); } }
+  if (!(to in prev)) return by[to]?.owner === 'kr' ? ['sea:' + to] : null; // 바다 건너면 해상 수송
+  const path = []; for (let x = to; x !== from; x = prev[x]) path.unshift(x); return path;
+}
+function initArmies(s) {
+  const T = s.war.theater; const F = frontProvs(T);
+  const homes = T.provs.filter(p => p.home === 'kr' && p.owner === 'kr');
+  const coast = homes.find(p => p.n === '부산광역시') || homes[0];
+  const n = F.length >= 2 ? 3 : 2;
+  const byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  const Fs = [...F].sort((a, b) => byId[a].c[0] - byId[b].c[0]); // 서쪽 → 동쪽
+  const spread = Fs.length ? [Fs[0], Fs[Fs.length - 1]] : [coast.id, coast.id];
+  const mid = Fs.length >= 3 ? Fs[Math.floor(Fs.length / 2)] : coast.id;
+  const shares = n === 3 ? [0.4, 0.35, 0.25] : [0.6, 0.4];
+  T.armies = shares.map((sh, i) => ({ id: 'a' + i, name: ARMY_NAMES[i], share: sh, str: 100, loc: i < 2 ? spread[i] : (F.length >= 3 ? mid : coast.id), order: 'hold', target: null, path: [], moveT: 0, auto: true, gen: genGeneral(), kills: 0 }));
+  if (T.armies[2]) T.armies[2].name = '제3군(예비·상륙)';
+}
+const armyAt = (T, pid) => (T.armies || []).filter(a => a.loc === pid && a.str > 0);
+// 이 전선(아군 ourId → 적 enId)에서 아군 공격력·방어력 배율 (균등 배치면 기존과 같은 1)
+function armyWeights(s, T, edges) {
+  const F = [...new Set(edges.map(e => e[0]))], nF = Math.max(1, F.length);
+  const live = (T.armies || []).filter(a => a.str > 0); const tot = live.reduce((x, a) => x + a.share, 0) || 1;
+  const eff = a => (a.share / tot) * (0.7 + 0.3 * a.str / 100);
+  return {
+    atk: (ourId, enId) => { const as = live.filter(a => a.loc === ourId && a.order === 'attack' && a.target === enId); if (!as.length) return { w: 0, prog: 1 };
+      return { w: Math.pow(nF, 0.8) * as.reduce((x, a) => x + eff(a) * genMul(a.gen, 'atk'), 0), prog: Math.max(...as.map(a => genMul(a.gen, 'prog'))), armies: as }; },
+    def: ourId => 0.35 + 0.65 * nF * live.filter(a => a.loc === ourId).reduce((x, a) => x + eff(a) * genMul(a.gen, 'def'), 0),
+  };
+}
+function retreat(s, T, a) {
+  const lm = linkMap(T), by = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  const opts = (lm[a.loc] || []).filter(n => by[n].owner === 'kr');
+  if (!opts.length && by[a.loc]?.home !== 'kr') { // 교두보에서 밀리면 해상 철수
+    const home = T.provs.find(p => p.home === 'kr' && p.owner === 'kr' && ['부산광역시', '인천광역시', '울산광역시'].includes(p.n)) || T.provs.find(p => p.home === 'kr' && p.owner === 'kr');
+    if (home) { a.loc = home.id; a.str = Math.max(10, a.str - 40); a.order = 'hold'; a.target = null; a.path = []; if (s.war.k !== 'nk' && !frontProvs(T).length) T.landLinked = false; warLog(s, `🚢 ${a.name}이(가) 교두보를 잃고 ${home.n}(으)로 해상 철수했습니다.`, 'bad'); return; }
+  }
+  if (!opts.length) { a.str = 0; warLog(s, `💀 ${a.name}(${a.gen.name} 장군)이 퇴로를 잃고 궤멸했습니다!`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: `${a.name} 궤멸`, vp: 6, c: by[a.loc].c }); return; }
+  a.loc = opts[Math.floor(Math.random() * opts.length)]; a.str = Math.max(10, a.str - 15); a.order = 'hold'; a.target = null; a.path = [];
+  warLog(s, `↩️ ${a.name}이(가) ${by[a.loc].n}(으)로 후퇴했습니다.`, 'bad');
+}
+// 점령·함락 직후 군단 처리
+function armiesOnCapture(s, T, ourId, enId) {
+  for (const a of (T.armies || [])) if (a.loc === ourId && a.order === 'attack' && a.target === enId && a.str > 0) {
+    a.loc = enId; a.target = null; a.order = a.auto ? 'attack' : 'hold'; a.gen.xp++; a.kills++;
+    if (a.gen.xp >= (a.gen.skill + 1) * 3 && a.gen.skill < 5) { a.gen.skill++; warLog(s, `⭐ ${a.gen.name} 장군 진급! (지휘력 ${a.gen.skill})`, 'good'); }
+  }
+}
+function armiesOnLoss(s, T, lostId) { for (const a of (T.armies || [])) if (a.loc === lostId && a.str > 0) retreat(s, T, a); }
+// 하루마다: 이동, 회복, 자동 지휘, 포위
+function armiesDay(s) {
+  const T = s.war?.theater; if (!T?.armies) return;
+  const lm = linkMap(T), by = Object.fromEntries(T.provs.map(p => [p.id, p])), enemyAdj = id => (lm[id] || []).filter(n => by[n].owner !== 'kr');
+  const glob = T.kr.stance;
+  for (const a of T.armies) {
+    if (a.str <= 0) continue;
+    if (by[a.loc]?.owner !== 'kr') { retreat(s, T, a); continue; }
+    // 이동
+    if (a.order === 'move' && a.path.length) {
+      a.moveT = (a.moveT || 0) + 1;
+      const sea = String(a.path[0]).startsWith('sea:');
+      if (a.moveT >= (sea ? 12 : genMul(a.gen, 'speed') !== 1 ? GEN_TRAITS.armor.speed : 5)) { a.moveT = 0; const nx = String(a.path.shift()).replace('sea:', ''); if (by[nx]?.owner === 'kr') { a.loc = nx; if (sea) warLog(s, `🚢 ${a.name}이(가) 해상 수송으로 ${by[nx].n}에 도착했습니다.`); } else { a.path = []; } }
+      if (!a.path.length) { a.order = a.auto ? 'attack' : 'hold'; if (!a.auto) warLog(s, `📍 ${a.name}이(가) ${by[a.loc].n}에 도착해 명령을 기다립니다.`); }
+    }
+    // 회복: 방어·대기 중이면 병력 회복
+    a.str = clamp(a.str + (a.order === 'attack' ? -0.04 : 0.6 * genMul(a.gen, 'regen')), 5, 100);
+    // 자동 지휘: 지치면 쉬었다가 다시 공격
+    if (a.auto) { if (a.str < 35) a.resting = true; if (a.resting && a.str > 75) a.resting = false; }
+    // 자동 지휘: 인접한 적 지역 중 목표(주공)에 가깝고 약한 곳, 없으면 가장 가까운 전선으로 이동
+    if (a.auto && a.order !== 'move') {
+      const adj = enemyAdj(a.loc);
+      if (glob === 'hold' || a.resting) { a.order = 'hold'; a.target = null; }
+      else if (adj.length) {
+        if (!a.target || !adj.includes(a.target) || T.days % 10 === 0) {
+          const tg = T.target && by[T.target];
+          const sc = id => by[id].vp * 2 - by[id].terrain * 3 - (by[id].fort || 1) * 2 - (tg ? Math.hypot(by[id].c[0] - tg.c[0], by[id].c[1] - tg.c[1]) * 0.6 : 0) + (by[id].nuked ? -5 : 0);
+          a.target = adj.sort((x, y) => sc(y) - sc(x))[0];
+        }
+        a.order = 'attack';
+      } else {
+        const F = frontProvs(T); const occ = f => T.armies.filter(x => x !== a && x.str > 0 && (x.loc === f || x.path?.at?.(-1) === f || String(x.path?.at?.(-1)) === 'sea:' + f)).length;
+        if (F.length) { const near = F.map(f => [f, armyPath(T, a.loc, f)]).filter(x => x[1]).sort((x, y) => occ(x[0]) - occ(y[0]) || x[1].length - y[1].length)[0]; if (near && near[1].length) { a.order = 'move'; a.path = near[1]; a.target = null; } }
+      }
+    }
+    if (a.order === 'attack' && (!a.target || by[a.target]?.owner === 'kr' || !enemyAdj(a.loc).includes(a.target))) { a.order = a.auto ? 'attack' : 'hold'; a.target = null; }
+  }
+  if (T.days % 7 === 0) {
+    const F = frontProvs(T), live = T.armies.filter(a => a.str > 0);
+    const empty = F.filter(f => !live.some(a => a.loc === f || a.path?.at?.(-1) === f));
+    const crowded = live.filter(a => a.auto && a.order !== 'move' && live.filter(b => b.loc === a.loc).length >= 2);
+    if (empty.length && crowded.length && F.length > live.length - 1) {
+      const a = crowded[0], tgt = empty.map(f => [f, armyPath(T, a.loc, f)]).filter(x => x[1]).sort((x, y) => x[1].length - y[1].length)[0];
+      if (tgt) { a.order = 'move'; a.path = tgt[1]; a.target = null; }
+    }
+  }
+  // 포위 섬멸: 사방이 아군 땅인 적 지역은 항복
+  for (const p of T.provs) {
+    if (p.owner === 'kr' || p.virtual) continue;
+    const nb = lm[p.id] || []; if (nb.length < 2 || !nb.every(n => by[n].owner === 'kr')) continue;
+    p.owner = 'kr'; clearEdges(T, p.id); T.en.mp = clamp(T.en.mp - 5, 25, 100); T.en.cas += 15000;
+    warLog(s, `🌀 ${p.n} 포위 섬멸! 고립된 적 부대가 항복했습니다.`, 'good'); warFx(T, { type: 'capture', side: 'kr', name: `${p.n} 포위 섬멸`, vp: 6, c: p.c });
+    (s.cnt = s.cnt || {}).capture = (s.cnt.capture || 0) + 1;
+  }
+  // 아군 포위: 사방이 적이면 그 땅과 군단을 잃음
+  for (const p of T.provs) {
+    if (p.owner !== 'kr' || p.virtual) continue;
+    const nb = lm[p.id] || []; if (nb.length < 2 || !nb.every(n => by[n].owner !== 'kr')) continue;
+    for (const a of armyAt(T, p.id)) { a.str = 0; warLog(s, `💀 ${a.name}이(가) ${p.n}에서 포위돼 궤멸했습니다!`, 'bad'); }
+    p.owner = s.war.k; clearEdges(T, p.id); T.kr.mp = clamp(T.kr.mp - 5, 25, 100);
+    warLog(s, `🌀 ${p.n}이(가) 포위당해 함락됐습니다.`, 'bad'); warFx(T, { type: 'capture', side: 'en', name: `${p.n} 포위 함락`, vp: 6, c: p.c });
+  }
+  // 궤멸한 군단은 30일 뒤 수도에서 재편성
+  for (const a of T.armies) if (a.str <= 0) { a.dead = (a.dead || 0) + 1; if (a.dead > 30) { const cap = T.provs.find(p => p.home === 'kr' && p.owner === 'kr' && p.vp >= 5) || T.provs.find(p => p.owner === 'kr'); if (cap) { a.str = 40; a.loc = cap.id; a.dead = 0; a.order = 'hold'; a.gen = genGeneral(); warLog(s, `🔁 ${a.name}이(가) 새 장군 ${a.gen.name} 아래 재편성됐습니다.`); } } }
+}
+
+/* ---------------- 플레이어 명령 ---------------- */
+function armyOrder(s, aid, kind, pid) {
+  const T = s.war?.theater, a = T?.armies?.find(x => x.id === aid); if (!a) return { ok: false, msg: '군단이 없습니다.' };
+  if (a.str <= 0) return { ok: false, msg: '궤멸한 군단입니다. 재편성을 기다리세요.' };
+  const by = Object.fromEntries(T.provs.map(p => [p.id, p])), lm = linkMap(T);
+  if (kind === 'auto') { a.auto = !a.auto; return { ok: true, msg: `${a.name}: ${a.auto ? '🤖 자동 지휘' : '✋ 직접 지휘'}` }; }
+  if (kind === 'hold') { a.auto = false; a.order = 'hold'; a.target = null; a.path = []; return { ok: true, msg: `${a.name}: 방어 태세` }; }
+  const p = by[pid]; if (!p) return { ok: false, msg: '알 수 없는 지역입니다.' };
+  if (p.owner !== 'kr') {
+    if (!(lm[a.loc] || []).includes(pid)) return { ok: false, msg: `${a.name}이(가) 있는 ${by[a.loc].n}과(와) 맞닿은 적 지역만 공격할 수 있습니다. 먼저 전선으로 이동시키세요.` };
+    a.auto = false; a.order = 'attack'; a.target = pid; a.path = [];
+    maybeBattleCard(s, T, a, p);
+    return { ok: true, msg: `⚔️ ${a.name} → ${p.n} 공격 개시!` };
+  }
+  if (pid === a.loc) return { ok: false, msg: '이미 그 자리에 있습니다.' };
+  const path = armyPath(T, a.loc, pid); if (!path) return { ok: false, msg: '아군 땅으로 이어진 길이 없습니다.' };
+  a.auto = false; a.order = 'move'; a.path = path; a.target = null; a.moveT = 0;
+  return { ok: true, msg: `🚚 ${a.name} → ${p.n} 이동 (${path.length}개 지역, 약 ${path.length * (genMul(a.gen, 'speed') !== 1 ? 3 : 5)}일)` };
+}
+function shiftShare(s, from, to) {
+  const T = s.war?.theater, A = T?.armies?.find(x => x.id === from), B = T?.armies?.find(x => x.id === to);
+  if (!A || !B || A.share < 0.15) return { ok: false, msg: '더 뺄 병력이 없습니다.' };
+  A.share -= 0.1; B.share += 0.1; B.str = Math.max(30, B.str - 5);
+  return { ok: true, msg: `${A.name}의 병력 10%를 ${B.name}에 넘겼습니다.` };
+}
+
+/* ---------------- 전투 결정 카드 (큰 도시·험지) ---------------- */
+const BATTLE_CHOICES = [
+  { id: 'assault', name: '정면 돌격', icon: '💥', desc: '빠르게 밀어붙입니다. 돌파력 +40%, 사상자 +60%.', mod: { atk: 1.4, cas: 1.6, days: 20 } },
+  { id: 'siege', name: '포위·고사 작전', icon: '🌀', desc: '천천히 조여 갑니다. 돌파력 -20%지만 20일 뒤 적 방어 -40%, 사상자 -40%.', mod: { atk: 0.8, cas: 0.6, days: 20, siege: true } },
+  { id: 'bombard', name: '포격·공습 우선', icon: '✈️', desc: `국고 ₩1조. 적 조직력 -12, 돌파력 +20%.`, mod: { atk: 1.2, cas: 0.9, days: 15, cost: 10 } },
+];
+function maybeBattleCard(s, T, a, p) {
+  if (!(p.vp >= 3 || p.terrain > 1 || p.fort > 1)) return;
+  T.decided = T.decided || {}; if (T.decided[p.id]) return;
+  T.decided[p.id] = true;
+  T.pendingBattle = { pid: p.id, aid: a.id };
+}
+function applyBattle(s, choiceId) {
+  const T = s.war?.theater, B = T?.pendingBattle; if (!B) return { ok: false };
+  const C = BATTLE_CHOICES.find(x => x.id === choiceId) || BATTLE_CHOICES[1];
+  if (C.mod.cost && s.pcap < C.mod.cost) return { ok: false, msg: `국고 ${won(C.mod.cost)}이(가) 필요합니다.` };
+  if (C.mod.cost) { s.pcap -= C.mod.cost; T.en.org = clamp(T.en.org - 12, 5, 100); }
+  T.pendingBattle = null;
+  (T.bmods = T.bmods || {})[B.pid] = { ...C.mod, until: T.days + C.mod.days, start: T.days };
+  const p = T.provs.find(x => x.id === B.pid);
+  warLog(s, `${C.icon} ${p.n} 공방전: ${C.name}`);
+  return { ok: true, msg: `${C.icon} ${p.n}: ${C.name}` };
+}
+// 전투 보정값 (돌격·포위·포격)
+function battleMod(T, enId) {
+  const m = T.bmods?.[enId]; if (!m) return { atk: 1, cas: 1, def: 1 };
+  if (T.days > m.until && !m.siege) return { atk: 1, cas: 1, def: 1 };
+  return { atk: T.days <= m.until ? m.atk : 1, cas: T.days <= m.until ? m.cas : 1, def: m.siege && T.days - m.start >= 20 ? 0.6 : 1 };
 }
 
 </script>
@@ -8714,13 +8950,15 @@ function bindMapInteraction(container, svg) {
   const toMap = (cx, cy) => { const r = svg.getBoundingClientRect(); const ctm = svg.getScreenCTM().inverse(); const p = new DOMPoint(cx, cy).matrixTransform(ctm); return [p.x, p.y, r]; };
   svg.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = toMap(e.clientX, e.clientY); zoomAt(svg, Math.exp(e.deltaY * 0.0015), x, y); }, { passive: false });
   const ptrs = new Map(); let moved = 0, pinch0 = null;
-  svg.addEventListener('pointerdown', e => { svg.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch0 = null; });
+  // 누르자마자 포인터를 붙잡으면 클릭 대상이 지도 전체가 돼 나라·군단·지역을 못 고름 → 실제로 끌기 시작할 때만 붙잡음
+  svg.addEventListener('pointerdown', e => { ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch0 = null; });
   svg.addEventListener('pointermove', e => {
     if (!ptrs.has(e.pointerId)) return;
     const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
     const unit = mapView.w / svg.clientWidth;
     if (ptrs.size === 1) {
       const dx = e.clientX - prev[0], dy = e.clientY - prev[1]; moved += Math.abs(dx) + Math.abs(dy);
+      if (moved > 6 && !svg.hasPointerCapture(e.pointerId)) try { svg.setPointerCapture(e.pointerId); } catch { }
       mapView = { ...mapView, x: mapView.x - dx * unit, y: mapView.y - dy * unit }; applyView(svg);
     } else if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); moved += 10;
@@ -9859,6 +10097,93 @@ document.addEventListener('click', e => {
   if (!p || p.owner === 'kr') return;
   const r = setTarget(S, id); toast(esc(r.msg)); saveGame(S); updateMap(); if (openPanelName === 'world') renderWarPanel();
 });
+
+</script>
+<script>
+/* js/ui_armies.js */
+/* =========================================================
+ *  군단 지휘 화면: 지도에서 군단을 누르고 → 적 지역(공격)이나 아군 지역(이동)을 누름
+ *  전쟁 패널의 군단 카드, 전투 결정 카드
+ * ========================================================= */
+let selArmy = null;
+// 지도 위 군단 표식 (기존 전선 표시에 덧붙임)
+const _warOverlay = warOverlay;
+warOverlay = function (s) {
+  let h = _warOverlay(s);
+  const T = s.war.theater; if (!T.armies) return h;
+  const by = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  let orders = '', marks = '';
+  T.armies.forEach((a, i) => {
+    if (a.str <= 0) return;
+    const p = by[a.loc]; if (!p) return;
+    const off = T.armies.filter((b, j) => j < i && b.loc === a.loc && b.str > 0).length; // 같은 곳이면 살짝 비켜 그림
+    const x = p.c[0] + off * 1.4, y = p.c[1] - off * 1.1;
+    if (a.order === 'attack' && a.target && by[a.target]) orders += `<line class="aord atk ${selArmy === a.id ? 'sel' : ''}" x1="${x}" y1="${y}" x2="${by[a.target].c[0]}" y2="${by[a.target].c[1]}" marker-end="url(#arr-kr)"></line>`;
+    if (a.order === 'move' && a.path?.length) { const pts = [[x, y], ...a.path.map(id => by[String(id).replace('sea:', '')]?.c).filter(Boolean)]; orders += `<polyline class="aord mv" points="${pts.map(q => q.join(',')).join(' ')}"></polyline>`; }
+    const num = a.name.match(/\d/)?.[0] || 'R';
+    marks += unitG(x, y, `army ${selArmy === a.id ? 'sel' : ''} ${a.order}`, `<g class="army-hit" data-army="${a.id}"><rect x="-15" y="-11" width="30" height="22" rx="3"></rect><path d="M-15 -11 L15 11 M-15 11 L15 -11"></path><text class="an" y="4">${num}</text>
+      <rect class="sb" x="-15" y="13" width="30" height="3.5"></rect><rect class="sf" x="-15" y="13" width="${(30 * a.str / 100).toFixed(1)}" height="3.5"></rect>
+      <text class="ag" y="-15">${esc(a.gen.name)} ${'★'.repeat(Math.min(5, a.gen.skill))}${a.auto ? ' 🤖' : ''}</text></g>`);
+  });
+  return h + orders + marks;
+};
+// 지도 클릭: 군단 선택 → 목표 지정 (기존 주공 목표 클릭보다 먼저 처리)
+document.addEventListener('click', e => {
+  const T = S?.war?.theater; if (!T?.armies) return;
+  const hit = e.target.closest?.('#geo .army-hit');
+  if (hit) { e.stopImmediatePropagation(); selArmy = selArmy === hit.dataset.army ? null : hit.dataset.army; const a = T.armies.find(x => x.id === selArmy); toast(a ? `🎖️ ${esc(a.name)} 선택 — 공격할 적 지역(인접)이나 이동할 아군 지역을 누르세요.` : '선택 해제'); updateMap(); if (openPanelName === 'world') renderWarPanel(); return; }
+  if (!selArmy) return;
+  const el = e.target.closest?.('#geo .prov, #geo .vreg-hit'); if (!el) return;
+  e.stopImmediatePropagation();
+  const r = armyOrder(S, selArmy, 'go', el.dataset.p || el.dataset.vp);
+  toast(esc(r.msg || '')); if (r.ok) { saveGame(S); if (typeof consumeWarFx === 'function') consumeWarFx(); }
+  updateMap(); if (openPanelName === 'world') renderWarPanel();
+  if (S.war?.theater?.pendingBattle) openBattleCard();
+}, true);
+
+// 전쟁 패널: 군단 카드
+const _renderWarPanel = renderWarPanel;
+renderWarPanel = function (force) {
+  _renderWarPanel(force);
+  const T = S?.war?.theater, box = document.querySelector('#war-slot .warbox.hoi'); if (!T?.armies || !box) return;
+  const by = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  const ordTxt = a => a.str <= 0 ? `💀 궤멸 — 재편성 ${Math.max(0, 30 - (a.dead || 0))}일` : a.order === 'attack' && a.target ? `⚔️ ${by[a.target]?.n} 공격 중` : a.order === 'move' ? `🚚 ${by[String(a.path.at(-1)).replace('sea:', '')]?.n || ''}(으)로 이동 중${String(a.path[0]).startsWith('sea:') ? '(해상)' : ''}` : a.resting ? '😮‍💨 휴식·재정비' : '🛡️ 방어 중';
+  const div = document.createElement('div'); div.className = 'army-sec';
+  div.innerHTML = `<div class="wlabel">🎖️ 군단 지휘 <span class="muted">지도에서 군단 표식을 누른 뒤 → 인접한 적 지역(공격) 또는 아군 지역(이동)을 누르세요. 적을 사방에서 둘러싸면 포위 섬멸!</span></div>
+    <div class="armies">${T.armies.map(a => `<div class="acard ${selArmy === a.id ? 'sel' : ''} ${a.str <= 0 ? 'dead' : ''}">
+      <div class="ah"><b>${esc(a.name)}</b><span class="muted small">병력 ${Math.round(a.share * 100)}% · 전과 ${a.kills}</span></div>
+      <div class="small">👤 ${esc(a.gen.name)} 대장 ${'★'.repeat(Math.min(5, a.gen.skill))} ${a.gen.traits.map(t => `<span class="tag" title="${esc(GEN_TRAITS[t].desc)}">${GEN_TRAITS[t].icon} ${GEN_TRAITS[t].name}</span>`).join('')}</div>
+      <div class="wrow"><span>전투력</span>${meter(a.str, 'org')}<em>${a.str.toFixed(0)}</em></div>
+      <div class="small">📍 ${esc(by[a.loc]?.n || '')} · ${ordTxt(a)}</div>
+      <div class="row-btns"><button class="btn sm ${selArmy === a.id ? 'primary' : ''}" data-asel="${a.id}">${selArmy === a.id ? '✔ 선택됨' : '🎯 선택'}</button><button class="btn sm" data-ahold="${a.id}">🛡️ 방어</button><button class="btn sm ${a.auto ? 'primary' : 'ghost'}" data-aauto="${a.id}">🤖 자동 ${a.auto ? 'ON' : 'OFF'}</button>
+        ${T.armies.length > 1 ? `<button class="btn sm ghost" data-ashare="${a.id}" title="가장 큰 다른 군단에서 병력 10%를 데려옵니다">➕ 증원</button>` : ''}</div>
+    </div>`).join('')}</div>`;
+  const anchor = box.querySelector('.wlabel'); box.insertBefore(div, anchor);
+  div.querySelectorAll('[data-asel]').forEach(b => b.onclick = () => { selArmy = selArmy === b.dataset.asel ? null : b.dataset.asel; updateMap(); renderWarPanel(); if (selArmy) { const a = T.armies.find(x => x.id === selArmy); zoomToProv(a.loc); toast('지도에서 공격할 적 지역이나 이동할 아군 지역을 누르세요.'); } });
+  div.querySelectorAll('[data-ahold]').forEach(b => b.onclick = () => act(armyOrder)(S, b.dataset.ahold, 'hold'));
+  div.querySelectorAll('[data-aauto]').forEach(b => b.onclick = () => act(armyOrder)(S, b.dataset.aauto, 'auto'));
+  div.querySelectorAll('[data-ashare]').forEach(b => b.onclick = () => { const to = b.dataset.ashare, from = [...T.armies].filter(x => x.id !== to && x.str > 0).sort((x, y) => y.share - x.share)[0]; if (from) act(shiftShare)(S, from.id, to); });
+};
+function zoomToProv(pid) {
+  const p = S.war?.theater?.provs.find(x => x.id === pid); if (!p || !mapBuilt) return;
+  const w = 40, h = 40 * (mapBuilt.svg.clientHeight / Math.max(1, mapBuilt.svg.clientWidth) || 0.6);
+  mapView = { x: p.c[0] - w / 2, y: p.c[1] - h / 2, w, h }; applyView(mapBuilt.svg);
+}
+
+// 전투 결정 카드
+function openBattleCard() {
+  const T = S?.war?.theater, B = T?.pendingBattle; if (!B || !$('modal').classList.contains('hidden')) return;
+  setSpeed(0);
+  const p = T.provs.find(x => x.id === B.pid), a = T.armies?.find(x => x.id === B.aid);
+  openModal(`<div class="event battle">
+    <div class="ev-banner ev-security"><span class="ev-art">⚔️</span><span class="ev-kind">전투 결정</span><span class="ev-date">${esc(a?.name || '')}</span></div>
+    <h2>${esc(p.n)} 공방전</h2>
+    <p class="ev-desc">${esc(a?.gen.name || '')} 대장이 보고합니다. "${esc(p.n)}${p.vp >= 5 ? '은(는) 적의 핵심 거점입니다' : p.terrain > 1 ? '은(는) 험준한 산악 지대입니다' : '에 적이 요새를 쌓았습니다'}. 어떻게 공략할까요?"</p>
+    <div class="ev-opts">${BATTLE_CHOICES.map(c => `<button class="ev-opt" data-bc="${c.id}" ${c.mod.cost && S.pcap < c.mod.cost ? 'disabled' : ''}><b>${c.icon} ${c.name}</b><span>${esc(c.desc)}</span></button>`).join('')}</div></div>`, { closable: false });
+  document.querySelectorAll('[data-bc]').forEach(b => b.onclick = () => { const r = applyBattle(S, b.dataset.bc); if (r.ok === false) return toast(esc(r.msg)); saveGame(S); closeModal(); toast(esc(r.msg)); renderAll(); });
+}
+const _warTick2 = warTick;
+warTick = function () { _warTick2(); if (S?.war?.theater?.pendingBattle) openBattleCard(); };
 
 </script>
 <script>

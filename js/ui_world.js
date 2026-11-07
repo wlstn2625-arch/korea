@@ -102,13 +102,15 @@ function bindMapInteraction(container, svg) {
   const toMap = (cx, cy) => { const r = svg.getBoundingClientRect(); const ctm = svg.getScreenCTM().inverse(); const p = new DOMPoint(cx, cy).matrixTransform(ctm); return [p.x, p.y, r]; };
   svg.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = toMap(e.clientX, e.clientY); zoomAt(svg, Math.exp(e.deltaY * 0.0015), x, y); }, { passive: false });
   const ptrs = new Map(); let moved = 0, pinch0 = null;
-  svg.addEventListener('pointerdown', e => { svg.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch0 = null; });
+  // 누르자마자 포인터를 붙잡으면 클릭 대상이 지도 전체가 돼 나라·군단·지역을 못 고름 → 실제로 끌기 시작할 때만 붙잡음
+  svg.addEventListener('pointerdown', e => { ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch0 = null; });
   svg.addEventListener('pointermove', e => {
     if (!ptrs.has(e.pointerId)) return;
     const prev = ptrs.get(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
     const unit = mapView.w / svg.clientWidth;
     if (ptrs.size === 1) {
       const dx = e.clientX - prev[0], dy = e.clientY - prev[1]; moved += Math.abs(dx) + Math.abs(dy);
+      if (moved > 6 && !svg.hasPointerCapture(e.pointerId)) try { svg.setPointerCapture(e.pointerId); } catch { }
       mapView = { ...mapView, x: mapView.x - dx * unit, y: mapView.y - dy * unit }; applyView(svg);
     } else if (ptrs.size === 2) {
       const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]); moved += 10;

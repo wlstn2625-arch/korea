@@ -1026,3 +1026,25 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .bi .ic { font-size: 22px; } .bi b { font-size: 13px; display: block; } .bi small { font-size: 11px; color: var(--muted); }
 .chip.big { font-weight: 800; }
 #modal-x { z-index: 8; }
+
+/* 군단 지휘 */
+.geo .army { transform: scale(var(--u)); }
+.geo .army-hit { pointer-events: all; cursor: pointer; }
+.geo .army rect:first-child { fill: #2f6fe0; stroke: #e2c27a; stroke-width: 2px; }
+.geo .army path { stroke: #0b0f16; stroke-width: 1.5px; }
+.geo .army .an { font-size: 12px; font-weight: 900; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.geo .army .ag { font-size: 9.5px; font-weight: 700; text-anchor: middle; fill: #ffe08a; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.geo .army .sb { fill: rgba(0, 0, 0, .6); } .geo .army .sf { fill: #6fcf7f; }
+.geo .army.attack rect:first-child { fill: #c9452f; }
+.geo .army.move rect:first-child { fill: #6a5acd; }
+.geo .army.sel rect:first-child { stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 6px #ffd22e); animation: selGlow 1s ease-in-out infinite alternate; }
+.geo .aord { fill: none; stroke-width: calc(var(--u) * 4px); stroke-linecap: round; }
+.geo .aord.atk { stroke: #ff7a4a; stroke-dasharray: calc(var(--u) * 8px) calc(var(--u) * 4px); animation: march 0.8s linear infinite; }
+.geo .aord.atk.sel { stroke: #ffd22e; }
+.geo .aord.mv { stroke: #b5a6ff; stroke-dasharray: calc(var(--u) * 3px) calc(var(--u) * 4px); }
+.army-sec { display: grid; gap: 6px; }
+.armies { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+.acard { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: var(--card2); border: 1px solid var(--line); font-size: 12px; }
+.acard.sel { border-color: #ffd22e; box-shadow: 0 0 0 1px #ffd22e inset; }
+.acard.dead { opacity: .5; }
+.acard .ah { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; } .acard .ah b { font-size: 13.5px; }
