@@ -1048,3 +1048,5 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .acard.sel { border-color: #ffd22e; box-shadow: 0 0 0 1px #ffd22e inset; }
 .acard.dead { opacity: .5; }
 .acard .ah { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; } .acard .ah b { font-size: 13.5px; }
+.bal-box { display: grid; gap: 6px; padding-top: 4px; border-top: 1px dashed var(--line); }
+.alliance { display: grid; gap: 4px; padding: 8px; border-radius: 10px; background: linear-gradient(90deg, rgba(160, 36, 43, .18), var(--card2)); border: 1px solid #8e2f2f; }

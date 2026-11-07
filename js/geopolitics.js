@@ -57,6 +57,7 @@ function judge(s, k) {
   const G = geoState(s), rel = relOf(s, k), near = nearness(s, k), ratio = theirMight(s, k) / Math.max(1, krMight(s));
   const agg = typeof leaderAgg === 'function' ? leaderAgg(s, k) : 30, d = dip(s, k);
   if (d.alliance || s.terr?.[k] || s.heg?.sphere?.[k] != null) return { stance: 'ours', why: d.alliance ? '대한민국과 동맹' : s.terr?.[k] ? '대한민국의 보호국' : '대한민국 세력권(안보 보장)' };
+  if (s.geo?.bal?.great?.[k] != null) return { stance: 'coalition', why: '세력 균형(패권 견제)', balance: 99, bandwagon: 0, fear: G.threat };
   const fear = G.threat * near * (1.2 - rel / 120);
   const why = [`위협 체감 ${fear.toFixed(0)}`, `거리 ${near >= 0.85 ? '인접' : near >= 0.6 ? '같은 대륙' : '원거리'}`, `관계 ${rel.toFixed(0)}`, `국력비 ${ratio.toFixed(2)}`];
   const tr = t => typeof hasTrait === 'function' && hasTrait(s, k, t);
@@ -86,7 +87,7 @@ function geoTurn(s, report) {
     // 판단은 한 번에 휙 바뀌지 않음: 연합 가입·탈퇴는 확률적으로
     let st = j.stance;
     if (st === 'coalition' && prev !== 'coalition' && Math.random() > 0.45) st = 'wary';
-    if (prev === 'coalition' && st !== 'coalition' && G.threat > 25 && Math.random() > 0.35) st = 'coalition';
+    if (prev === 'coalition' && st !== 'coalition' && (j.balance > 30 || (G.threat > 25 && Math.random() > 0.35))) st = 'coalition'; // 한 번 가입하면 쉽게 안 나감
     G.stance[k] = st;
     if (st === 'coalition') coal.push(k);
     if (st !== prev && (st === 'coalition' || prev === 'coalition' || st === 'bandwagon') && (isCore(k) || cinfo(k).eco >= 30 || nearness(s, k) >= 0.85)) {
