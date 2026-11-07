@@ -325,8 +325,8 @@ function renderCountryPanel() {
   const conflicts = (S.world?.conflicts || []).filter(x => x.a === k || x.b === k);
   const confHtml = conflicts.length ? `<div class="box"><h4>진행 중인 분쟁</h4>${conflicts.map(x => `<div>${CONFLICT_TYPES[x.type].icon} ${CONFLICT_TYPES[x.type].name}: ${esc(cname(x.a))}${x.b !== x.a ? ' ↔ ' + esc(cname(x.b)) : ''} (${x.turns}분기째)</div>`).join('')}</div>` : '';
   const odds = !c.isBloc && !S.annexed[k] && !owner ? (() => {
-    const o = warOdds(S, k);
-    return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>우리 편: ${['대한민국', ...o.allies.map(cname)].join(', ')} (전력 ${o.ours.toFixed(0)}${o.reach < 1 ? `, 원거리 투사 ${Math.round(o.reach * 100)}%` : ''})<br>상대 편: ${[c.name, ...o.en.map(cname)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
+    const o = warOdds(S, k), tf = typeof terrForces === 'function' ? terrForces(S) : null;
+    return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>${tf && Object.keys(S.terr || {}).length ? `<div class="muted small">우리 군사력 ${Math.round(milPower(S))} = 본국 ${Math.round(milPower(S) - tf.mil)} + 점령지·보호국 ${Math.round(tf.mil)} (사단 +${Math.round(tf.divs)}, 공군 +${Math.round(tf.air)}, 해군 +${Math.round(tf.navy)})</div>` : ''}우리 편: ${['대한민국', ...o.allies.map(cname)].join(', ')} (전력 ${o.ours.toFixed(0)}${o.reach < 1 ? `, 원거리 투사 ${Math.round(o.reach * 100)}%` : ''})<br>상대 편: ${[c.name, ...o.en.map(cname)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
       판정: <b style="color:${o.edge > 0.15 ? 'var(--good)' : o.edge > -0.05 ? 'var(--mid)' : 'var(--bad)'}">${o.edge > 0.25 ? '압도적 우세' : o.edge > 0.1 ? '우세' : o.edge > -0.05 ? '팽팽함' : o.edge > -0.2 ? '열세' : '절대 열세'}</b>${(c.nukes || o.en.some(x => cinfo(x).nukes)) ? ' · ☢️ 상대 진영 핵보유: 몰리면 핵 사용 위험' : ''}${!c.annex ? ' · 핵보유국이라 합병은 불가(배상만 가능)' : ''}</div>`;
   })() : '';
   const actions = S.annexed[k] ? '<div class="empty">합병된 지역입니다.</div>' : DIPLO_ACTIONS.map(a => {

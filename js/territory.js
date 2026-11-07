@@ -85,15 +85,17 @@ function terrOutput(s, k) {
   const capital = (c.eco * 0.35 + 2) * (t.dev / 50) * ext * calm * Math.max(0.2, 1 + M.cap);
   const upkeep = R.upkeep * (c.eco * 0.5 + 6) * Math.max(0.3, 1 + M.upkeep) + LEVELS.invest.cost[t.invest];
   const divs = R.puppet ? terrPop(k) / 1e6 * 0.08 * LEVELS.conscript.mul[Math.min(1, t.conscript)] : terrPop(k) / 1e6 * 0.2 * Math.max(LEVELS.conscript.mul[t.conscript], full ? 0.4 : 0) * calm;
-  const milShare = R.puppet ? 0.08 : t.rule === 'autonomy' ? 0.08 : 0.15;
+  // 점령지의 군대·군수 산업을 얼마나 우리 것으로 쓰는가 (통합될수록 거의 전부)
+  const milShare = R.puppet ? 0.25 : t.rule === 'integrate' ? 0.3 + 0.6 * t.integ / 100 : t.rule === 'autonomy' ? 0.3 : t.rule === 'colony' ? 0.4 : 0.5;
   const mil = c.mil * milShare * calm * (1 + M.mil);
+  const garrison = c.mil * 0.35 * milShare * calm; // 현지 편성 사단(징병 없이도)
   const gdp = ecoK(k) * 0.12 * (t.dev / 50) * (t.extract > 0 ? 1 : 0.6) * calm * (R.puppet ? 0.5 : 1) * (1 + M.gdp);
-  return { capital, upkeep, divs: Math.min(divs + M.divs, 30), air: mil * 0.5, navy: mil * 0.4, mil, gdp };
+  return { capital, upkeep, divs: Math.min(divs + M.divs + garrison, 120), air: mil * 0.6, navy: mil * 0.5, mil, gdp };
 }
 function terrForces(s) {
   const r = { divs: 0, air: 0, navy: 0, mil: 0 };
   if (!s.terr) return { divs: s.annexed?.nk ? 10 : 0, air: 0, navy: 0, mil: s.annexed?.nk ? 8 : 0 };
-  for (const k in s.terr) { const o = terrOutput(s, k); r.divs += o.divs; r.air += o.air; r.navy += o.navy; r.mil += o.mil * 0.5 + o.divs * 0.4; }
+  for (const k in s.terr) { const o = terrOutput(s, k); r.divs += o.divs; r.air += o.air; r.navy += o.navy; r.mil += o.mil + o.divs * 0.3; }
   return r;
 }
 function terrIncome(s) { let n = 0; for (const k in (s.terr || {})) { const o = terrOutput(s, k); n += o.capital - o.upkeep; } return n; }

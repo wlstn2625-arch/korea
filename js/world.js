@@ -91,7 +91,19 @@ function milPower(s) {
   if (typeof terrForces === 'function') m += terrForces(s).mil;
   else { if (s.annexed?.nk) m += 8; m += Object.keys(s.annexed || {}).filter(k => k !== 'nk').reduce((a, k) => a + cinfo(k).mil * 0.15, 0); }
   if (typeof techBonus === 'function') m += techBonus(s).mil;
-  return clamp(m, 5, 140);
+  return clamp(m, 5, 2000); // 제국이 커지면 상한 없이 성장
+}
+// 전력 투사력: 서울만이 아니라 우리 영토(점령지·본토 편입지) 중 가장 가까운 곳에서 계산
+function reachOf(s, k) {
+  const C = typeof MAP_DATA !== 'undefined' ? MAP_DATA.countries : null; let best = cinfo(k).reach;
+  if (!C?.[k]?.ll || typeof kmBetween !== 'function') return best;
+  for (const h of Object.keys(s.terr || {})) {
+    const t = s.terr[h]; if (!C[h]?.ll || (t.rule === 'puppet')) continue;
+    if (typeof neighborsOf === 'function' && neighborsOf(h)?.includes?.(k)) return 1;
+    best = Math.max(best, clamp(1 - (kmBetween(C[h].ll, C[k].ll) - 1500) / 14000, 0.35, 1));
+  }
+  for (const h of Object.keys(s.heg?.bases || {})) if (C[h]?.ll) best = Math.max(best, clamp(1 - (kmBetween(C[h].ll, C[k].ll) - 1500) / 14000, 0.35, 1));
+  return best;
 }
 const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' || !!s.tech?.done?.includes('s5') : cinfo(k).nukes;
 
@@ -185,7 +197,7 @@ function warAllies(s, k, side, aggressor = 'kr') {
 function warOdds(s, k) {
   const w = s.war && s.war.k === k ? s.war : null;
   const allies = w ? w.allies : warAllies(s, k, 'kr'), en = w ? w.enemyAllies : warAllies(s, k, 'them');
-  const reach = cinfo(k).reach;
+  const reach = reachOf(s, k);
   const ours = milPower(s) * reach + allies.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   const theirs = (typeof power === 'function' && s.world ? power(s, k) : cinfo(k).mil) + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   return { ours, theirs, edge: (ours - theirs) / (ours + theirs), reach, allies, en };

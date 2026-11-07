@@ -5491,7 +5491,19 @@ function milPower(s) {
   if (typeof terrForces === 'function') m += terrForces(s).mil;
   else { if (s.annexed?.nk) m += 8; m += Object.keys(s.annexed || {}).filter(k => k !== 'nk').reduce((a, k) => a + cinfo(k).mil * 0.15, 0); }
   if (typeof techBonus === 'function') m += techBonus(s).mil;
-  return clamp(m, 5, 140);
+  return clamp(m, 5, 2000); // 제국이 커지면 상한 없이 성장
+}
+// 전력 투사력: 서울만이 아니라 우리 영토(점령지·본토 편입지) 중 가장 가까운 곳에서 계산
+function reachOf(s, k) {
+  const C = typeof MAP_DATA !== 'undefined' ? MAP_DATA.countries : null; let best = cinfo(k).reach;
+  if (!C?.[k]?.ll || typeof kmBetween !== 'function') return best;
+  for (const h of Object.keys(s.terr || {})) {
+    const t = s.terr[h]; if (!C[h]?.ll || (t.rule === 'puppet')) continue;
+    if (typeof neighborsOf === 'function' && neighborsOf(h)?.includes?.(k)) return 1;
+    best = Math.max(best, clamp(1 - (kmBetween(C[h].ll, C[k].ll) - 1500) / 14000, 0.35, 1));
+  }
+  for (const h of Object.keys(s.heg?.bases || {})) if (C[h]?.ll) best = Math.max(best, clamp(1 - (kmBetween(C[h].ll, C[k].ll) - 1500) / 14000, 0.35, 1));
+  return best;
 }
 const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' || !!s.tech?.done?.includes('s5') : cinfo(k).nukes;
 
@@ -5585,7 +5597,7 @@ function warAllies(s, k, side, aggressor = 'kr') {
 function warOdds(s, k) {
   const w = s.war && s.war.k === k ? s.war : null;
   const allies = w ? w.allies : warAllies(s, k, 'kr'), en = w ? w.enemyAllies : warAllies(s, k, 'them');
-  const reach = cinfo(k).reach;
+  const reach = reachOf(s, k);
   const ours = milPower(s) * reach + allies.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   const theirs = (typeof power === 'function' && s.world ? power(s, k) : cinfo(k).mil) + en.reduce((a, c) => a + cinfo(c).mil * 0.5, 0);
   return { ours, theirs, edge: (ours - theirs) / (ours + theirs), reach, allies, en };
@@ -6334,15 +6346,17 @@ function terrOutput(s, k) {
   const capital = (c.eco * 0.35 + 2) * (t.dev / 50) * ext * calm * Math.max(0.2, 1 + M.cap);
   const upkeep = R.upkeep * (c.eco * 0.5 + 6) * Math.max(0.3, 1 + M.upkeep) + LEVELS.invest.cost[t.invest];
   const divs = R.puppet ? terrPop(k) / 1e6 * 0.08 * LEVELS.conscript.mul[Math.min(1, t.conscript)] : terrPop(k) / 1e6 * 0.2 * Math.max(LEVELS.conscript.mul[t.conscript], full ? 0.4 : 0) * calm;
-  const milShare = R.puppet ? 0.08 : t.rule === 'autonomy' ? 0.08 : 0.15;
+  // 점령지의 군대·군수 산업을 얼마나 우리 것으로 쓰는가 (통합될수록 거의 전부)
+  const milShare = R.puppet ? 0.25 : t.rule === 'integrate' ? 0.3 + 0.6 * t.integ / 100 : t.rule === 'autonomy' ? 0.3 : t.rule === 'colony' ? 0.4 : 0.5;
   const mil = c.mil * milShare * calm * (1 + M.mil);
+  const garrison = c.mil * 0.35 * milShare * calm; // 현지 편성 사단(징병 없이도)
   const gdp = ecoK(k) * 0.12 * (t.dev / 50) * (t.extract > 0 ? 1 : 0.6) * calm * (R.puppet ? 0.5 : 1) * (1 + M.gdp);
-  return { capital, upkeep, divs: Math.min(divs + M.divs, 30), air: mil * 0.5, navy: mil * 0.4, mil, gdp };
+  return { capital, upkeep, divs: Math.min(divs + M.divs + garrison, 120), air: mil * 0.6, navy: mil * 0.5, mil, gdp };
 }
 function terrForces(s) {
   const r = { divs: 0, air: 0, navy: 0, mil: 0 };
   if (!s.terr) return { divs: s.annexed?.nk ? 10 : 0, air: 0, navy: 0, mil: s.annexed?.nk ? 8 : 0 };
-  for (const k in s.terr) { const o = terrOutput(s, k); r.divs += o.divs; r.air += o.air; r.navy += o.navy; r.mil += o.mil * 0.5 + o.divs * 0.4; }
+  for (const k in s.terr) { const o = terrOutput(s, k); r.divs += o.divs; r.air += o.air; r.navy += o.navy; r.mil += o.mil + o.divs * 0.3; }
   return r;
 }
 function terrIncome(s) { let n = 0; for (const k in (s.terr || {})) { const o = terrOutput(s, k); n += o.capital - o.upkeep; } return n; }
@@ -8923,8 +8937,8 @@ function renderCountryPanel() {
   const conflicts = (S.world?.conflicts || []).filter(x => x.a === k || x.b === k);
   const confHtml = conflicts.length ? `<div class="box"><h4>진행 중인 분쟁</h4>${conflicts.map(x => `<div>${CONFLICT_TYPES[x.type].icon} ${CONFLICT_TYPES[x.type].name}: ${esc(cname(x.a))}${x.b !== x.a ? ' ↔ ' + esc(cname(x.b)) : ''} (${x.turns}분기째)</div>`).join('')}</div>` : '';
   const odds = !c.isBloc && !S.annexed[k] && !owner ? (() => {
-    const o = warOdds(S, k);
-    return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>우리 편: ${['대한민국', ...o.allies.map(cname)].join(', ')} (전력 ${o.ours.toFixed(0)}${o.reach < 1 ? `, 원거리 투사 ${Math.round(o.reach * 100)}%` : ''})<br>상대 편: ${[c.name, ...o.en.map(cname)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
+    const o = warOdds(S, k), tf = typeof terrForces === 'function' ? terrForces(S) : null;
+    return `<div class="box"><h4>⚔️ 전쟁 시뮬레이션</h4>${tf && Object.keys(S.terr || {}).length ? `<div class="muted small">우리 군사력 ${Math.round(milPower(S))} = 본국 ${Math.round(milPower(S) - tf.mil)} + 점령지·보호국 ${Math.round(tf.mil)} (사단 +${Math.round(tf.divs)}, 공군 +${Math.round(tf.air)}, 해군 +${Math.round(tf.navy)})</div>` : ''}우리 편: ${['대한민국', ...o.allies.map(cname)].join(', ')} (전력 ${o.ours.toFixed(0)}${o.reach < 1 ? `, 원거리 투사 ${Math.round(o.reach * 100)}%` : ''})<br>상대 편: ${[c.name, ...o.en.map(cname)].join(', ')} (전력 ${o.theirs.toFixed(0)})<br>
       판정: <b style="color:${o.edge > 0.15 ? 'var(--good)' : o.edge > -0.05 ? 'var(--mid)' : 'var(--bad)'}">${o.edge > 0.25 ? '압도적 우세' : o.edge > 0.1 ? '우세' : o.edge > -0.05 ? '팽팽함' : o.edge > -0.2 ? '열세' : '절대 열세'}</b>${(c.nukes || o.en.some(x => cinfo(x).nukes)) ? ' · ☢️ 상대 진영 핵보유: 몰리면 핵 사용 위험' : ''}${!c.annex ? ' · 핵보유국이라 합병은 불가(배상만 가능)' : ''}</div>`;
   })() : '';
   const actions = S.annexed[k] ? '<div class="empty">합병된 지역입니다.</div>' : DIPLO_ACTIONS.map(a => {
