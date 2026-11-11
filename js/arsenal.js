@@ -109,6 +109,7 @@ function techBonus(s) {
     const b = techById(id)?.b || {};
     for (const k in b) if (['missile'].includes(k)) r.missile += b[k]; else if (['cas', 'enemyAir', 'nuke'].includes(k)) r[k] *= b[k]; else r[k] += b[k];
   }
+  for (const b of Object.values(s.fb || {})) for (const k in b) if (k in r) { if (['cas', 'enemyAir', 'nuke'].includes(k)) r[k] *= b[k]; else r[k] += b[k]; } // 국가 중점 보너스
   return r;
 }
 function techWhyNot(s, t) {

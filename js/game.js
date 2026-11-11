@@ -30,6 +30,7 @@ setInterval(() => {
   if (!$('modal').classList.contains('hidden')) return;      // 사건 카드·대화 중에는 시간이 멈춤
   const before = Math.floor(S.day || 0);
   S.day = (S.day || 0) + DAY_RATE[gameSpeed];
+  if (typeof focusTick === 'function') focusTick(S, DAY_RATE[gameSpeed]);
   // 전쟁 중이면 하루하루 전투가 실시간으로 진행
   if (S.war?.theater) {
     const days = Math.min(Math.floor(S.day), QUARTER_DAYS) - before;
