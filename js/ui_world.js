@@ -206,6 +206,7 @@ function renderWorld() {
 /* ---------------- 하츠식 전선 표시: 전선·부대·전투·공세 화살표 ---------------- */
 // 부대 마커는 화면에서 같은 크기로 보이도록 --u 배율을 씀
 const unitG = (x, y, cls, inner) => `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><g class="${cls}">${inner}</g></g>`;
+const frontShown = {};
 function warOverlay(s) {
   const w = s.war, T = w.theater, byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
   const edges = frontEdges(T);
@@ -220,7 +221,9 @@ function warOverlay(s) {
     const a = byId[ourId], b = byId[enId], e = T.edges[ourId + '>' + enId] || { prog: 0 };
     const mx = (a.c[0] + b.c[0]) / 2, my = (a.c[1] + b.c[1]) / 2, dx = b.c[0] - a.c[0], dy = b.c[1] - a.c[1], L = Math.hypot(dx, dy) || 1;
     // 전선은 전투 진행도만큼 밀려 있음
-    const sh = (e.prog / 100) * 0.35, fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
+    // 전선이 밀고 밀리는 모습을 부드럽게: 화면에 그린 위치를 실제 위치 쪽으로 조금씩 옮김
+    const fkey = ourId + '>' + enId, tsh = (e.prog / 100) * 0.35; frontShown[fkey] = frontShown[fkey] == null ? tsh : frontShown[fkey] + (tsh - frontShown[fkey]) * 0.35;
+    const sh = frontShown[fkey], fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
     lines += `<line class="fline" x1="${(fx + px).toFixed(2)}" y1="${(fy + py).toFixed(2)}" x2="${(fx - px).toFixed(2)}" y2="${(fy - py).toFixed(2)}"></line>`;
     if (STANCES[T.kr.stance].atk) arrows += `<line class="farrow kr" x1="${(a.c[0] + dx * 0.15).toFixed(2)}" y1="${(a.c[1] + dy * 0.15).toFixed(2)}" x2="${(fx + dx * 0.14).toFixed(2)}" y2="${(fy + dy * 0.14).toFixed(2)}" marker-end="url(#arr-kr)"></line>`;
     if (STANCES[T.en.stance].atk) arrows += `<line class="farrow en" x1="${(b.c[0] - dx * 0.15).toFixed(2)}" y1="${(b.c[1] - dy * 0.15).toFixed(2)}" x2="${(fx - dx * 0.14).toFixed(2)}" y2="${(fy - dy * 0.14).toFixed(2)}" marker-end="url(#arr-en)"></line>`;

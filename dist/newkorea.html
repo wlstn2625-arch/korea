@@ -1086,6 +1086,25 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .save-code { width: 100%; height: 110px; font: 11px/1.4 ui-monospace, monospace; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; word-break: break-all; }
 .start-actions.small-row { margin-top: 8px; gap: 8px; } .start-actions.small-row .btn { font-size: 13px; }
 
+/* 미사일 타격·적 미사일·요격 */
+.geo .crater { transform: scale(var(--u)); }
+.geo .crater circle { fill: rgba(255, 120, 40, .35); stroke: #ff7a2a; stroke-width: 1.5px; stroke-dasharray: 3 2; }
+.geo .crater text { font-size: 10px; text-anchor: middle; } .geo .crater .cd { font-size: 8px; fill: #ffb27a; font-weight: 700; paint-order: stroke; stroke: #0b0f16; stroke-width: 2.5px; }
+.geo .army .dv { font-size: 8.5px; font-weight: 800; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #0b0f16; stroke-width: 2.5px; }
+.geo .fx-trail.enemy { stroke: #ff4b4b; filter: drop-shadow(0 0 calc(var(--u) * 3px) #ff2a2a); }
+.geo .fx-trail.intercept { stroke: #9ad8ff; stroke-width: calc(var(--u) * 1.6px); stroke-dasharray: 400; stroke-dashoffset: 400; animation: fxTrail .7s linear forwards; }
+.geo .intercept-t { font-size: 12px !important; font-weight: 900; fill: #9ad8ff; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.missile-sec { display: grid; gap: 5px; }
+.ms-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ms-ammo { display: flex; gap: 3px; } .ms-ammo i { width: 7px; height: 16px; border-radius: 3px 3px 1px 1px; background: rgba(255, 255, 255, .12); } .ms-ammo i.on { background: linear-gradient(180deg, #ffd27a, #c9452f); }
+
+/* 로그인·회원가입 */
+.acc-box { display: grid; gap: 6px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--card2); border: 1px solid var(--line); }
+.acc-form { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 6px; }
+.acc-form input { min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+.acc-in { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+@media (max-width: 520px) { .acc-form { grid-template-columns: 1fr 1fr; } }
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -4521,7 +4540,9 @@ function registerCustomPolicy(s, text, a) {
 }
 
 /* ---------------- 저장 ---------------- */
-const SAVE_KEY = 'newkorea_save_v1';
+let SAVE_KEY = 'newkorea_save_v1'; // 로그인하면 계정별 키로 바뀜 (accounts.js)
+const SAVE_BASE = 'newkorea_save_v1';
+function setSaveUser(id) { SAVE_KEY = id ? `${SAVE_BASE}:${id}` : SAVE_BASE; }
 function saveGame(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); return true; } catch { return false; } }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }
@@ -6020,7 +6041,7 @@ function warDay(s) {
       const atkK = STANCES[T.kr.stance].atk, atkE = STANCES[T.en.stance].atk;
       let delta = 0;
       // 방어 측은 지형·요새·참호(방어 태세) 보너스
-      const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
+      const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1) * (typeof strikeDef === 'function' ? strikeDef(T, enId) : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
       const fk = AW ? 1 : fK(theirs), fe = fE(ours);
       const aw = AW ? AW.atk(ourId, enId) : { w: 1, prog: 1 }, bm = typeof battleMod === 'function' ? battleMod(T, enId) : { atk: 1, cas: 1, def: 1 };
       const kAtk = AW ? (aw.w > 0 ? (STANCES[T.kr.stance].atk || 1) : 0) : atkK;
@@ -6044,6 +6065,7 @@ function warDay(s) {
   }
   T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
   if (AW && typeof armiesDay === 'function') armiesDay(s);
+  if (typeof strikesDay === 'function') strikesDay(s);
   // 조직력·장비·병력
   for (const side of ['kr', 'en']) {
     const st = T[side];
@@ -6367,6 +6389,103 @@ function battleMod(T, enId) {
   if (T.days > m.until && !m.siege) return { atk: 1, cas: 1, def: 1 };
   return { atk: T.days <= m.until ? m.atk : 1, cas: T.days <= m.until ? m.cas : 1, def: m.siege && T.days - m.start >= 20 ? 0.6 : 1 };
 }
+
+</script>
+<script>
+/* js/strikes.js */
+/* =========================================================
+ *  미사일 정밀 타격 (적 내륙 어디든) + 적의 미사일 공격과 요격
+ *  - 미사일 재고: 기본 6발 + 미사일 기술, 10일마다 1발 보충
+ *  - 목표 종류: 지휘부·군수공장·비행장·항구·수도(정부청사)
+ *  - 맞은 지역은 일정 기간 방어가 약해짐(공략이 쉬워짐), 목표별 전국 효과
+ *  - 적도 우리 도시·군단에 미사일을 쏨 → 방공 기술에 따라 요격
+ * ========================================================= */
+const STRIKE_TYPES = [
+  { id: 'hq', icon: '🎯', name: '지휘부', desc: '그 지역 방어 -30%(20일), 적 조직력 -12', def: 0.7, days: 20, run: (s, T) => { T.en.org = clamp(T.en.org - 12, 5, 100); } },
+  { id: 'factory', icon: '🏭', name: '군수공장', desc: '적 장비 -6%, 30일간 적 장비 보충 절반', def: 0.9, days: 30, run: (s, T) => { T.en.equip = clamp(T.en.equip - 0.06, 0.15, 1); T.enProdCut = T.days + 30; } },
+  { id: 'airbase', icon: '✈️', name: '비행장', desc: '적 공군 -12% (제공권↑)', def: 0.9, days: 15, run: (s, T) => { T.en.airLeft = clamp(T.en.airLeft - 12, 10, 100); } },
+  { id: 'port', icon: '⚓', name: '항구', desc: '적 해군 -12% (제해권↑), 해안 지역만', def: 0.9, days: 15, coast: true, run: (s, T) => { T.en.navyLeft = clamp(T.en.navyLeft - 12, 10, 100); } },
+  { id: 'capital', icon: '🏛️', name: '수도·정부청사', desc: '적 항복 의지 꺾기(병력 -4%, 조직력 -8). 국제 비난, 위협도 +2', def: 0.8, days: 20, capital: true, run: (s, T) => { T.en.mp = clamp(T.en.mp - 4, 25, 100); T.en.org = clamp(T.en.org - 8, 5, 100); if (typeof addThreat === 'function') addThreat(s, 2); relBump(s, 'eu', -2, -1); } },
+];
+const COAST_WORDS = /해안|항만|부산|인천|울산|남포|원산|청진|함경|평안남|황해|도$|현$|시$/;
+function missileStock(s) {
+  const T = s.war?.theater; if (!T) return 0;
+  const tb = typeof techBonus === 'function' ? techBonus(s) : { missile: 1 };
+  const cap = 6 + Math.round((tb.missile - 1) * 8);
+  if (T.missiles == null) T.missiles = cap;
+  T.missileCap = cap; return T.missiles;
+}
+function strikeOptions(s, pid) {
+  const T = s.war.theater, p = T.provs.find(x => x.id === pid); if (!p || p.owner === 'kr') return [];
+  return STRIKE_TYPES.filter(t => (!t.capital || p.vp >= 5) && (!t.coast || p.virtual || COAST_WORDS.test(p.n)));
+}
+function missileStrike(s, pid, type) {
+  const T = s.war?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  const p = T.provs.find(x => x.id === pid), st = STRIKE_TYPES.find(x => x.id === type);
+  if (!p || !st || p.owner === 'kr') return { ok: false, msg: '적 지역을 고르세요.' };
+  if (missileStock(s) < 1) return { ok: false, msg: '미사일이 없습니다. 10일마다 1발씩 보충됩니다.' };
+  if (s.pcap < 8) return { ok: false, msg: `발사 비용 ${won(8)}이(가) 필요합니다.` };
+  T.missiles--; s.pcap -= 8;
+  const tb = typeof techBonus === 'function' ? techBonus(s) : { missile: 1 };
+  // 적 방공에 일부 요격 (극초음속·정찰위성이면 잘 뚫음)
+  const hit = Math.random() < clamp(0.6 + (tb.missile - 1) * 0.25 + (1 - T.en.airLeft / 100) * 0.2, 0.45, 0.95);
+  warFx(T, { type: 'strike', c: p.c, ok: hit, kind: st.id });
+  if (!hit) { warLog(s, `🚀 ${p.n} ${st.name} 타격 — 적 방공망에 요격당했습니다.`, 'bad'); return { ok: true, msg: `${st.icon} ${p.n} ${st.name}: 요격당했습니다! (남은 미사일 ${T.missiles}발)` }; }
+  (T.strikes = T.strikes || {})[pid] = { def: st.def, until: T.days + st.days, icon: st.icon };
+  st.run(s, T);
+  (s.cnt = s.cnt || {}).ops = (s.cnt.ops || 0) + 1;
+  warLog(s, `🚀 ${p.n} ${st.name} 명중! ${st.desc}`, 'good');
+  return { ok: true, msg: `${st.icon} ${p.n} ${st.name} 명중! (남은 미사일 ${T.missiles}발)` };
+}
+// 맞은 지역의 방어 배율 (전투 계산에서 사용)
+function strikeDef(T, pid) { const x = T.strikes?.[pid]; return x && T.days <= x.until ? x.def : 1; }
+// 하루마다: 미사일 보충, 적의 미사일 공격
+function strikesDay(s) {
+  const T = s.war?.theater; if (!T) return;
+  missileStock(s);
+  if (T.days % 10 === 0 && T.missiles < T.missileCap) T.missiles++;
+  if (T.enProdCut && T.days <= T.enProdCut) T.en.equip = clamp(T.en.equip - 0.002, 0.15, 1); // 보충 절반
+  // 적 미사일: 핵심 도시나 군단을 노림
+  const enemyMissiles = cinfo(s.war.k).mil >= 30 || cinfo(s.war.k).nukes;
+  if (!enemyMissiles || Math.random() > 0.06) return;
+  const mine = T.provs.filter(p => p.owner === 'kr' && p.home === 'kr');
+  const armyLocs = new Set((T.armies || []).filter(a => a.str > 0).map(a => a.loc));
+  const tg = mine.sort((a, b) => (b.vp + (armyLocs.has(b.id) ? 6 : 0)) - (a.vp + (armyLocs.has(a.id) ? 6 : 0)))[Math.floor(Math.random() * Math.min(3, mine.length))];
+  if (!tg) return;
+  const done = id => typeof techDone === 'function' && techDone(s, id);
+  const pInt = clamp(0.15 + (done('m1') ? 0.25 : 0) + (done('m6') ? 0.2 : 0) + (done('m5') ? 0.15 : 0) + (done('n7') ? 0.08 : 0) + (done('a7') ? 0.07 : 0), 0.1, 0.92);
+  const intercepted = Math.random() < pInt;
+  const from = T.provs.filter(p => p.owner !== 'kr').sort((a, b) => b.vp - a.vp)[0]?.c;
+  warFx(T, { type: 'enemyStrike', from, c: tg.c, intercepted });
+  if (intercepted) { warLog(s, `🛡️ 적 탄도미사일이 ${tg.n}을(를) 노렸으나 요격에 성공했습니다! (요격률 ${Math.round(pInt * 100)}%)`, 'good'); return; }
+  const hitArmies = (T.armies || []).filter(a => a.loc === tg.id && a.str > 0);
+  for (const a of hitArmies) a.str = clamp(a.str - 12, 5, 100);
+  s.approval = clamp(s.approval - 0.4, 0, 100); s.stats.gdp -= 0.02; T.kr.org = clamp(T.kr.org - 3, 5, 100);
+  warLog(s, `💥 적 미사일이 ${tg.n}에 떨어졌습니다!${hitArmies.length ? ` ${hitArmies.map(a => a.name).join('·')} 피해` : ' 민간 피해 발생'} (요격률 ${Math.round(pInt * 100)}%)`, 'bad');
+}
+
+/* ---------------- 사단 재편: 새 군단 편성·군단 합치기 ---------------- */
+const ARMY_EXTRA_NAMES = ['제5군', '제6군', '제7군', '수도방위사령부', '기동군단', '특수전사령부'];
+function splitArmy(s, aid) {
+  const T = s.war?.theater, a = T?.armies?.find(x => x.id === aid); if (!a) return { ok: false };
+  if (T.armies.filter(x => x.str > 0).length >= 6) return { ok: false, msg: '군단은 6개까지 편성할 수 있습니다.' };
+  if (a.share < 0.2) return { ok: false, msg: '떼어낼 사단이 부족합니다.' };
+  const take = Math.round(a.share * 0.4 * 100) / 100; a.share -= take;
+  const name = ARMY_EXTRA_NAMES.find(n => !T.armies.some(x => x.name === n)) || `제${T.armies.length + 1}군`;
+  const b = { id: 'a' + Date.now().toString(36) + T.armies.length, name, share: take, str: a.str, loc: a.loc, order: 'hold', target: null, path: [], moveT: 0, auto: false, gen: genGeneral(), kills: 0 };
+  T.armies.push(b);
+  return { ok: true, msg: `${a.name}에서 사단을 떼어 ${name}(${b.gen.name} 대장)을 편성했습니다.` };
+}
+function mergeArmy(s, aid) {
+  const T = s.war?.theater, a = T?.armies?.find(x => x.id === aid); if (!a) return { ok: false };
+  const b = T.armies.find(x => x !== a && x.loc === a.loc && x.str > 0);
+  if (!b) return { ok: false, msg: '같은 지역에 있는 다른 군단이 없습니다. 먼저 한곳으로 모으세요.' };
+  b.str = (b.str * b.share + a.str * a.share) / (a.share + b.share); b.share += a.share;
+  T.armies = T.armies.filter(x => x !== a);
+  return { ok: true, msg: `${a.name}을(를) ${b.name}에 합쳤습니다.` };
+}
+// 군단의 사단 수 (화면 표시)
+function armyDivs(s, a) { const f = sideForces(s, 'kr'); const live = s.war.theater.armies.filter(x => x.str > 0).reduce((x, y) => x + y.share, 0) || 1; return Math.max(1, Math.round(f.rawDivs * 0.65 * a.share / live)); }
 
 </script>
 <script>
@@ -9174,6 +9293,7 @@ function renderWorld() {
 /* ---------------- 하츠식 전선 표시: 전선·부대·전투·공세 화살표 ---------------- */
 // 부대 마커는 화면에서 같은 크기로 보이도록 --u 배율을 씀
 const unitG = (x, y, cls, inner) => `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><g class="${cls}">${inner}</g></g>`;
+const frontShown = {};
 function warOverlay(s) {
   const w = s.war, T = w.theater, byId = Object.fromEntries(T.provs.map(p => [p.id, p]));
   const edges = frontEdges(T);
@@ -9188,7 +9308,9 @@ function warOverlay(s) {
     const a = byId[ourId], b = byId[enId], e = T.edges[ourId + '>' + enId] || { prog: 0 };
     const mx = (a.c[0] + b.c[0]) / 2, my = (a.c[1] + b.c[1]) / 2, dx = b.c[0] - a.c[0], dy = b.c[1] - a.c[1], L = Math.hypot(dx, dy) || 1;
     // 전선은 전투 진행도만큼 밀려 있음
-    const sh = (e.prog / 100) * 0.35, fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
+    // 전선이 밀고 밀리는 모습을 부드럽게: 화면에 그린 위치를 실제 위치 쪽으로 조금씩 옮김
+    const fkey = ourId + '>' + enId, tsh = (e.prog / 100) * 0.35; frontShown[fkey] = frontShown[fkey] == null ? tsh : frontShown[fkey] + (tsh - frontShown[fkey]) * 0.35;
+    const sh = frontShown[fkey], fx = mx + dx * sh, fy = my + dy * sh, half = Math.min(L * 0.42, 3.2), px = -dy / L * half, py = dx / L * half;
     lines += `<line class="fline" x1="${(fx + px).toFixed(2)}" y1="${(fy + py).toFixed(2)}" x2="${(fx - px).toFixed(2)}" y2="${(fy - py).toFixed(2)}"></line>`;
     if (STANCES[T.kr.stance].atk) arrows += `<line class="farrow kr" x1="${(a.c[0] + dx * 0.15).toFixed(2)}" y1="${(a.c[1] + dy * 0.15).toFixed(2)}" x2="${(fx + dx * 0.14).toFixed(2)}" y2="${(fy + dy * 0.14).toFixed(2)}" marker-end="url(#arr-kr)"></line>`;
     if (STANCES[T.en.stance].atk) arrows += `<line class="farrow en" x1="${(b.c[0] - dx * 0.15).toFixed(2)}" y1="${(b.c[1] - dy * 0.15).toFixed(2)}" x2="${(fx - dx * 0.14).toFixed(2)}" y2="${(fy - dy * 0.14).toFixed(2)}" marker-end="url(#arr-en)"></line>`;
@@ -10308,6 +10430,122 @@ warTick = function () { _warTick2(); if (S?.war?.theater?.pendingBattle) openBat
 
 </script>
 <script>
+/* js/ui_strikes.js */
+/* =========================================================
+ *  미사일 타격 화면·연출, 군단 이동 애니메이션·사단 수, 사단 재편 버튼
+ * ========================================================= */
+let strikeMode = false;
+const armyShown = {}; // 군단 표식이 화면에서 미끄러지듯 움직이도록 직전 위치 기억
+function armyPos(T, a, by) {
+  let x = by[a.loc]?.c[0], y = by[a.loc]?.c[1];
+  if (a.order === 'move' && a.path?.length) { // 다음 지역 쪽으로 이동한 만큼
+    const nx = by[String(a.path[0]).replace('sea:', '')]; const sea = String(a.path[0]).startsWith('sea:');
+    const steps = sea ? 12 : (a.gen.traits.includes('armor') ? 3 : 5), f = clamp((a.moveT || 0) / steps, 0, 1);
+    if (nx) { x += (nx.c[0] - x) * f; y += (nx.c[1] - y) * f; }
+  }
+  const prev = armyShown[a.id]; const cur = prev ? [prev[0] + (x - prev[0]) * 0.45, prev[1] + (y - prev[1]) * 0.45] : [x, y];
+  armyShown[a.id] = cur; return cur;
+}
+// 군단 표식을 부드러운 위치·사단 수로 다시 그림 (ui_armies의 표식을 대체)
+const _warOverlayS = warOverlay;
+warOverlay = function (s) {
+  let h = _warOverlayS(s);
+  const T = s.war.theater, by = Object.fromEntries(T.provs.map(p => [p.id, p]));
+  // 맞은 지역 표시
+  for (const [pid, x] of Object.entries(T.strikes || {})) if (T.days <= x.until && by[pid]) h += unitG(by[pid].c[0] + 1.2, by[pid].c[1] + 1, 'crater', `<circle r="7"></circle><text y="4">${x.icon}</text><text class="cd" y="17">${x.until - T.days}일</text>`);
+  if (!T.armies) return h;
+  // ui_armies가 그린 군단 표식을 이동 보간 위치로 교체
+  h = h.replace(/<g transform="translate\([^)]*\)"><g class="army [^"]*">[\s\S]*?<\/g><\/g><\/g>/g, '');
+  let marks = '';
+  T.armies.forEach((a, i) => {
+    if (a.str <= 0) return;
+    const off = T.armies.filter((b, j) => j < i && b.loc === a.loc && b.str > 0 && b.order !== 'move').length;
+    const [x0, y0] = armyPos(T, a, by), x = x0 + off * 1.4, y = y0 - off * 1.1;
+    const num = a.name.match(/\d/)?.[0] || '★', dv = typeof armyDivs === 'function' ? armyDivs(s, a) : '';
+    marks += unitG(x, y, `army ${selArmy === a.id ? 'sel' : ''} ${a.order}`, `<g class="army-hit" data-army="${a.id}"><rect x="-15" y="-11" width="30" height="22" rx="3"></rect><path d="M-15 -11 L15 11 M-15 11 L15 -11"></path><text class="an" y="4">${num}</text>
+      <rect class="sb" x="-15" y="13" width="30" height="3.5"></rect><rect class="sf" x="-15" y="13" width="${(30 * a.str / 100).toFixed(1)}" height="3.5"></rect>
+      <text class="ag" y="-15">${esc(a.gen.name)} ${'★'.repeat(Math.min(5, a.gen.skill))}${a.auto ? ' 🤖' : ''}</text><text class="dv" y="27">${dv}개 사단</text></g>`);
+  });
+  return h + marks;
+};
+
+// 미사일 타격 모드: 지도에서 적 지역을 누르면 목표 선택 창
+document.addEventListener('click', e => {
+  if (!strikeMode || !S?.war?.theater) return;
+  const el = e.target.closest?.('#geo .prov, #geo .vreg-hit'); if (!el) return;
+  e.stopImmediatePropagation();
+  const pid = el.dataset.p || el.dataset.vp, T = S.war.theater, p = T.provs.find(x => x.id === pid);
+  if (!p || p.owner === 'kr') return toast('적이 장악한 지역을 누르세요.');
+  openStrikeMenu(pid);
+}, true);
+function openStrikeMenu(pid) {
+  const T = S.war.theater, p = T.provs.find(x => x.id === pid), opts = strikeOptions(S, pid);
+  setSpeed(0);
+  openModal(`<div class="event">
+    <div class="ev-banner ev-security"><span class="ev-art">🚀</span><span class="ev-kind">미사일 정밀 타격</span><span class="ev-date">남은 미사일 ${missileStock(S)}/${T.missileCap}발</span></div>
+    <h2>${esc(p.n)} — 무엇을 칠까요?</h2>
+    <p class="ev-desc">발사 비용 ${won(8)}. 적 방공에 요격될 수 있습니다(미사일 기술·적 공군 피해가 클수록 잘 뚫림). 맞은 지역은 한동안 방어가 약해져 군단이 공략하기 쉬워집니다.</p>
+    <div class="ev-opts">${opts.map(o => `<button class="ev-opt" data-st="${o.id}" ${missileStock(S) < 1 || S.pcap < 8 ? 'disabled' : ''}><b>${o.icon} ${o.name}</b><span>${esc(o.desc)}</span></button>`).join('')}</div>
+    <div class="modal-actions"><button class="btn ghost" id="st-cancel">취소</button></div></div>`);
+  document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { const r = missileStrike(S, pid, b.dataset.st); closeModal(); toast(esc(r.msg || '')); saveGame(S); consumeWarFx(); updateMap(); if (openPanelName === 'world') renderWarPanel(); if (missileStock(S) < 1) strikeMode = false; });
+  $('st-cancel').onclick = () => closeModal();
+}
+
+// 연출: 우리 미사일(명중/요격), 적 미사일(요격 장면 포함)
+const _consumeWarFx = consumeWarFx;
+consumeWarFx = function () {
+  const T = S?.war?.theater; if (!T?.fx?.length) return;
+  const mine = T.fx.filter(e => e.type === 'strike' || e.type === 'enemyStrike'); T.fx = T.fx.filter(e => !mine.includes(e));
+  mine.slice(-3).forEach((ev, i) => setTimeout(() => {
+    if (ev.type === 'strike') {
+      const from = KOREA_LAUNCH();
+      if (ev.ok) fxStrike(from, ev.c, 'missile');
+      else { fxStrike(from, [from[0] + (ev.c[0] - from[0]) * 0.7, from[1] + (ev.c[1] - from[1]) * 0.7], 'missile'); }
+    } else if (ev.type === 'enemyStrike' && ev.from && ev.c) {
+      if (ev.intercepted) {
+        const mid = [ev.from[0] + (ev.c[0] - ev.from[0]) * 0.65, ev.from[1] + (ev.c[1] - ev.from[1]) * 0.65];
+        fxEnemyTrail(ev.from, mid); setTimeout(() => fxIntercept(ev.c, mid), 350);
+      } else { fxEnemyTrail(ev.from, ev.c); setTimeout(() => { fxBurst(ev.c, true); const st = document.querySelector('.stage'); st?.classList.remove('shake'); void st?.offsetWidth; st?.classList.add('shake'); }, 1050); }
+    }
+  }, i * 400));
+  _consumeWarFx();
+};
+function fxEnemyTrail(from, to) {
+  const mx = (from[0] + to[0]) / 2, my = Math.min(from[1], to[1]) - Math.hypot(to[0] - from[0], to[1] - from[1]) * 0.35, d = `M${from[0]} ${from[1]} Q${mx} ${my} ${to[0]} ${to[1]}`;
+  fxAdd(`<path d="${d}" class="fx-trail enemy"></path><g class="fx-obj"><text class="fx-ic">☄️<animateMotion dur="1.1s" fill="freeze" rotate="auto" path="${d}"></animateMotion></text></g>`, 1300);
+}
+function fxIntercept(from, at) {
+  const d = `M${from[0]} ${from[1]} L${at[0]} ${at[1]}`;
+  fxAdd(`<path d="${d}" class="fx-trail intercept"></path><g class="fx-obj"><text class="fx-ic">🛡️<animateMotion dur="0.7s" fill="freeze" path="${d}"></animateMotion></text></g>`, 900);
+  setTimeout(() => { fxBurst(at, true); fxAdd(at && `<g transform="translate(${at[0]} ${at[1]})"><g class="fxb big"><text class="b-txt intercept-t" y="-14">요격!</text></g></g>`, 1200); }, 700);
+}
+
+// 전쟁 패널: 미사일 칸 + 군단 카드에 사단 수·분할·합치기
+const _renderWarPanelS = renderWarPanel;
+renderWarPanel = function (force) {
+  _renderWarPanelS(force);
+  const T = S?.war?.theater, box = document.querySelector('#war-slot .warbox.hoi'); if (!T || !box) return;
+  const ms = document.createElement('div'); ms.className = 'missile-sec';
+  ms.innerHTML = `<div class="wlabel">🚀 미사일 정밀 타격 <span class="muted">적 내륙 어디든 · 10일마다 1발 보충</span></div>
+    <div class="ms-row"><span class="ms-ammo">${Array.from({ length: T.missileCap || 6 }, (_, i) => `<i class="${i < missileStock(S) ? 'on' : ''}"></i>`).join('')}</span><b>${missileStock(S)}/${T.missileCap}발</b>
+      <button class="btn sm ${strikeMode ? 'primary' : ''}" id="ms-mode">${strikeMode ? '🎯 목표 지정 중… (지도에서 적 지역 누르기)' : '🎯 목표 지정'}</button></div>`;
+  const army = box.querySelector('.army-sec'); box.insertBefore(ms, army || box.querySelector('.wlabel'));
+  $('ms-mode').onclick = () => { strikeMode = !strikeMode; selArmy = null; renderWarPanel(); toast(strikeMode ? '🚀 지도에서 칠 적 지역을 누르세요. 내륙 깊숙한 곳도 됩니다.' : '타격 모드를 껐습니다.'); if (strikeMode) zoomTo(S.war.k); };
+  // 군단 카드 보강
+  box.querySelectorAll('.acard').forEach(card => {
+    const id = card.querySelector('[data-asel]')?.dataset.asel, a = T.armies?.find(x => x.id === id); if (!a) return;
+    const h = card.querySelector('.ah span'); if (h) h.textContent = `${armyDivs(S, a)}개 사단 · 전과 ${a.kills}`;
+    const row = card.querySelector('.row-btns'); if (!row || a.str <= 0) return;
+    row.insertAdjacentHTML('beforeend', `<button class="btn sm ghost" data-asplit="${a.id}" title="사단 40%를 떼어 새 군단 편성">✂️ 분할</button><button class="btn sm ghost" data-amerge="${a.id}" title="같은 지역의 다른 군단에 합치기">🔗 합치기</button>`);
+  });
+  box.querySelectorAll('[data-asplit]').forEach(b => b.onclick = () => act(splitArmy)(S, b.dataset.asplit));
+  box.querySelectorAll('[data-amerge]').forEach(b => b.onclick = () => act(mergeArmy)(S, b.dataset.amerge));
+};
+// 군단을 고르면 타격 모드는 끔
+document.addEventListener('click', e => { if (e.target.closest?.('#geo .army-hit, [data-asel]')) strikeMode = false; }, true);
+
+</script>
+<script>
 /* js/missions.js */
 /* =========================================================
  *  온라인 게임식 진행: 임무(퀘스트)·대통령 레벨·업적·국력 세계 순위
@@ -11206,5 +11444,140 @@ setInterval(() => {
 if (typeof ACHIEVEMENTS !== 'undefined') ACHIEVEMENTS.push(
   { id: 'f21', icon: '🎯', name: '국가 백년대계', desc: '국가 중점 10개 완료', ok: s => (s.focus?.done || []).length >= 10 },
   { id: 'f22', icon: '🇰🇷', name: '조국과 민족을 위하여', desc: '최종 중점 완료', ok: s => (s.focus?.done || []).includes('d_final') });
+
+</script>
+<script>
+/* js/accounts.js */
+/* =========================================================
+ *  초간단 로그인·회원가입 (아이디 + 비밀번호)
+ *  - 계정과 세이브는 이 기기(브라우저)에 저장. 비밀번호는 솔트+SHA-256 해시로만 보관
+ *  - claude.ai에서 열면 내 Claude 계정의 비공개 저장소에 세이브를 백업 →
+ *    다른 기기에서도 같은 아이디·비밀번호로 로그인하면 이어서 플레이
+ *  - 로그인 안 하면 '게스트'(이 기기에만 저장)
+ * ========================================================= */
+const ACC_KEY = 'newkorea_accounts', CUR_KEY = 'newkorea_user';
+let curUser = null;
+const accRead = () => { try { return JSON.parse(localStorage.getItem(ACC_KEY) || '{}'); } catch { return {}; } };
+const accWrite = a => { try { localStorage.setItem(ACC_KEY, JSON.stringify(a)); } catch { } };
+async function pwHash(salt, pw) {
+  const txt = `${salt}:${pw}:newkorea`;
+  try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  catch { let h = 2166136261; for (const ch of txt) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return 'f' + (h >>> 0).toString(16); }
+}
+const validId = id => /^[A-Za-z0-9\uAC00-\uD7A3_]{2,16}$/.test(id);
+
+/* ---------------- 클라우드 백업 (claude.ai에서만) ---------------- */
+let cloudP = null;
+function cloud() {
+  if (!cloudP) cloudP = (async () => {
+    if (!window.claude?.use) return null;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return null;
+    const uid = await user.id(); if (!uid) return null;
+    return { db, uid, ref: id => db.collection('data/users/' + uid).doc('nk_' + id.replace(/[^A-Za-z0-9_]/g, c => '~' + c.charCodeAt(0).toString(36))) };
+  })().catch(() => null);
+  return cloudP;
+}
+async function packSave(s) {
+  const json = JSON.stringify(s);
+  if (typeof CompressionStream === 'undefined') return { enc: 'json', data: json };
+  const buf = await new Response(new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  let bin = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode(...u.subarray(i, i + 0x8000));
+  return { enc: 'gz64', data: btoa(bin) };
+}
+async function unpackSave(o) {
+  if (o.enc === 'json') return JSON.parse(o.data);
+  const bin = atob(o.data), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+}
+let cloudBusy = false, cloudLast = 0, cloudState = '';
+async function cloudPush(force) {
+  if (!curUser || !S || cloudBusy || (!force && Date.now() - cloudLast < 20000)) return;
+  const c = await cloud(); if (!c) return;
+  cloudBusy = true;
+  try {
+    const acc = accRead()[curUser]; const pk = await packSave(S);
+    await c.ref(curUser).set({ salt: acc.salt, hash: acc.hash, enc: pk.enc, save: pk.data, turn: S.turn, name: S.name, updated: Date.now() });
+    cloudLast = Date.now(); cloudState = '☁️ 클라우드 저장됨';
+  } catch (e) { cloudState = e?.code === 'invalid_argument' ? '☁️ 세이브가 너무 커서 클라우드에 못 올림' : '☁️ 클라우드 저장 실패(이 기기엔 저장됨)'; }
+  finally { cloudBusy = false; const el = $('acc-cloud'); if (el) el.textContent = cloudState; }
+}
+// 저장할 때마다(최대 20초에 한 번) 클라우드에도 올림
+(function () { const f = saveGame; saveGame = function (s) { const r = f(s); if (curUser && s === S) cloudPush(false); return r; }; })();
+
+/* ---------------- 로그인·회원가입 ---------------- */
+function useAccount(id) {
+  curUser = id || null; setSaveUser(curUser);
+  try { id ? localStorage.setItem(CUR_KEY, id) : localStorage.removeItem(CUR_KEY); } catch { }
+}
+async function signUp(id, pw) {
+  id = (id || '').trim();
+  if (!validId(id)) return { ok: false, msg: '아이디는 2~16자 (한글·영문·숫자·_)로 정해주세요.' };
+  if ((pw || '').length < 4) return { ok: false, msg: '비밀번호는 4자 이상이면 됩니다.' };
+  const a = accRead(); if (a[id]) return { ok: false, msg: '이미 있는 아이디입니다. 로그인해 주세요.' };
+  const c = await cloud(); if (c) { try { if ((await c.ref(id).get()).exists) return { ok: false, msg: '클라우드에 이미 있는 아이디입니다. 로그인해 주세요.' }; } catch { } }
+  const salt = Math.random().toString(36).slice(2, 10);
+  a[id] = { salt, hash: await pwHash(salt, pw), t: Date.now() }; accWrite(a);
+  // 게스트로 하던 게임이 있으면 새 계정으로 옮겨 줌
+  const guest = (() => { try { return localStorage.getItem(SAVE_BASE); } catch { return null; } })();
+  useAccount(id);
+  const moved = guest && !loadGame();
+  if (moved) { try { localStorage.setItem(SAVE_KEY, guest); localStorage.removeItem(SAVE_BASE); } catch { } }
+  return { ok: true, msg: `🎉 ${id}님, 가입했습니다!${moved ? ' 게스트로 하던 게임도 옮겨 왔어요.' : ''}` };
+}
+async function logIn(id, pw) {
+  id = (id || '').trim(); if (!id || !pw) return { ok: false, msg: '아이디와 비밀번호를 넣어주세요.' };
+  const a = accRead();
+  if (a[id]) {
+    if (await pwHash(a[id].salt, pw) !== a[id].hash) return { ok: false, msg: '비밀번호가 맞지 않습니다.' };
+    useAccount(id);
+    // 클라우드에 더 최근 세이브가 있으면 받아옴
+    const c = await cloud(); if (c) { try { const d = (await c.ref(id).get()).data(); const local = loadGame(); if (d?.save && (!local || d.turn > local.turn)) { saveGameRaw(await unpackSave({ enc: d.enc, data: d.save })); return { ok: true, msg: `👋 ${id}님, 클라우드에서 더 최근 진행(${d.turn}분기)을 불러왔습니다.` }; } } catch { } }
+    return { ok: true, msg: `👋 ${id}님, 어서 오세요!` };
+  }
+  // 이 기기엔 없음 → 클라우드에서 찾기
+  const c = await cloud();
+  if (c) {
+    try {
+      const snap = await c.ref(id).get();
+      if (snap.exists) {
+        const d = snap.data();
+        if (await pwHash(d.salt, pw) !== d.hash) return { ok: false, msg: '비밀번호가 맞지 않습니다.' };
+        a[id] = { salt: d.salt, hash: d.hash, t: Date.now() }; accWrite(a); useAccount(id);
+        if (d.save) saveGameRaw(await unpackSave({ enc: d.enc, data: d.save }));
+        return { ok: true, msg: `☁️ ${id}님, 다른 기기의 진행(${d.name || ''} 대통령, ${d.turn}분기)을 불러왔습니다.` };
+      }
+    } catch { }
+  }
+  return { ok: false, msg: '없는 아이디입니다. 회원가입을 눌러 주세요.' };
+}
+function saveGameRaw(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch { } }
+function logOut() { if (S) saveGame(S); useAccount(null); S = null; $('game')?.classList.add('hidden'); $('start')?.classList.remove('hidden'); closeModal(); renderStart(); toast('로그아웃했습니다. (게스트 모드)'); }
+
+/* ---------------- 화면 ---------------- */
+function renderAccountBox() {
+  let box = $('acc-box');
+  if (!box) { box = document.createElement('div'); box.id = 'acc-box'; box.className = 'acc-box'; const card = document.querySelector('#start .start-actions'); card?.parentNode.insertBefore(box, card); }
+  if (curUser) {
+    box.innerHTML = `<div class="acc-in"><span>👤 <b>${esc(curUser)}</b>님으로 로그인</span><span id="acc-cloud" class="muted small">${cloudState}</span><button class="btn sm ghost" id="acc-out">로그아웃</button></div>`;
+    $('acc-out').onclick = () => logOut();
+    cloud().then(c => { const el = $('acc-cloud'); if (el && !cloudState) el.textContent = c ? '☁️ claude.ai 클라우드 백업 켜짐' : '📱 이 기기에 저장'; });
+  } else {
+    box.innerHTML = `<div class="acc-form"><input id="acc-id" placeholder="아이디" maxlength="16" autocomplete="username"><input id="acc-pw" type="password" placeholder="비밀번호 (4자 이상)" autocomplete="current-password">
+      <button class="btn sm primary" id="acc-login">로그인</button><button class="btn sm" id="acc-join">회원가입</button></div>
+      <div class="muted small" id="acc-msg">로그인하면 계정별로 저장되고, claude.ai에서는 다른 기기에서도 이어서 할 수 있어요. 안 해도 게스트로 바로 플레이할 수 있습니다.</div>`;
+    const go = async fn => { const id = $('acc-id').value, pw = $('acc-pw').value; $('acc-msg').textContent = '확인 중…'; const r = await fn(id, pw); if (!r.ok) { $('acc-msg').innerHTML = `<span class="bad-t">${esc(r.msg)}</span>`; return; } toast(esc(r.msg), 4000); renderStart(); };
+    $('acc-login').onclick = () => go(logIn); $('acc-join').onclick = () => go(signUp);
+    $('acc-pw').onkeydown = e => { if (e.key === 'Enter') go(logIn); };
+  }
+}
+(function () { const f = renderStart; renderStart = function () { f(); renderAccountBox(); }; })();
+// 설정 화면에 계정 줄
+(function () {
+  const btn = $('btn-settings'); if (!btn) return; const f = btn.onclick;
+  btn.onclick = () => { f(); const m = document.querySelector('#modal-body h2'); if (!m) return; m.insertAdjacentHTML('afterend', `<p class="muted small">👤 ${curUser ? `<b>${esc(curUser)}</b>님 로그인 중 · ${esc(cloudState || '')} <button class="btn sm ghost" id="cfg-logout">로그아웃</button> <button class="btn sm ghost" id="cfg-cloud">☁️ 지금 백업</button>` : '게스트 (이 기기에만 저장) — 시작 화면에서 로그인할 수 있어요.'}</p>`); const lo = $('cfg-logout'); if (lo) lo.onclick = () => logOut(); const cb = $('cfg-cloud'); if (cb) cb.onclick = async () => { const c = await cloud(); if (!c) return toast('클라우드 백업은 claude.ai에서 열었을 때만 됩니다.'); await cloudPush(true); toast(esc(cloudState)); }; };
+})();
+// 시작할 때 마지막 로그인 계정으로
+(function () { let id = null; try { id = localStorage.getItem(CUR_KEY); } catch { } if (id && accRead()[id]) useAccount(id); renderStart(); })();
 
 </script>

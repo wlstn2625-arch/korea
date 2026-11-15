@@ -814,7 +814,9 @@ function registerCustomPolicy(s, text, a) {
 }
 
 /* ---------------- 저장 ---------------- */
-const SAVE_KEY = 'newkorea_save_v1';
+let SAVE_KEY = 'newkorea_save_v1'; // 로그인하면 계정별 키로 바뀜 (accounts.js)
+const SAVE_BASE = 'newkorea_save_v1';
+function setSaveUser(id) { SAVE_KEY = id ? `${SAVE_BASE}:${id}` : SAVE_BASE; }
 function saveGame(s) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); return true; } catch { return false; } }
 function loadGame() { try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch { return null; } }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch {} }

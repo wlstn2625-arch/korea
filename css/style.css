@@ -1079,3 +1079,22 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .q-focus.none { color: #ffd27a; animation: pulse 1.6s ease-in-out infinite; }
 .save-code { width: 100%; height: 110px; font: 11px/1.4 ui-monospace, monospace; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; word-break: break-all; }
 .start-actions.small-row { margin-top: 8px; gap: 8px; } .start-actions.small-row .btn { font-size: 13px; }
+
+/* 미사일 타격·적 미사일·요격 */
+.geo .crater { transform: scale(var(--u)); }
+.geo .crater circle { fill: rgba(255, 120, 40, .35); stroke: #ff7a2a; stroke-width: 1.5px; stroke-dasharray: 3 2; }
+.geo .crater text { font-size: 10px; text-anchor: middle; } .geo .crater .cd { font-size: 8px; fill: #ffb27a; font-weight: 700; paint-order: stroke; stroke: #0b0f16; stroke-width: 2.5px; }
+.geo .army .dv { font-size: 8.5px; font-weight: 800; text-anchor: middle; fill: #fff; paint-order: stroke; stroke: #0b0f16; stroke-width: 2.5px; }
+.geo .fx-trail.enemy { stroke: #ff4b4b; filter: drop-shadow(0 0 calc(var(--u) * 3px) #ff2a2a); }
+.geo .fx-trail.intercept { stroke: #9ad8ff; stroke-width: calc(var(--u) * 1.6px); stroke-dasharray: 400; stroke-dashoffset: 400; animation: fxTrail .7s linear forwards; }
+.geo .intercept-t { font-size: 12px !important; font-weight: 900; fill: #9ad8ff; paint-order: stroke; stroke: #0b0f16; stroke-width: 3px; }
+.missile-sec { display: grid; gap: 5px; }
+.ms-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ms-ammo { display: flex; gap: 3px; } .ms-ammo i { width: 7px; height: 16px; border-radius: 3px 3px 1px 1px; background: rgba(255, 255, 255, .12); } .ms-ammo i.on { background: linear-gradient(180deg, #ffd27a, #c9452f); }
+
+/* 로그인·회원가입 */
+.acc-box { display: grid; gap: 6px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--card2); border: 1px solid var(--line); }
+.acc-form { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 6px; }
+.acc-form input { min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+.acc-in { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+@media (max-width: 520px) { .acc-form { grid-template-columns: 1fr 1fr; } }

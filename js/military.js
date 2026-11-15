@@ -129,7 +129,7 @@ function warDay(s) {
       const atkK = STANCES[T.kr.stance].atk, atkE = STANCES[T.en.stance].atk;
       let delta = 0;
       // 방어 측은 지형·요새·참호(방어 태세) 보너스
-      const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
+      const dE = theirs.terrain * (theirs.fort || 1) * (T.en.stance === 'hold' ? 1.2 : 1) * (typeof strikeDef === 'function' ? strikeDef(T, enId) : 1), dK = ours.terrain * (ours.fort || 1) * (T.kr.stance === 'hold' ? 1.2 : 1);
       const fk = AW ? 1 : fK(theirs), fe = fE(ours);
       const aw = AW ? AW.atk(ourId, enId) : { w: 1, prog: 1 }, bm = typeof battleMod === 'function' ? battleMod(T, enId) : { atk: 1, cas: 1, def: 1 };
       const kAtk = AW ? (aw.w > 0 ? (STANCES[T.kr.stance].atk || 1) : 0) : atkK;
@@ -153,6 +153,7 @@ function warDay(s) {
   }
   T.dayKr = dayKr || 0; T.dayEn = dayEn || 0;
   if (AW && typeof armiesDay === 'function') armiesDay(s);
+  if (typeof strikesDay === 'function') strikesDay(s);
   // 조직력·장비·병력
   for (const side of ['kr', 'en']) {
     const st = T[side];
