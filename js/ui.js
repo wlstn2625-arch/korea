@@ -523,6 +523,13 @@ $('btn-settings').onclick = () => {
     <div class="settings-row"><label for="cfg-model">모델</label><select id="cfg-model">${ClaudeAI.MODELS.map(m => `<option value="${m.id}" ${m.id === c.model ? 'selected' : ''}>${m.name}</option>`).join('')}</select></div>
     <div class="settings-row"><label for="cfg-effort">사고 깊이(effort)</label><select id="cfg-effort">${['low', 'medium', 'high'].map(x => `<option ${x === c.effort ? 'selected' : ''}>${x}</option>`).join('')}</select></div>`}
     <div class="modal-actions" style="justify-content:flex-start"><button class="btn" id="cfg-test">연결 테스트</button><span id="cfg-msg" class="muted" style="align-self:center"></span></div>
+    <h3 class="sec">💾 세이브 옮기기 · 📴 오프라인</h3>
+    <p class="muted small">claude.ai 링크, 오프라인 파일, 설치한 앱은 저장 공간이 서로 달라요. 여기서 세이브를 내보내 다른 곳에서 불러오면 이어서 할 수 있습니다.</p>
+    <div class="modal-actions" style="justify-content:flex-start">
+      <button class="btn" id="cfg-export">📤 세이브 내보내기</button>
+      <button class="btn" id="cfg-import">📥 세이브 불러오기</button>
+      <button class="btn ghost" id="cfg-offline">📴 오프라인으로 하는 법</button>
+    </div>
     <h3 class="sec">게임</h3>
     <div class="modal-actions" style="justify-content:flex-start">
       <button class="btn" id="cfg-theme">🌓 테마 전환</button>
@@ -536,6 +543,9 @@ $('btn-settings').onclick = () => {
     try { const r = await ClaudeAI.test(); $('cfg-msg').textContent = '✅ 연결 성공: ' + r.slice(0, 30); }
     catch (e) { $('cfg-msg').textContent = '❌ 실패: ' + e.message; }
   };
+  $('cfg-export').onclick = () => openExport();
+  $('cfg-import').onclick = () => openImport();
+  $('cfg-offline').onclick = () => openOfflineHelp();
   $('cfg-theme').onclick = () => {
     const root = document.documentElement; const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     root.dataset.theme = cur === 'light' ? 'dark' : 'light'; try { localStorage.setItem('newkorea_theme', root.dataset.theme); } catch {}
@@ -546,6 +556,59 @@ $('btn-settings').onclick = () => {
     b.dataset.armed = '1'; b.textContent = '정말 삭제하고 새로 시작합니다 (한 번 더 클릭)';
   };
 };
+
+/* ---------------- 세이브 내보내기·불러오기 (온라인↔오프라인) ---------------- */
+const SAVE_PREFIX = 'NEWKOREA1:';
+const encodeSave = s => SAVE_PREFIX + btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+function decodeSave(text) {
+  const t = String(text || '').trim();
+  const raw = t.startsWith(SAVE_PREFIX) ? decodeURIComponent(escape(atob(t.slice(SAVE_PREFIX.length).replace(/\s+/g, '')))) : t;
+  const s = JSON.parse(raw);
+  if (!s || typeof s !== 'object' || !s.stats || !s.policies || s.turn == null) throw new Error('새로운 대한민국 세이브가 아닙니다.');
+  return s;
+}
+function openExport() {
+  if (!S) return toast('진행 중인 게임이 없습니다.');
+  saveGame(S); const code = encodeSave(S), t = turnLabel(S.turn);
+  openModal(`<h2>📤 세이브 내보내기</h2>
+    <p class="lead">${esc(S.name)} 대통령 · ${t.year}년 ${t.q}분기 · 세이브 코드 ${Math.round(code.length / 1024)}KB</p>
+    <p class="muted small">① <b>파일로 저장</b>하거나 ② <b>코드를 복사</b>해 메모장·카톡 나에게 보내기 등에 붙여 두세요. 다른 곳(오프라인 파일·설치한 앱·claude.ai)에서 '세이브 불러오기'로 넣으면 이어서 합니다.</p>
+    <textarea id="ex-code" class="save-code" readonly>${esc(code)}</textarea>
+    <div class="modal-actions"><button class="btn" id="ex-copy">📋 코드 복사</button><button class="btn primary" id="ex-file">💾 파일로 저장</button></div>`);
+  $('ex-copy').onclick = async () => { const ta = $('ex-code'); ta.select(); try { await navigator.clipboard.writeText(code); toast('📋 세이브 코드를 복사했습니다.'); } catch { try { document.execCommand('copy'); toast('📋 복사했습니다.'); } catch { toast('복사가 막혀 있습니다. 코드를 길게 눌러 직접 복사하세요.'); } } };
+  $('ex-file').onclick = () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); a.download = `새로운대한민국_${S.name}_${t.year}년${t.q}분기.txt`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast('💾 세이브 파일을 저장했습니다.'); } catch { toast('이 화면에서는 파일 저장이 막혀 있습니다. 코드 복사를 이용하세요.'); } };
+}
+function openImport() {
+  openModal(`<h2>📥 세이브 불러오기</h2>
+    <p class="muted small">내보낸 세이브 파일을 고르거나, 세이브 코드를 붙여 넣으세요. 지금 진행 중인 게임은 이 세이브로 바뀝니다.</p>
+    <div class="modal-actions" style="justify-content:flex-start"><label class="btn"><input type="file" id="im-file" accept=".txt,.json,text/plain,application/json" hidden>📂 파일 고르기</label></div>
+    <textarea id="im-code" class="save-code" placeholder="NEWKOREA1:... 로 시작하는 코드를 붙여 넣으세요"></textarea>
+    <div id="im-msg" class="muted small"></div>
+    <div class="modal-actions"><button class="btn primary" id="im-go">불러오기</button></div>`);
+  $('im-file').onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('im-code').value = r.result; $('im-msg').textContent = `${f.name} 을(를) 읽었습니다. '불러오기'를 누르세요.`; }; r.readAsText(f); };
+  $('im-go').onclick = () => {
+    try { const s = decodeSave($('im-code').value); S = s; migrateState(S); saveGame(S); closeModal(); enterGame(); const t = turnLabel(S.turn); toast(`📥 ${esc(S.name)} 대통령 · ${t.year}년 ${t.q}분기 세이브를 불러왔습니다.`, 4000); }
+    catch (e) { $('im-msg').innerHTML = `<span class="bad-t">불러오지 못했습니다: ${esc(e.message)}</span>`; }
+  };
+}
+function openOfflineHelp() {
+  const where = location.protocol === 'file:' ? '지금 오프라인 파일로 실행 중입니다 ✅' : /claude\.ai|claudeusercontent/.test(location.host) || window.top !== window ? '지금은 claude.ai에서 실행 중입니다(인터넷 필요).' : '지금 웹 서버로 실행 중입니다. 한 번 열어 두면 인터넷 없이도 열립니다 ✅';
+  openModal(`<h2>📴 오프라인으로 하기</h2>
+    <p class="lead">${where}</p>
+    <div class="box"><h4>방법 1. 오프라인 파일 (PC·안드로이드)</h4><ul>
+      <li><b>newkorea-offline.html</b> 파일 하나를 기기에 저장한 뒤 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다.</li>
+      <li>파일은 Claude 대화에서 받거나 GitHub 저장소의 <code>dist/newkorea-offline.html</code>에 있습니다.</li>
+      <li>안드로이드: 파일 앱에서 길게 눌러 '다른 앱으로 열기 → Chrome'.</li></ul></div>
+    <div class="box"><h4>방법 2. 앱처럼 설치 (아이폰·안드로이드·PC)</h4><ul>
+      <li>게임 폴더를 웹 서버(GitHub Pages 등)로 열고 한 번 접속하면, 게임 파일이 기기에 저장됩니다.</li>
+      <li>아이폰 사파리: 공유 → '홈 화면에 추가'. 안드로이드 크롬: 메뉴 → '앱 설치'. 이후 비행기 모드에서도 실행됩니다.</li></ul></div>
+    <div class="box"><h4>알아 둘 점</h4><ul>
+      <li>오프라인에서는 실제 Claude 대신 <b>내장 AI 참모</b>가 판단합니다. 게임 기능은 모두 그대로입니다.</li>
+      <li>claude.ai·오프라인 파일·설치한 앱은 저장이 따로라서, ⚙️ 설정의 '세이브 내보내기/불러오기'로 옮기세요.</li></ul></div>
+    <div class="modal-actions"><button class="btn primary" onclick="closeModal()">확인</button></div>`);
+}
+$('btn-import') && ($('btn-import').onclick = () => openImport());
+$('btn-offline') && ($('btn-offline').onclick = () => openOfflineHelp());
 
 /* ---------------- 초기화 ---------------- */
 try { const th = localStorage.getItem('newkorea_theme'); if (th) document.documentElement.dataset.theme = th; } catch {}

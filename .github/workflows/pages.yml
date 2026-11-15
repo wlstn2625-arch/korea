@@ -1,0 +1,33 @@
+# 게임을 GitHub Pages로 배포합니다. 한 번 접속하면 서비스 워커가 파일을 저장해 오프라인에서도 실행되고,
+# 휴대폰에서 '홈 화면에 추가'로 앱처럼 설치할 수 있습니다.
+# 사용 전 1회: 저장소 Settings → Pages → Source를 'GitHub Actions'로 설정하세요.
+name: Deploy game to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+          cp -r index.html manifest.webmanifest sw.js css js icons dist _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

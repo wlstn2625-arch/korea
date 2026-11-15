@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>새로운 대한민국</title>
   <meta name="description" content="대한민국 대통령이 되어 헌법부터 세율·국방·외교·교육·검경까지 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0e1622">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="새로운 대한민국">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
@@ -27,6 +32,7 @@
         <button id="btn-start" class="btn primary big">취임 선서 ▶</button>
         <button id="btn-continue" class="btn big hidden">이어하기</button>
       </div>
+      <div class="start-actions small-row"><button id="btn-import" class="btn ghost">📂 세이브 불러오기</button><button id="btn-offline" class="btn ghost">📴 오프라인으로 하기</button></div>
       <p class="hint">모든 제도는 2026년 하반기 대한민국 현행 제도를 기준으로 시작합니다. 정책을 바꿀 때마다 이득과 손해가 생기고, 부작용이 터지면 AI 참모가 해결책을 판단해 결과를 도출합니다.</p>
     </div>
   </section>
@@ -162,5 +168,7 @@
   <script src="js/balance.js"></script>
   <script src="js/focus.js"></script>
   <script src="js/ui_focus.js"></script>
+  <script>/* 오프라인 실행(서비스 워커) — 웹 서버로 열었을 때만 */
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && window.top === window) navigator.serviceWorker.register('sw.js').catch(() => {});</script>
 </body>
 </html>

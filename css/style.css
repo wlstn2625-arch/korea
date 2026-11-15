@@ -37,7 +37,7 @@
 html, body { margin: 0; padding: 0; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg2); }
 body {
-  font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', system-ui, -apple-system, sans-serif;
   background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.55;
 }
 .hidden { display: none !important; }
@@ -1077,3 +1077,5 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .q-focus .b { height: 5px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; } .q-focus .b i { display: block; height: 100%; background: #ffd22e; }
 .q-focus small { grid-column: 2; color: var(--muted); font-size: 10px; }
 .q-focus.none { color: #ffd27a; animation: pulse 1.6s ease-in-out infinite; }
+.save-code { width: 100%; height: 110px; font: 11px/1.4 ui-monospace, monospace; background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px; resize: vertical; word-break: break-all; }
+.start-actions.small-row { margin-top: 8px; gap: 8px; } .start-actions.small-row .btn { font-size: 13px; }
