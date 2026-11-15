@@ -9,7 +9,7 @@ html = (root / 'index.html').read_text(encoding='utf-8')
 css = (root / 'css/style.css').read_text(encoding='utf-8')
 body = re.search(r'<body>(.*?)<script', html, re.S).group(1)
 scripts = re.findall(r'<script src="([^"]+)"></script>', html)
-js = []
+js = ['<script>/* boot */ window.__BODY0 = document.body.innerHTML;</script>']
 for src in scripts:
     code = (root / src).read_text(encoding='utf-8')
     assert '</script' not in code.lower(), src
