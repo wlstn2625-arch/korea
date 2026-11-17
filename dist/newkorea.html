@@ -1106,6 +1106,10 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @media (max-width: 520px) { .acc-form { grid-template-columns: 1fr 1fr; } }
 .game-title { display: grid; justify-items: center; gap: 4px; font-size: 52px; letter-spacing: .12em; background: linear-gradient(180deg, #ffe7a8, #c9a44c); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .game-title small { font-size: 13px; letter-spacing: .08em; color: var(--muted); -webkit-text-fill-color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-weight: 500; }
+.cloud-chip { font: inherit; font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--card2); color: var(--muted); cursor: pointer; white-space: nowrap; }
+.cloud-chip.ok { color: var(--good); border-color: rgba(76, 196, 138, .45); } .cloud-chip.bad { color: #ff8b8b; border-color: rgba(224, 82, 82, .5); } .cloud-chip.busy { color: #ffd27a; }
+.srv-box { margin: 0 0 10px; padding: 9px 12px; border-radius: 11px; background: rgba(90, 140, 230, .12); border: 1px solid rgba(90, 140, 230, .45); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (max-width: 760px) { .cloud-chip { display: none; } }
 
 </style>
 <!-- 시작 화면 -->
@@ -11492,20 +11496,33 @@ async function unpackSave(o) {
   const bin = atob(o.data), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
 }
-let cloudBusy = false, cloudLast = 0, cloudState = '';
-async function cloudPush(force) {
-  if (!curUser || !S || cloudBusy || (!force && Date.now() - cloudLast < 20000)) return;
-  const c = await cloud(); if (!c) return;
-  cloudBusy = true;
-  try {
-    const acc = accRead()[curUser]; const pk = await packSave(S);
-    await c.ref(curUser).set({ salt: acc.salt, hash: acc.hash, enc: pk.enc, save: pk.data, turn: S.turn, name: S.name, updated: Date.now() });
-    cloudLast = Date.now(); cloudState = '☁️ 클라우드 저장됨';
-  } catch (e) { cloudState = e?.code === 'invalid_argument' ? '☁️ 세이브가 너무 커서 클라우드에 못 올림' : '☁️ 클라우드 저장 실패(이 기기엔 저장됨)'; }
-  finally { cloudBusy = false; const el = $('acc-cloud'); if (el) el.textContent = cloudState; }
+let cloudBusy = false, cloudLast = 0, cloudState = '', cloudTimer = null, cloudDirty = false;
+const cloudDocId = () => curUser || '_guest'; // 로그인 안 해도 내 Claude 계정의 '게스트' 칸에 저장
+function setCloudState(t, cls) {
+  cloudState = t; const el = $('acc-cloud'); if (el) el.textContent = t;
+  const chip = $('cloud-chip'); if (chip) { chip.textContent = t; chip.className = `cloud-chip ${cls || ''}`; }
 }
-// 저장할 때마다(최대 20초에 한 번) 클라우드에도 올림
-(function () { const f = saveGame; saveGame = function (s) { const r = f(s); if (curUser && s === S) cloudPush(false); return r; }; })();
+async function cloudPush(force) {
+  if (!S) return;
+  const c = await cloud(); if (!c) return;
+  if (cloudBusy) { cloudDirty = true; return; }
+  if (!force && Date.now() - cloudLast < 4000) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudPush(false), 4000); return; }
+  cloudBusy = true; cloudDirty = false; setCloudState('☁️ 서버에 저장 중…', 'busy');
+  try {
+    const acc = curUser ? accRead()[curUser] : null; const pk = await packSave(S);
+    await c.ref(cloudDocId()).set({ ...(acc ? { salt: acc.salt, hash: acc.hash } : {}), enc: pk.enc, save: pk.data, turn: S.turn, name: S.name, updated: Date.now() });
+    cloudLast = Date.now(); const d = new Date(); setCloudState(`☁️ 서버 저장됨 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, 'ok');
+  } catch (e) { setCloudState(e?.code === 'invalid_argument' ? '☁️ 세이브가 너무 커서 서버에 못 올림' : e?.code === 'resource_exhausted' ? '☁️ 잠시 후 다시 저장' : '☁️ 서버 저장 실패 (이 기기엔 저장됨)', 'bad'); if (e?.code === 'resource_exhausted') setTimeout(() => cloudPush(false), 15000); }
+  finally { cloudBusy = false; if (cloudDirty) setTimeout(() => cloudPush(false), 1500); }
+}
+async function cloudPull(id) {
+  const c = await cloud(); if (!c) return null;
+  try { const snap = await c.ref(id || cloudDocId()).get(); if (!snap.exists) return null; const d = snap.data(); return d?.save ? { ...d, state: await unpackSave({ enc: d.enc, data: d.save }) } : null; } catch { return null; }
+}
+// 저장할 때마다 곧바로(2초 안에) 서버에도 올림
+(function () { const f = saveGame; saveGame = function (s) { if (s) s.savedAt = Date.now(); const r = f(s); if (s && s === S) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudPush(false), 1500); } return r; }; })();
+// 창을 닫거나 다른 앱으로 갈 때도 저장
+document.addEventListener('visibilitychange', () => { if (document.hidden && S) cloudPush(true); });
 
 /* ---------------- 로그인·회원가입 ---------------- */
 function useAccount(id) {
@@ -11563,7 +11580,7 @@ function renderAccountBox() {
   if (curUser) {
     box.innerHTML = `<div class="acc-in"><span>👤 <b>${esc(curUser)}</b>님으로 로그인</span><span id="acc-cloud" class="muted small">${cloudState}</span><button class="btn sm ghost" id="acc-out">로그아웃</button></div>`;
     $('acc-out').onclick = () => logOut();
-    cloud().then(c => { const el = $('acc-cloud'); if (el && !cloudState) el.textContent = c ? '☁️ claude.ai 클라우드 백업 켜짐' : '📱 이 기기에 저장'; });
+    cloud().then(c => { const el = $('acc-cloud'); if (el && !cloudState) el.textContent = c ? '☁️ 서버 자동 저장 켜짐' : '📱 이 기기에 저장'; });
   } else {
     box.innerHTML = `<div class="acc-form"><input id="acc-id" placeholder="아이디" maxlength="16" autocomplete="username"><input id="acc-pw" type="password" placeholder="비밀번호 (4자 이상)" autocomplete="current-password">
       <button class="btn sm primary" id="acc-login">로그인</button><button class="btn sm" id="acc-join">회원가입</button></div>
@@ -11573,13 +11590,31 @@ function renderAccountBox() {
     $('acc-pw').onkeydown = e => { if (e.key === 'Enter') go(logIn); };
   }
 }
-(function () { const f = renderStart; renderStart = function () { f(); renderAccountBox(); }; })();
+(function () { const f = renderStart; renderStart = function () { f(); renderAccountBox(); checkServerSave(); }; })();
+// 시작 화면에서 서버에 더 최근 세이브가 있으면 '서버에서 이어하기'
+let serverChecked = '';
+async function checkServerSave() {
+  const key = cloudDocId(); if (serverChecked === key) return; serverChecked = key;
+  const d = await cloudPull(); if (!d || !$('start') || $('start').classList.contains('hidden')) return;
+  const local = loadGame();
+  const newer = !local || (d.updated || 0) > (local.savedAt || 0) + 2000;
+  if (!newer) return;
+  if (!local) { saveGameRaw(d.state); renderStart(); toast(`☁️ 서버에 저장된 게임(${esc(d.name || '')} 대통령)을 불러왔습니다. '이어하기'를 누르세요.`, 5000); return; }
+  const t = turnLabel(d.turn); let box = $('srv-box');
+  if (!box) { box = document.createElement('div'); box.id = 'srv-box'; box.className = 'srv-box'; $('acc-box')?.after(box); }
+  box.innerHTML = `☁️ 서버에 더 최근 저장이 있습니다: <b>${esc(d.name || '')} 대통령 · ${t.year}년 ${t.q}분기</b> <button class="btn sm primary" id="srv-load">서버에서 이어하기</button>`;
+  $('srv-load').onclick = () => { saveGameRaw(d.state); S = d.state; migrateState(S); enterGame(); toast('☁️ 서버 저장에서 이어서 합니다.'); };
+}
 // 설정 화면에 계정 줄
 (function () {
   const btn = $('btn-settings'); if (!btn) return; const f = btn.onclick;
-  btn.onclick = () => { f(); const m = document.querySelector('#modal-body h2'); if (!m) return; m.insertAdjacentHTML('afterend', `<p class="muted small">👤 ${curUser ? `<b>${esc(curUser)}</b>님 로그인 중 · ${esc(cloudState || '')} <button class="btn sm ghost" id="cfg-logout">로그아웃</button> <button class="btn sm ghost" id="cfg-cloud">☁️ 지금 백업</button>` : '게스트 (이 기기에만 저장) — 시작 화면에서 로그인할 수 있어요.'}</p>`); const lo = $('cfg-logout'); if (lo) lo.onclick = () => logOut(); const cb = $('cfg-cloud'); if (cb) cb.onclick = async () => { const c = await cloud(); if (!c) return toast('클라우드 백업은 claude.ai에서 열었을 때만 됩니다.'); await cloudPush(true); toast(esc(cloudState)); }; };
+  btn.onclick = () => { f(); const m = document.querySelector('#modal-body h2'); if (!m) return; m.insertAdjacentHTML('afterend', `<p class="muted small">👤 ${curUser ? `<b>${esc(curUser)}</b>님 로그인 중 <button class="btn sm ghost" id="cfg-logout">로그아웃</button> ` : '게스트'} · ${esc(cloudState || '')} <button class="btn sm ghost" id="cfg-cloud">☁️ 지금 서버에 저장</button> <button class="btn sm ghost" id="cfg-pull">☁️ 서버에서 불러오기</button></p>`); const lo = $('cfg-logout'); if (lo) lo.onclick = () => logOut(); const cb = $('cfg-cloud'); if (cb) cb.onclick = async () => { const c = await cloud(); if (!c) return toast('서버 저장은 claude.ai에서 열었을 때만 됩니다. 여기서는 세이브 내보내기를 이용하세요.'); await cloudPush(true); toast(esc(cloudState)); };
+    const pl = $('cfg-pull'); if (pl) pl.onclick = async () => { const d = await cloudPull(); if (!d) return toast(window.claude?.use ? '서버에 저장된 게임이 없습니다.' : '서버 저장은 claude.ai에서 열었을 때만 됩니다.'); S = d.state; migrateState(S); saveGameRaw(S); closeModal(); enterGame(); const t = turnLabel(S.turn); toast(`☁️ 서버에서 불러왔습니다: ${esc(S.name)} 대통령 · ${t.year}년 ${t.q}분기`, 4000); }; };
 })();
 // 시작할 때 마지막 로그인 계정으로
 (function () { let id = null; try { id = localStorage.getItem(CUR_KEY); } catch { } if (id && accRead()[id]) useAccount(id); renderStart(); })();
+
+// 상단에 서버 저장 상태 칩 (claude.ai에서만)
+cloud().then(c => { if (!c) return; const r = document.querySelector('.hud-right'); if (r && !$('cloud-chip')) { const ch = document.createElement('button'); ch.id = 'cloud-chip'; ch.className = 'cloud-chip'; ch.title = '누르면 지금 서버에 저장'; ch.textContent = cloudState || '☁️ 서버 자동 저장'; ch.onclick = () => cloudPush(true); r.insertBefore(ch, r.firstChild); } });
 
 </script>

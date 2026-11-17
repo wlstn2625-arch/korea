@@ -1,5 +1,5 @@
 /* 오프라인 실행용 서비스 워커: 처음 한 번 접속하면 게임 파일을 모두 저장해 두고, 이후엔 인터넷 없이 실행 */
-const CACHE = 'newkorea-ea6fbf5eb3';
+const CACHE = 'newkorea-af4e921c83';
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "css/style.css", "js/vendor/anthropic-sdk.mjs", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/icon-maskable-512.png", "js/data.js", "js/details/a.js", "js/details/b.js", "js/details/c.js", "js/mapdata.js", "js/engine.js", "js/politics.js", "js/powers.js", "js/domestic.js", "js/dom_events.js", "js/economy.js", "js/world.js", "js/military.js", "js/armies.js", "js/strikes.js", "js/arsenal.js", "js/territory.js", "js/leaders.js", "js/worldai.js", "js/treaty.js", "js/geopolitics.js", "js/eras.js", "js/claude.js", "js/ui.js", "js/ui_systems.js", "js/ui_world.js", "js/game.js", "js/ui_domestic.js", "js/advisor.js", "js/ui_defense.js", "js/warfx.js", "js/ui_armies.js", "js/ui_strikes.js", "js/missions.js", "js/hegemony.js", "js/governance.js", "js/balance.js", "js/focus.js", "js/ui_focus.js", "js/accounts.js"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
