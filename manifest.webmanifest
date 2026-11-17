@@ -1,6 +1,6 @@
 {
-  "name": "새로운 대한민국",
-  "short_name": "새로운 대한민국",
+  "name": "대권 — 대한민국 대통령 시뮬레이션",
+  "short_name": "대권",
   "description": "대한민국 대통령이 되어 제도를 바꾸고 세계와 맞서는 국정·전략 시뮬레이션",
   "lang": "ko",
   "start_url": "./index.html",

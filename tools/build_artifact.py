@@ -1,7 +1,7 @@
 """index.html + css + js 를 하나의 HTML로 합칩니다.
 사용: python3 tools/build_artifact.py
   → dist/newkorea.html          claude.ai 아티팩트용 (API 키 대신 보는 사람의 Claude 계정으로 AI 동작)
-  → dist/newkorea-offline.html  오프라인용 단일 파일 (저장해 두고 브라우저로 열면 인터넷 없이 실행)
+  → dist/daegwon-offline.html  오프라인용 단일 파일 (저장해 두고 브라우저로 열면 인터넷 없이 실행)
   → sw.js                       웹 서버·앱 설치(PWA)용 서비스 워커 (파일 목록·버전 자동 갱신)"""
 import pathlib, re, hashlib, json
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -14,7 +14,7 @@ for src in scripts:
     code = (root / src).read_text(encoding='utf-8')
     assert '</script' not in code.lower(), src
     js.append(f'<script>\n/* {src} */\n{code}\n</script>')
-out = f'''<title>새로운 대한민국</title>
+out = f'''<title>대권 — 대한민국 대통령 시뮬레이션</title>
 <meta name="description" content="대한민국 대통령이 되어 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,8 +46,8 @@ offline = f'''<!doctype html>
 </body>
 </html>
 '''
-(dist / 'newkorea-offline.html').write_text(offline, encoding='utf-8')
-print('wrote', dist / 'newkorea-offline.html', len(offline.encode()), 'bytes')
+(dist / 'daegwon-offline.html').write_text(offline, encoding='utf-8')
+print('wrote', dist / 'daegwon-offline.html', len(offline.encode()), 'bytes')
 
 # 서비스 워커: 캐시할 파일 목록과 내용 해시로 버전을 만들어 업데이트 시 새로 받게 함
 assets = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css', 'js/vendor/anthropic-sdk.mjs',

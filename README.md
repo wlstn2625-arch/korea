@@ -1,4 +1,4 @@
-# 🇰🇷 새로운 대한민국
+# 🇰🇷 대권 (大權) — 대한민국 대통령 시뮬레이션
 
 > 내가 대한민국 대통령이 되어, **지금의 대한민국과 똑같은 제도**에서 출발해 헌법부터 민법·국방·외교·교육·세율·검경까지 하나씩 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임
 
@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 ## 오프라인으로 하기
 
-- **오프라인 파일 하나**: `dist/newkorea-offline.html`을 기기에 저장해 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다(PC·안드로이드).
+- **오프라인 파일 하나**: `dist/daegwon-offline.html`을 기기에 저장해 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다(PC·안드로이드).
 - **앱처럼 설치(PWA)**: 이 폴더를 웹 서버로 열고 한 번 접속하면 서비스 워커(`sw.js`)가 게임 파일을 저장합니다. 아이폰 사파리 '홈 화면에 추가', 안드로이드 크롬 '앱 설치' 후 비행기 모드에서도 실행됩니다. GitHub Pages로 배포하려면 저장소 Settings → Pages → Source를 'GitHub Actions'로 바꾸고 main에 병합하세요(`.github/workflows/pages.yml`).
 - 오프라인에서는 실제 Claude 대신 내장 AI 참모가 판단합니다. claude.ai·오프라인 파일·설치한 앱은 저장 공간이 따로라서, ⚙️ 설정의 **세이브 내보내기/불러오기**(파일 또는 코드)로 진행 상황을 옮기세요.
 - `python3 tools/build_artifact.py`가 아티팩트용 파일, 오프라인 파일, 서비스 워커 파일 목록·버전을 함께 갱신합니다.
@@ -119,7 +119,7 @@ js/ui_systems.js        국회·경제·외교 화면
 js/claude.js            Claude API 연동 (선택)
 js/ui.js                UI 렌더링과 게임 흐름
 js/vendor/anthropic-sdk.mjs   Anthropic TypeScript SDK 브라우저 번들 (0.135.0)
-tools/build_artifact.py  단일 HTML 빌드: dist/newkorea.html(claude.ai), dist/newkorea-offline.html(오프라인), sw.js 갱신
+tools/build_artifact.py  단일 HTML 빌드: dist/newkorea.html(claude.ai), dist/daegwon-offline.html(오프라인), sw.js 갱신
 sw.js, manifest.webmanifest, icons/  오프라인 실행·앱 설치(PWA)
 ```
 

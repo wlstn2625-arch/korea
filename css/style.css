@@ -1098,3 +1098,5 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .acc-form input { min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
 .acc-in { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 @media (max-width: 520px) { .acc-form { grid-template-columns: 1fr 1fr; } }
+.game-title { display: grid; justify-items: center; gap: 4px; font-size: 52px; letter-spacing: .12em; background: linear-gradient(180deg, #ffe7a8, #c9a44c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.game-title small { font-size: 13px; letter-spacing: .08em; color: var(--muted); -webkit-text-fill-color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-weight: 500; }

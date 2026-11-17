@@ -1,5 +1,5 @@
 /* =========================================================
- *  새로운 대한민국 — UI
+ *  대권 — UI
  * ========================================================= */
 let S = null;
 let activeCat = 'const';
@@ -574,7 +574,7 @@ function buildOfflineHtml() {
   const css = [...document.querySelectorAll('style')].map(x => x.textContent).sort((a, b) => b.length - a.length)[0] || '';
   const js = [...document.querySelectorAll('script:not([src])')].map(x => x.textContent).filter(t => /^\s*\/\* (js\/|boot)/.test(t));
   const close = '</' + 'script>';
-  return `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0e1622">\n<title>새로운 대한민국</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">\n<style>${css}</style>\n</head>\n<body>\n${tpl.innerHTML.trim()}\n${js.map(t => '<script>' + t + close).join('\n')}\n</body>\n</html>\n`;
+  return `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0e1622">\n<title>대권 — 대한민국 대통령 시뮬레이션</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">\n<style>${css}</style>\n</head>\n<body>\n${tpl.innerHTML.trim()}\n${js.map(t => '<script>' + t + close).join('\n')}\n</body>\n</html>\n`;
 }
 
 /* ---------------- 세이브 내보내기·불러오기 (온라인↔오프라인) ---------------- */
@@ -584,7 +584,7 @@ function decodeSave(text) {
   const t = String(text || '').trim();
   const raw = t.startsWith(SAVE_PREFIX) ? decodeURIComponent(escape(atob(t.slice(SAVE_PREFIX.length).replace(/\s+/g, '')))) : t;
   const s = JSON.parse(raw);
-  if (!s || typeof s !== 'object' || !s.stats || !s.policies || s.turn == null) throw new Error('새로운 대한민국 세이브가 아닙니다.');
+  if (!s || typeof s !== 'object' || !s.stats || !s.policies || s.turn == null) throw new Error('대권 세이브가 아닙니다.');
   return s;
 }
 function openExport() {
@@ -596,7 +596,7 @@ function openExport() {
     <textarea id="ex-code" class="save-code" readonly>${esc(code)}</textarea>
     <div class="modal-actions"><button class="btn" id="ex-copy">📋 코드 복사</button><button class="btn primary" id="ex-file">💾 파일로 저장</button></div>`);
   $('ex-copy').onclick = async () => { const ta = $('ex-code'); ta.select(); try { await navigator.clipboard.writeText(code); toast('📋 세이브 코드를 복사했습니다.'); } catch { try { document.execCommand('copy'); toast('📋 복사했습니다.'); } catch { toast('복사가 막혀 있습니다. 코드를 길게 눌러 직접 복사하세요.'); } } };
-  $('ex-file').onclick = () => offerFile(`새로운대한민국_${S.name}_${t.year}년${t.q}분기.txt`, code, '💾 세이브 파일');
+  $('ex-file').onclick = () => offerFile(`대권_${S.name}_${t.year}년${t.q}분기.txt`, code, '💾 세이브 파일');
 }
 function openImport() {
   openModal(`<h2>📥 세이브 불러오기</h2>
@@ -615,10 +615,10 @@ function openOfflineHelp() {
   const where = location.protocol === 'file:' ? '지금 오프라인 파일로 실행 중입니다 ✅' : /claude\.ai|claudeusercontent/.test(location.host) || window.top !== window ? '지금은 claude.ai에서 실행 중입니다(인터넷 필요).' : '지금 웹 서버로 실행 중입니다. 한 번 열어 두면 인터넷 없이도 열립니다 ✅';
   openModal(`<h2>📴 오프라인으로 하기</h2>
     <p class="lead">${where}</p>
-    ${window.__BODY0 ? '<div class="modal-actions" style="justify-content:flex-start"><button class="btn primary" id="off-get">📥 오프라인 파일 받기 (newkorea-offline.html)</button></div>' : ''}
+    ${window.__BODY0 ? '<div class="modal-actions" style="justify-content:flex-start"><button class="btn primary" id="off-get">📥 오프라인 파일 받기 (daegwon-offline.html)</button></div>' : ''}
     <div class="box"><h4>방법 1. 오프라인 파일 (PC·안드로이드)</h4><ul>
-      <li><b>newkorea-offline.html</b> 파일 하나를 기기에 저장한 뒤 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다.</li>
-      <li>파일은 Claude 대화에서 받거나 GitHub 저장소의 <code>dist/newkorea-offline.html</code>에 있습니다.</li>
+      <li><b>daegwon-offline.html</b> 파일 하나를 기기에 저장한 뒤 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다.</li>
+      <li>파일은 Claude 대화에서 받거나 GitHub 저장소의 <code>dist/daegwon-offline.html</code>에 있습니다.</li>
       <li>안드로이드: 파일 앱에서 길게 눌러 '다른 앱으로 열기 → Chrome'.</li></ul></div>
     <div class="box"><h4>방법 2. 앱처럼 설치 (아이폰·안드로이드·PC)</h4><ul>
       <li>게임 폴더를 웹 서버(GitHub Pages 등)로 열고 한 번 접속하면, 게임 파일이 기기에 저장됩니다.</li>
@@ -627,7 +627,7 @@ function openOfflineHelp() {
       <li>오프라인에서는 실제 Claude 대신 <b>내장 AI 참모</b>가 판단합니다. 게임 기능은 모두 그대로입니다.</li>
       <li>claude.ai·오프라인 파일·설치한 앱은 저장이 따로라서, ⚙️ 설정의 '세이브 내보내기/불러오기'로 옮기세요.</li></ul></div>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">확인</button></div>`);
-  const g = $('off-get'); if (g) g.onclick = () => { const h = buildOfflineHtml(); if (!h) return toast('이 화면에서는 만들 수 없습니다.'); offerFile('newkorea-offline.html', h, '📴 오프라인 파일'); };
+  const g = $('off-get'); if (g) g.onclick = () => { const h = buildOfflineHtml(); if (!h) return toast('이 화면에서는 만들 수 없습니다.'); offerFile('daegwon-offline.html', h, '📴 오프라인 파일'); };
 }
 $('btn-import') && ($('btn-import').onclick = () => openImport());
 $('btn-offline') && ($('btn-offline').onclick = () => openOfflineHelp());

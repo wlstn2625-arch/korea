@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e1622">
-<title>새로운 대한민국</title>
+<title>대권 — 대한민국 대통령 시뮬레이션</title>
 <meta name="description" content="대한민국 대통령이 되어 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1110,6 +1110,8 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .acc-form input { min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
 .acc-in { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 @media (max-width: 520px) { .acc-form { grid-template-columns: 1fr 1fr; } }
+.game-title { display: grid; justify-items: center; gap: 4px; font-size: 52px; letter-spacing: .12em; background: linear-gradient(180deg, #ffe7a8, #c9a44c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.game-title small { font-size: 13px; letter-spacing: .08em; color: var(--muted); -webkit-text-fill-color: var(--muted); font-family: 'Noto Sans KR', sans-serif; font-weight: 500; }
 
 </style>
 </head>
@@ -1118,7 +1120,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
   <section id="start" class="screen">
     <div class="start-card">
       <div class="start-emblem">🇰🇷</div>
-      <h1>새로운 대한민국</h1>
+      <h1 class="game-title">대권<small>大權 · 대한민국 대통령 시뮬레이션</small></h1>
       <p class="sub">당신은 제21대 대한민국 대통령입니다.<br>헌법·세제·국방·외교·교육·검경, 그리고 세계 무대까지.<br>국가 안팎의 모든 권한을 쥐고 당신만의 대한민국을 만드세요.</p>
       <label class="field">대통령 이름
         <input id="pres-name" maxlength="12" placeholder="이름을 입력하세요" value="">
@@ -1232,7 +1234,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 <script>
 /* js/data.js */
 /* =========================================================
- *  새로운 대한민국 — 게임 데이터
+ *  대권 — 게임 데이터
  *  - 모든 정책의 '현행' 옵션은 2026년 하반기 대한민국 제도를 기준으로 함
  *  - 효과(e)는 '현행' 대비 장기 균형값의 변화량(정책이 완전히 자리잡았을 때)
  *  - 세력 반응(f)은 즉시 발생하는 지지도 변화
@@ -3733,7 +3735,7 @@ const MAP_DATA = {"w":2000,"h":1040,"sphere":"M449.6,0L1000,0L1550.4,0L1575.3,1.
 <script>
 /* js/engine.js */
 /* =========================================================
- *  새로운 대한민국 — 시뮬레이션 엔진 + 규칙 기반 AI 판단
+ *  대권 — 시뮬레이션 엔진 + 규칙 기반 AI 판단
  * ========================================================= */
 
 // 난이도: 국고 시작값·분기 수입 배율·정책 비용 배율 (내부 단위 10 = 1조 원)
@@ -8055,7 +8057,7 @@ const ClaudeAI = (() => {
     return client;
   }
 
-  const BASE_SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "새로운 대한민국"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
+  const BASE_SYSTEM = `당신은 대한민국 대통령의 최고 국정자문 AI입니다. 정책 시뮬레이션 게임 "대권"에서 현실 한국의 제도·경제·정치 상황에 근거해 냉정하고 균형 잡힌 판단을 내립니다.
 - 모든 답변은 한국어로 작성합니다.
 - 실제 한국의 사례와 연구, 해외 사례를 근거로 들되 간결하게 씁니다.
 - 수치 효과는 게임 밸런스를 위해 현실적인 범위로 추정합니다(과장 금지).
@@ -8320,7 +8322,7 @@ relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정�
 <script>
 /* js/ui.js */
 /* =========================================================
- *  새로운 대한민국 — UI
+ *  대권 — UI
  * ========================================================= */
 let S = null;
 let activeCat = 'const';
@@ -8895,7 +8897,7 @@ function buildOfflineHtml() {
   const css = [...document.querySelectorAll('style')].map(x => x.textContent).sort((a, b) => b.length - a.length)[0] || '';
   const js = [...document.querySelectorAll('script:not([src])')].map(x => x.textContent).filter(t => /^\s*\/\* (js\/|boot)/.test(t));
   const close = '</' + 'script>';
-  return `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0e1622">\n<title>새로운 대한민국</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">\n<style>${css}</style>\n</head>\n<body>\n${tpl.innerHTML.trim()}\n${js.map(t => '<script>' + t + close).join('\n')}\n</body>\n</html>\n`;
+  return `<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="theme-color" content="#0e1622">\n<title>대권 — 대한민국 대통령 시뮬레이션</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">\n<style>${css}</style>\n</head>\n<body>\n${tpl.innerHTML.trim()}\n${js.map(t => '<script>' + t + close).join('\n')}\n</body>\n</html>\n`;
 }
 
 /* ---------------- 세이브 내보내기·불러오기 (온라인↔오프라인) ---------------- */
@@ -8905,7 +8907,7 @@ function decodeSave(text) {
   const t = String(text || '').trim();
   const raw = t.startsWith(SAVE_PREFIX) ? decodeURIComponent(escape(atob(t.slice(SAVE_PREFIX.length).replace(/\s+/g, '')))) : t;
   const s = JSON.parse(raw);
-  if (!s || typeof s !== 'object' || !s.stats || !s.policies || s.turn == null) throw new Error('새로운 대한민국 세이브가 아닙니다.');
+  if (!s || typeof s !== 'object' || !s.stats || !s.policies || s.turn == null) throw new Error('대권 세이브가 아닙니다.');
   return s;
 }
 function openExport() {
@@ -8917,7 +8919,7 @@ function openExport() {
     <textarea id="ex-code" class="save-code" readonly>${esc(code)}</textarea>
     <div class="modal-actions"><button class="btn" id="ex-copy">📋 코드 복사</button><button class="btn primary" id="ex-file">💾 파일로 저장</button></div>`);
   $('ex-copy').onclick = async () => { const ta = $('ex-code'); ta.select(); try { await navigator.clipboard.writeText(code); toast('📋 세이브 코드를 복사했습니다.'); } catch { try { document.execCommand('copy'); toast('📋 복사했습니다.'); } catch { toast('복사가 막혀 있습니다. 코드를 길게 눌러 직접 복사하세요.'); } } };
-  $('ex-file').onclick = () => offerFile(`새로운대한민국_${S.name}_${t.year}년${t.q}분기.txt`, code, '💾 세이브 파일');
+  $('ex-file').onclick = () => offerFile(`대권_${S.name}_${t.year}년${t.q}분기.txt`, code, '💾 세이브 파일');
 }
 function openImport() {
   openModal(`<h2>📥 세이브 불러오기</h2>
@@ -8936,10 +8938,10 @@ function openOfflineHelp() {
   const where = location.protocol === 'file:' ? '지금 오프라인 파일로 실행 중입니다 ✅' : /claude\.ai|claudeusercontent/.test(location.host) || window.top !== window ? '지금은 claude.ai에서 실행 중입니다(인터넷 필요).' : '지금 웹 서버로 실행 중입니다. 한 번 열어 두면 인터넷 없이도 열립니다 ✅';
   openModal(`<h2>📴 오프라인으로 하기</h2>
     <p class="lead">${where}</p>
-    ${window.__BODY0 ? '<div class="modal-actions" style="justify-content:flex-start"><button class="btn primary" id="off-get">📥 오프라인 파일 받기 (newkorea-offline.html)</button></div>' : ''}
+    ${window.__BODY0 ? '<div class="modal-actions" style="justify-content:flex-start"><button class="btn primary" id="off-get">📥 오프라인 파일 받기 (daegwon-offline.html)</button></div>' : ''}
     <div class="box"><h4>방법 1. 오프라인 파일 (PC·안드로이드)</h4><ul>
-      <li><b>newkorea-offline.html</b> 파일 하나를 기기에 저장한 뒤 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다.</li>
-      <li>파일은 Claude 대화에서 받거나 GitHub 저장소의 <code>dist/newkorea-offline.html</code>에 있습니다.</li>
+      <li><b>daegwon-offline.html</b> 파일 하나를 기기에 저장한 뒤 크롬·엣지·삼성 인터넷으로 열면 인터넷 없이 실행됩니다.</li>
+      <li>파일은 Claude 대화에서 받거나 GitHub 저장소의 <code>dist/daegwon-offline.html</code>에 있습니다.</li>
       <li>안드로이드: 파일 앱에서 길게 눌러 '다른 앱으로 열기 → Chrome'.</li></ul></div>
     <div class="box"><h4>방법 2. 앱처럼 설치 (아이폰·안드로이드·PC)</h4><ul>
       <li>게임 폴더를 웹 서버(GitHub Pages 등)로 열고 한 번 접속하면, 게임 파일이 기기에 저장됩니다.</li>
@@ -8948,7 +8950,7 @@ function openOfflineHelp() {
       <li>오프라인에서는 실제 Claude 대신 <b>내장 AI 참모</b>가 판단합니다. 게임 기능은 모두 그대로입니다.</li>
       <li>claude.ai·오프라인 파일·설치한 앱은 저장이 따로라서, ⚙️ 설정의 '세이브 내보내기/불러오기'로 옮기세요.</li></ul></div>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">확인</button></div>`);
-  const g = $('off-get'); if (g) g.onclick = () => { const h = buildOfflineHtml(); if (!h) return toast('이 화면에서는 만들 수 없습니다.'); offerFile('newkorea-offline.html', h, '📴 오프라인 파일'); };
+  const g = $('off-get'); if (g) g.onclick = () => { const h = buildOfflineHtml(); if (!h) return toast('이 화면에서는 만들 수 없습니다.'); offerFile('daegwon-offline.html', h, '📴 오프라인 파일'); };
 }
 $('btn-import') && ($('btn-import').onclick = () => openImport());
 $('btn-offline') && ($('btn-offline').onclick = () => openOfflineHelp());
