@@ -1570,7 +1570,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 }
 
 /* 국가 등급(난이도) 타일 */
-#start .diff-pick { grid-template-columns: repeat(5, 1fr) !important; gap: 6px; }
+#start .diff-pick { grid-template-columns: repeat(4, 1fr) !important; gap: 6px; }
 #start .diff-pick .party-opt { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 4px 7px; gap: 2px; }
 #start .diff-pick .party-opt > span:last-child { display: none; }
 #start .diff-pick .d-ic { font-style: normal; font-size: 26px; line-height: 1.1; transition: transform .2s; }

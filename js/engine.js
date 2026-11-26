@@ -4,11 +4,10 @@
 
 // 난이도: 국고 시작값·분기 수입 배율·정책 비용 배율 (내부 단위 10 = 1조 원)
 const DIFFICULTY = {
-  easy:   { name: '초강대국',   icon: '👑', star: 1, desc: '돈도 힘도 넘치는 나라로 시작. 국고 넉넉, 정책 비용 30% 할인. 처음이라면 여기서!', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
-  dev:    { name: '선진국',     icon: '🏛️', star: 2, desc: '여유 있는 부자 나라. 정책 비용 15% 할인.', start: 250, base: 34, k: 0.55, cap: 5000, incomeMul: 1.55, costMul: 0.85, crisisBonus: 6 },
-  normal: { name: '중진국',     icon: '🏙️', star: 3, desc: '지금의 평범한 살림. 분기마다 정책 2~3개를 바꿀 수 있는 표준 난이도.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
-  hard:   { name: '개발도상국', icon: '🌿', star: 4, desc: '가난한 살림. 국고가 빠듯해 한 분기에 하나 바꾸기도 벅참.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
-  super:  { name: '신생국',     icon: '🌱', star: 5, desc: '갓 태어난 빈손의 나라. 수입은 적고 정책은 비싸며 위기 보상도 없음. 진짜 고수용.', start: 90, base: 6, k: 0.25, cap: 5000, incomeMul: 0.6, costMul: 1.2, crisisBonus: -2 },
+  easy:   { name: '초강대국',   icon: '👑', star: 1, desc: '돈도 힘도 넘치는 나라. 국고 넉넉, 정책 비용 30% 할인. 가장 쉬움.', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
+  dev:    { name: '선진국',     icon: '🏛️', star: 2, desc: '여유 있는 부자 나라. 정책 비용 15% 할인. 기본 난이도.', start: 250, base: 34, k: 0.55, cap: 5000, incomeMul: 1.55, costMul: 0.85, crisisBonus: 6 },
+  normal: { name: '개발도상국', icon: '🌿', star: 3, desc: '빠듯한 살림. 분기마다 정책 2~3개를 바꿀 수 있는 수준.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
+  hard:   { name: '후진국',     icon: '🛖', star: 4, desc: '가난한 나라에서 시작. 국고가 바닥이라 한 분기에 하나 바꾸기도 벅참. 고수용.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
 };
 const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
@@ -37,7 +36,7 @@ const WV_WEIGHT = { security: 1.15, safety: 1.15, fiscal: 1.15, debt: 1.15, gdp:
 // 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
 const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [], succession: [] };
 function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
-function migrateState(s) { runHooks('migrate', s); return s; }
+function migrateState(s) { if (s.difficulty === 'super') s.difficulty = 'hard'; runHooks('migrate', s); return s; }
 
 const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
 const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선, 이후 4년(16분기)마다
@@ -141,7 +140,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName, difficulty = 'easy', worldview = 'con') {
+function newGame(partyKey, presidentName, difficulty = 'dev', worldview = 'con') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }

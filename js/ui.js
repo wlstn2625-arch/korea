@@ -4,7 +4,7 @@
 let S = null;
 let activeCat = 'const';
 let selectedParty = 'pres';
-let selectedDiff = (() => { try { return localStorage.getItem('dg_diff') || 'easy'; } catch { return 'easy'; } })();
+let selectedDiff = (() => { try { const v = localStorage.getItem('dg_diff'); return v && DIFFICULTY[v] ? v : 'dev'; } catch { return 'dev'; } })();
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -48,7 +48,7 @@ function renderStart() {
   const em = document.querySelector('#start .ts-embers');
   if (em && !em.childElementCount) em.innerHTML = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${8 + Math.random() * 10}s;animation-delay:${-Math.random() * 18}s;--dx:${Math.round(Math.random() * 120 - 60)}px;width:${(1.5 + Math.random() * 3).toFixed(1)}px;height:${(1.5 + Math.random() * 3).toFixed(1)}px"></i>`).join('');
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
-    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><i class="d-ic">${d.icon}</i><b>${d.name}<i class="d-stars">${'★'.repeat(d.star)}${'☆'.repeat(5 - d.star)}</i></b>${diffMedal(k)}<span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><i class="d-ic">${d.icon}</i><b>${d.name}<i class="d-stars">${'★'.repeat(d.star)}${'☆'.repeat(4 - d.star)}</i></b>${diffMedal(k)}<span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
   { let dd = $('diff-desc'); if (!dd) { dd = document.createElement('div'); dd.id = 'diff-desc'; dd.className = 'diff-desc'; $('diff-pick').after(dd); }
     const D = DIFFICULTY[selectedDiff]; dd.innerHTML = `${D.icon} <b>${D.name}</b> ${'★'.repeat(D.star)} — ${D.desc} 시작 국고 ${won(D.start)}${diffClears()[selectedDiff] ? ` · 최고 평가 ${diffClears()[selectedDiff]}` : ''}`; }
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; try { localStorage.setItem('dg_diff', selectedDiff); } catch {} renderStart(); });

@@ -1583,7 +1583,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 }
 
 /* 국가 등급(난이도) 타일 */
-#start .diff-pick { grid-template-columns: repeat(5, 1fr) !important; gap: 6px; }
+#start .diff-pick { grid-template-columns: repeat(4, 1fr) !important; gap: 6px; }
 #start .diff-pick .party-opt { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 4px 7px; gap: 2px; }
 #start .diff-pick .party-opt > span:last-child { display: none; }
 #start .diff-pick .d-ic { font-style: normal; font-size: 26px; line-height: 1.1; transition: transform .2s; }
@@ -4232,11 +4232,10 @@ const MAP_DATA = {"w":2000,"h":1040,"sphere":"M449.6,0L1000,0L1550.4,0L1575.3,1.
 
 // 난이도: 국고 시작값·분기 수입 배율·정책 비용 배율 (내부 단위 10 = 1조 원)
 const DIFFICULTY = {
-  easy:   { name: '초강대국',   icon: '👑', star: 1, desc: '돈도 힘도 넘치는 나라로 시작. 국고 넉넉, 정책 비용 30% 할인. 처음이라면 여기서!', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
-  dev:    { name: '선진국',     icon: '🏛️', star: 2, desc: '여유 있는 부자 나라. 정책 비용 15% 할인.', start: 250, base: 34, k: 0.55, cap: 5000, incomeMul: 1.55, costMul: 0.85, crisisBonus: 6 },
-  normal: { name: '중진국',     icon: '🏙️', star: 3, desc: '지금의 평범한 살림. 분기마다 정책 2~3개를 바꿀 수 있는 표준 난이도.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
-  hard:   { name: '개발도상국', icon: '🌿', star: 4, desc: '가난한 살림. 국고가 빠듯해 한 분기에 하나 바꾸기도 벅참.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
-  super:  { name: '신생국',     icon: '🌱', star: 5, desc: '갓 태어난 빈손의 나라. 수입은 적고 정책은 비싸며 위기 보상도 없음. 진짜 고수용.', start: 90, base: 6, k: 0.25, cap: 5000, incomeMul: 0.6, costMul: 1.2, crisisBonus: -2 },
+  easy:   { name: '초강대국',   icon: '👑', star: 1, desc: '돈도 힘도 넘치는 나라. 국고 넉넉, 정책 비용 30% 할인. 가장 쉬움.', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
+  dev:    { name: '선진국',     icon: '🏛️', star: 2, desc: '여유 있는 부자 나라. 정책 비용 15% 할인. 기본 난이도.', start: 250, base: 34, k: 0.55, cap: 5000, incomeMul: 1.55, costMul: 0.85, crisisBonus: 6 },
+  normal: { name: '개발도상국', icon: '🌿', star: 3, desc: '빠듯한 살림. 분기마다 정책 2~3개를 바꿀 수 있는 수준.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
+  hard:   { name: '후진국',     icon: '🛖', star: 4, desc: '가난한 나라에서 시작. 국고가 바닥이라 한 분기에 하나 바꾸기도 벅참. 고수용.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
 };
 const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
@@ -4265,7 +4264,7 @@ const WV_WEIGHT = { security: 1.15, safety: 1.15, fiscal: 1.15, debt: 1.15, gdp:
 // 확장 시스템(국회 심의·이익집단·산업·외교/전쟁)이 끼어드는 지점
 const HOOKS = { migrate: [], preMacro: [], postMacro: [], events: [], postTurn: [], succession: [] };
 function runHooks(name, ...args) { for (const f of HOOKS[name]) f(...args); }
-function migrateState(s) { runHooks('migrate', s); return s; }
+function migrateState(s) { if (s.difficulty === 'super') s.difficulty = 'hard'; runHooks('migrate', s); return s; }
 
 const START_YEAR = 2026, START_Q = 4, TERM_TURNS = 20;
 const GENERAL_ELECTION_TURN = 6;  // 2028년 2분기 총선, 이후 4년(16분기)마다
@@ -4369,7 +4368,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName, difficulty = 'easy', worldview = 'con') {
+function newGame(partyKey, presidentName, difficulty = 'dev', worldview = 'con') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }
@@ -8863,7 +8862,7 @@ relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정�
 let S = null;
 let activeCat = 'const';
 let selectedParty = 'pres';
-let selectedDiff = (() => { try { return localStorage.getItem('dg_diff') || 'easy'; } catch { return 'easy'; } })();
+let selectedDiff = (() => { try { const v = localStorage.getItem('dg_diff'); return v && DIFFICULTY[v] ? v : 'dev'; } catch { return 'dev'; } })();
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -8907,7 +8906,7 @@ function renderStart() {
   const em = document.querySelector('#start .ts-embers');
   if (em && !em.childElementCount) em.innerHTML = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${8 + Math.random() * 10}s;animation-delay:${-Math.random() * 18}s;--dx:${Math.round(Math.random() * 120 - 60)}px;width:${(1.5 + Math.random() * 3).toFixed(1)}px;height:${(1.5 + Math.random() * 3).toFixed(1)}px"></i>`).join('');
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
-    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><i class="d-ic">${d.icon}</i><b>${d.name}<i class="d-stars">${'★'.repeat(d.star)}${'☆'.repeat(5 - d.star)}</i></b>${diffMedal(k)}<span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><i class="d-ic">${d.icon}</i><b>${d.name}<i class="d-stars">${'★'.repeat(d.star)}${'☆'.repeat(4 - d.star)}</i></b>${diffMedal(k)}<span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
   { let dd = $('diff-desc'); if (!dd) { dd = document.createElement('div'); dd.id = 'diff-desc'; dd.className = 'diff-desc'; $('diff-pick').after(dd); }
     const D = DIFFICULTY[selectedDiff]; dd.innerHTML = `${D.icon} <b>${D.name}</b> ${'★'.repeat(D.star)} — ${D.desc} 시작 국고 ${won(D.start)}${diffClears()[selectedDiff] ? ` · 최고 평가 ${diffClears()[selectedDiff]}` : ''}`; }
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; try { localStorage.setItem('dg_diff', selectedDiff); } catch {} renderStart(); });
