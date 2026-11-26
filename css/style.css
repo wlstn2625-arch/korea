@@ -1799,3 +1799,13 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .tn-img { height: 74px; margin: -8px -8px 2px; border-radius: 9px 9px 0 0; background-size: cover; background-position: center; }
 .tnode.locked .tn-img { filter: grayscale(1); }
 .fac-img { height: 86px; margin: -13px -14px 6px; border-radius: 4px 4px 0 0; background-size: cover; background-position: center; }
+
+/* 새 로고 (태극 + 大權 붓글씨) */
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ts-logoimg { width: min(400px, 74vw); aspect-ratio: 1; object-fit: cover; border-radius: 6px; box-shadow: 0 0 0 1px rgba(232,196,110,.5), 0 0 0 6px rgba(10,14,24,.8), 0 0 0 7px rgba(232,196,110,.35), 0 30px 60px rgba(0,0,0,.7), 0 0 60px rgba(232,180,90,.18);
+  animation: tsIn .9s cubic-bezier(.2,.8,.2,1) both, logoFloat 7s ease-in-out 1s infinite; }
+@keyframes logoFloat { 50% { transform: translateY(-6px); box-shadow: 0 0 0 1px rgba(232,196,110,.6), 0 0 0 6px rgba(10,14,24,.8), 0 0 0 7px rgba(232,196,110,.45), 0 36px 70px rgba(0,0,0,.7), 0 0 80px rgba(232,180,90,.28); } }
+#start .ts-logo { margin-top: 14px; }
+.sp-logo img { width: min(380px, 70vw); height: auto; border-radius: 6px; box-shadow: 0 30px 70px rgba(0,0,0,.7), 0 0 60px rgba(255,200,110,.3); }
+@media (max-width: 900px) { .ts-logoimg { width: min(260px, 64vw); } }
+.tr-vwrap.oldfilm video { filter: grayscale(1) sepia(.35) contrast(1.3) brightness(.9) blur(.3px); } .tr-vwrap.oldfilm::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 220px, rgba(255,255,255,.06) 220px 221px); animation: flicker .12s steps(2) infinite; pointer-events: none; } @keyframes flicker { 50% { opacity: .5; } }

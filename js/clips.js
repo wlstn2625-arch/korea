@@ -56,7 +56,7 @@ async function playClip(id, { title = '', sub = '', dur = 4200, kind = 'gold', f
   try { if (sessionStorage.getItem('dg_splash')) return; sessionStorage.setItem('dg_splash', '1'); } catch {}
   const el = document.createElement('div'); el.className = 'splash';
   el.innerHTML = `<div class="sp-bg" style="background-image:url(${imgUrl('bg_seoul_night')})"></div><div class="sp-vid"></div><div class="sp-vig"></div>
-    <div class="sp-logo"><img src="icons/icon-192.png" alt=""><b>대권</b><small>THE SUPREME POWER</small></div><div class="sp-tap">화면을 누르면 시작</div>`;
+    <div class="sp-logo"><img src="${document.querySelector('.ts-logoimg')?.src || 'icons/logo.jpg'}" alt="대권 大權"><small>THE SUPREME POWER</small></div><div class="sp-tap">화면을 누르면 시작</div>`;
   document.body.appendChild(el);
   const close = () => { if (el.classList.contains('out')) return; el.classList.add('out'); setTimeout(() => el.remove(), 900); };
   el.addEventListener('click', close);

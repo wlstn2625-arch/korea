@@ -9,8 +9,9 @@ html = (root / 'index.html').read_text(encoding='utf-8')
 css = (root / 'css/style.css').read_text(encoding='utf-8')
 body = re.search(r'<body>(.*?)<script', html, re.S).group(1)
 # 아이콘 이미지는 data URI로 넣어 단일 파일에서도 보이게
-icon_uri = 'data:image/png;base64,' + base64.b64encode((root / 'icons/icon-192.png').read_bytes()).decode()
-body = body.replace('src="icons/icon-192.png"', f'src="{icon_uri}"')
+icon_uri = 'data:image/jpeg;base64,' + base64.b64encode((root / 'icons/seal.jpg').read_bytes()).decode()
+logo_uri = 'data:image/jpeg;base64,' + base64.b64encode((root / 'icons/logo.jpg').read_bytes()).decode()
+body = body.replace('src="icons/seal.jpg"', f'src="{icon_uri}"').replace('src="icons/logo.jpg"', f'src="{logo_uri}"')
 scripts = re.findall(r'<script src="([^"]+)"></script>', html)
 js = ['<script>/* boot */ window.__BODY0 = document.body.innerHTML;</script>']
 for src in scripts:
@@ -22,7 +23,7 @@ out = f'''<title>대권 — 대한민국 대통령 시뮬레이션</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&family=Black+Han+Sans&family=Jua&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="{icon_uri}">
+<link rel="icon" type="image/jpeg" href="{icon_uri}">
 <style>
 {css}
 </style>
@@ -55,7 +56,7 @@ print('wrote', dist / 'daegwon-offline.html', len(offline.encode()), 'bytes')
 
 # 서비스 워커: 캐시할 파일 목록과 내용 해시로 버전을 만들어 업데이트 시 새로 받게 함
 assets = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css', 'js/vendor/anthropic-sdk.mjs',
-          'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon-maskable-512.png'] + scripts
+          'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon-maskable-512.png', 'icons/logo.jpg', 'icons/seal.jpg'] + scripts
 h = hashlib.sha1()
 for a in assets[1:]:
     h.update((root / a).read_bytes())

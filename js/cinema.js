@@ -133,11 +133,11 @@ async function shotTitle(v) {
 }
 
 // 실사 영상 컷 (없으면 false → 각본이 코드 장면으로 대신함)
-async function shotVideo(id, { dur = 3600, cap = '', hit = false, from = 0.3, zoom = true } = {}) {
+async function shotVideo(id, { dur = 3600, cap = '', hit = false, from = 0.3, zoom = true, look = '' } = {}) {
   if (TR.skip || typeof clipLoad !== 'function') return false;
   const v = await clipLoad(id, 2500); if (!v || TR.skip) return false;
   trCue('whoosh', 0.6);
-  const d = trShot(`<div class="tr-vwrap ${zoom ? 'zoom' : ''}"></div>${cap ? `<div class="tr-vcap">${esc(cap)}</div>` : ''}`, 'video');
+  const d = trShot(`<div class="tr-vwrap ${zoom ? 'zoom' : ''} ${look}"></div>${cap ? `<div class="tr-vcap">${esc(cap)}</div>` : ''}`, 'video');
   d.querySelector('.tr-vwrap').appendChild(v); v.className = 'tr-video';
   try { v.currentTime = from; } catch {}
   v.play().catch(() => {});
@@ -220,7 +220,7 @@ const TRAILERS = {
   async legacy() {
     const end = turnLabel(S.turn).year, pres = [...(S.presidents || []).slice(-7).map(p => [p.no, p.name, p.grade]), [termInfo(S).ord, S.name, '★']];
     await shotCard([`${START_YEAR}년.`], { small: '취임 선서', dur: 1900 });
-    await shotVideo('leg_1960', { dur: 3800 });
+    await shotVideo('leg_1960', { dur: 3800, look: 'oldfilm' });
     for (const [no, name, g] of pres) { if (TR.skip) break; trShot(`<div class="tr-pres"><small>제${no}대 대통령</small><b>${esc(name)}</b><em class="g-${g}">${g}</em></div>`, 'black'); trCue('hit'); TR.shake = 6; await trSleep(Math.max(450, 2400 / pres.length)); }
     await shotVideo('leg_lapse', { dur: 4000 });
     const H = S.history || [], W = 1000, Hh = 300, pts = H.map((h, i) => `${(i / Math.max(1, H.length - 1) * W).toFixed(1)},${(Hh - (h.approval ?? 50) / 100 * Hh).toFixed(1)}`).join(' ');
