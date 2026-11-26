@@ -132,16 +132,32 @@ async function shotTitle(v) {
   await trSleep(TR.skip ? 900 : 4600);
 }
 
+// 실사 영상 컷 (없으면 false → 각본이 코드 장면으로 대신함)
+async function shotVideo(id, { dur = 3600, cap = '', hit = false, from = 0.3, zoom = true } = {}) {
+  if (TR.skip || typeof clipLoad !== 'function') return false;
+  const v = await clipLoad(id, 2500); if (!v || TR.skip) return false;
+  trCue('whoosh', 0.6);
+  const d = trShot(`<div class="tr-vwrap ${zoom ? 'zoom' : ''}"></div>${cap ? `<div class="tr-vcap">${esc(cap)}</div>` : ''}`, 'video');
+  d.querySelector('.tr-vwrap').appendChild(v); v.className = 'tr-video';
+  try { v.currentTime = from; } catch {}
+  v.play().catch(() => {});
+  if (hit) setTimeout(() => !TR.skip && trHit(), 250);
+  await trSleep(dur); return true;
+}
+const TRAILER_CLIPS = { conquest: ['conq_flag', 'conq_tanks', 'conq_hill', 'conq_earth'], hegemon: ['heg_fleet', 'heg_seoul', 'heg_hall'], utopia: ['uto_river', 'uto_baby', 'uto_kids'], tech: ['tec_fab', 'tec_ignite', 'tec_space'], legacy: ['leg_1960', 'leg_lapse', 'leg_window'] };
+
 /* ---------------- 엔딩별 각본 ---------------- */
 const TRAILERS = {
   async conquest() {
     const svg = mapClone();
     await shotCard([`${START_YEAR}년.`], { small: '대한민국', dur: 1900 });
+    await shotVideo('conq_flag', { dur: 3800 });
     if (svg) {
       const d = trShot('', 'map'); d.appendChild(svg); colorLand(svg, ['kr'], 'mine'); svg.setAttribute('viewBox', '850 255 60 40'); mapPulse(svg, 'kr', 'gold');
       TR.ambient = 'dust'; await animViewBox(svg, [850, 255, 60, 40], [820, 235, 120, 80], 2600);
     }
     await shotCard(['작은 나라였다.'], { hit: true, dur: 1700 });
+    await shotVideo('conq_tanks', { dur: 3600, hit: true });
     if (svg) {
       const d = trShot('', 'map'); d.appendChild(svg);
       const keys = [...new Set([...svg.querySelectorAll('.land[data-c]')].map(l => l.dataset.c))].filter(k => k !== 'kr').sort((a, b) => (cinfo(a)?.km ?? 9e9) - (cinfo(b)?.km ?? 9e9));
@@ -153,8 +169,10 @@ const TRAILERS = {
         if (k < 1 && !TR.skip) requestAnimationFrame(step); else { colorLand(svg, keys, 'mine'); res(); } }; requestAnimationFrame(step); });
       await vb;
     }
+    await shotVideo('conq_hill', { dur: 3800, hit: true });
     await shotNumber(worldOwned(S) || 195, '개국을 손에 넣다', { from: 1, dur: 2000 });
     await shotCard(['그리고 세계는', '하나의 깃발 아래 섰다.'], { dur: 2600 });
+    if (await shotVideo('conq_earth', { dur: 4400 })) return;
     if (svg) { const d = trShot('', 'map gold'); d.appendChild(svg); ['us', 'cn', 'ru', 'bra', 'aus', 'deu', 'ind', 'egy'].forEach((k, i) => setTimeout(() => mapPulse(svg, k, 'gold'), i * 150)); await animViewBox(svg, [0, 0, 2000, 1040], [150, 80, 1700, 884], 2600); }
   },
   async hegemon() {
@@ -162,22 +180,27 @@ const TRAILERS = {
     await shotCard(['세계는', '강대국의 것이었다.'], { dur: 2400 });
     if (svg) { const d = trShot('', 'map'); d.appendChild(svg); colorLand(svg, ['us', 'cn', 'ru'], 'rival'); colorLand(svg, ['kr'], 'mine'); ['us', 'cn', 'ru'].forEach((k, i) => setTimeout(() => { mapPulse(svg, k, 'red'); trCue('hit'); TR.shake = 8; }, 400 + i * 700)); await animViewBox(svg, [100, 60, 1800, 936], [300, 120, 1300, 676], 3200); }
     await shotCard(['그 질서가', '무너졌다.'], { hit: true, dur: 2000 });
+    await shotVideo('heg_fleet', { dur: 3400, hit: true });
+    await shotVideo('heg_seoul', { dur: 3400 });
     if (svg) { const d = trShot('', 'map gold'); d.appendChild(svg); svg.querySelectorAll('.rival').forEach(l => l.classList.replace('rival', 'fallen')); mapPulse(svg, 'kr', 'gold');
       ['jp', 'cn', 'us', 'ru', 'ind', 'deu', 'gbr', 'aus'].forEach((k, i) => setTimeout(() => { mapArc(svg, 'kr', k, 'gold'); trCue('whoosh', 0.4); }, 300 + i * 380)); TR.ambient = 'embers'; await animViewBox(svg, [300, 120, 1300, 676], [700, 200, 360, 187], 4200); }
     await shotNumber(1, '국력 세계 순위', { from: 30, dur: 2200, suffix: '위' });
-    await shotCard(['누구도', '넘볼 수 없는 자리.'], { dur: 2200 });
+    if (!(await shotVideo('heg_hall', { dur: 4400, cap: '누구도 넘볼 수 없는 자리.' }))) await shotCard(['누구도', '넘볼 수 없는 자리.'], { dur: 2200 });
   },
   async utopia() {
     await shotCard(['합계출산율 0.72명.'], { small: '세계 최저', dur: 2200 });
+    if (await shotVideo('uto_river', { dur: 4200 })) { /* 실사 일출 */ } else {
     const d = trShot(`<div class="tr-dawn"><div class="sun"></div><div class="city">${Array.from({ length: 34 }, (_, i) => `<i style="height:${20 + ((i * 47) % 62)}%;animation-delay:${(i % 9) * 0.25}s"></i>`).join('')}</div><div class="haze"></div></div>`, 'dawn');
-    TR.ambient = 'dust'; trCue('riser', 4.5); await trSleep(5200);
+    TR.ambient = 'dust'; trCue('riser', 4.5); await trSleep(5200); }
     await shotNumber(S.stats.tfr, '합계출산율', { from: 0.72, dur: 2200, dec: 2, suffix: '명' });
+    await shotVideo('uto_baby', { dur: 3600 });
     await shotNumber(S.stats.happiness, '국민 행복도', { from: 31, dur: 1800 });
-    await shotCard(['아이들의 웃음소리가', '다시 들리는 나라.'], { dur: 2600 });
+    if (!(await shotVideo('uto_kids', { dur: 4400, cap: '아이들의 웃음소리가 다시 들리는 나라.' }))) await shotCard(['아이들의 웃음소리가', '다시 들리는 나라.'], { dur: 2600 });
   },
   async tech() {
     const names = (typeof TECHS !== 'undefined' ? TECHS : []).map(t => t.name).sort(() => Math.random() - 0.5).slice(0, 22);
     await shotCard([`${S.tech?.done?.length || 64}개의 기술.`], { dur: 1900 });
+    await shotVideo('tec_fab', { dur: 3400 });
     const d = trShot(`<svg class="tr-net" viewBox="0 0 1000 420"></svg>`, 'net'), sv = d.querySelector('svg'), ns = 'http://www.w3.org/2000/svg', pts = [];
     for (let i = 0; i < names.length; i++) { if (TR.skip) break; const x = 60 + Math.random() * 880, y = 40 + Math.random() * 340; pts.push([x, y]);
       const near = pts.slice(0, -1).map(p => [p, Math.hypot(p[0] - x, p[1] - y)]).sort((a, b) => a[1] - b[1]).slice(0, 2);
@@ -187,22 +210,25 @@ const TRAILERS = {
       trCue('tick'); await trSleep(150); }
     await trSleep(500);
     for (const n of ['3', '2', '1']) { if (TR.skip) break; trShot(`<div class="tr-count">${n}</div>`, 'black'); trHit(); await trSleep(800); }
+    if (await shotVideo('tec_ignite', { dur: 4200, hit: true })) { TR.shake = 22; await shotVideo('tec_space', { dur: 4000 }); } else {
     const r = trShot(`<div class="tr-launch"><div class="stars"></div><svg class="rocket" viewBox="0 0 120 400"><defs><linearGradient id="rk" x1="0" x2="1"><stop offset="0" stop-color="#8a96a8"/><stop offset=".45" stop-color="#f4f7fb"/><stop offset="1" stop-color="#6b7688"/></linearGradient><radialGradient id="fl" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#ffe08a"/><stop offset=".6" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ff3d00" stop-opacity="0"/></radialGradient></defs>
       <path class="flame" d="M38 300 Q60 420 82 300 Z" fill="url(#fl)"/><path d="M60 10 C88 50 92 110 90 290 L30 290 C28 110 32 50 60 10 Z" fill="url(#rk)"/><path d="M30 230 L8 300 L30 290 Z M90 230 L112 300 L90 290 Z" fill="#c8323a"/><circle cx="60" cy="110" r="13" fill="#1e3a6a" stroke="#cfd8e6" stroke-width="4"/><rect x="40" y="170" width="40" height="8" fill="#c8323a"/><text x="60" y="215" text-anchor="middle" font-size="16" font-weight="900" fill="#1e3a6a">KOREA</text></svg><div class="smoke"></div></div>`, 'launch');
     TR.ambient = 'embers'; trHit(true); let k = 0; const iv = setInterval(() => { TR.shake = Math.max(TR.shake, 10); trSparks(10, r.clientWidth / 2, r.clientHeight * 0.95); if (++k > 30) clearInterval(iv); }, 120);
-    await trSleep(4200); clearInterval(iv);
+    await trSleep(4200); clearInterval(iv); }
     await shotCard(['인류의 다음 시대는', '이곳에서 시작된다.'], { dur: 2600 });
   },
   async legacy() {
     const end = turnLabel(S.turn).year, pres = [...(S.presidents || []).slice(-7).map(p => [p.no, p.name, p.grade]), [termInfo(S).ord, S.name, '★']];
     await shotCard([`${START_YEAR}년.`], { small: '취임 선서', dur: 1900 });
+    await shotVideo('leg_1960', { dur: 3800 });
     for (const [no, name, g] of pres) { if (TR.skip) break; trShot(`<div class="tr-pres"><small>제${no}대 대통령</small><b>${esc(name)}</b><em class="g-${g}">${g}</em></div>`, 'black'); trCue('hit'); TR.shake = 6; await trSleep(Math.max(450, 2400 / pres.length)); }
+    await shotVideo('leg_lapse', { dur: 4000 });
     const H = S.history || [], W = 1000, Hh = 300, pts = H.map((h, i) => `${(i / Math.max(1, H.length - 1) * W).toFixed(1)},${(Hh - (h.approval ?? 50) / 100 * Hh).toFixed(1)}`).join(' ');
     const d = trShot(`<div class="tr-chart"><div class="yr">${START_YEAR}</div><svg viewBox="-10 -10 ${W + 20} ${Hh + 20}"><polyline points="${pts}"/></svg><small>지지율 ${H.length}분기의 기록</small></div>`, 'chart');
     const y = d.querySelector('.yr'), t0 = performance.now(); trCue('riser', 4);
     await new Promise(res => { const step = now => { const k = Math.min(1, (now - t0) / 4200); y.textContent = Math.round(START_YEAR + (end - START_YEAR) * k); if (k < 1 && !TR.skip) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
     await shotCard([`${end}년.`], { hit: true, dur: 1700 });
-    await shotCard(['반세기.', '역사가 당신을 기억한다.'], { dur: 2600 });
+    if (!(await shotVideo('leg_window', { dur: 4600, cap: '반세기. 역사가 당신을 기억한다.' }))) await shotCard(['반세기.', '역사가 당신을 기억한다.'], { dur: 2600 });
   },
 };
 
@@ -217,7 +243,8 @@ async function playEndingCinema(id, then) {
   TR.t0 = performance.now();
   el.querySelector('.tr-skip').onclick = () => { TR.skip = true; TR._w && TR._w(); };
   requestAnimationFrame(trFxLoop);
-  const est = { conquest: 24, hegemon: 22, utopia: 20, tech: 22, legacy: 22 }[id] || 22;
+  if (typeof clipLoad === 'function') (TRAILER_CLIPS[id] || []).forEach(c => clipLoad(c, 9000));
+  const est = { conquest: 38, hegemon: 34, utopia: 32, tech: 32, legacy: 34 }[id] || 34;
   if (TR.snd) TR.snd.drone(TR.base + 0.1, est); TR.cues.push({ t: 0.1, type: 'drone', arg: est });
   await trSleep(500);
   try { await TRAILERS[id](); } catch (e) { console.error(e); }

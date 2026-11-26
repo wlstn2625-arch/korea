@@ -42,7 +42,7 @@ function techHTML(tree) {
     return `<div class="tcol"><div class="tcol-h">${br.icon} ${br.name}</div>${list.map(t => {
       const done = T.done.includes(t.id), run = T.active.find(a => a.id === t.id), why = techWhyNot(S, t);
       const st = done ? 'done' : run ? 'run' : why && /선행/.test(why) ? 'locked' : 'open';
-      return `<div class="tnode ${st}" title="${esc(t.desc)}">
+      return `<div class="tnode ${st}" data-tid="${t.id}" title="${esc(t.desc)}">
         <div class="tn-h"><span class="tn-ic">${t.icon}</span><b>${esc(t.name)}</b></div>
         <div class="tn-b">${esc(bonusList(t.b, t.fx))}</div>
         <div class="tn-d muted">${esc(t.desc)}</div>

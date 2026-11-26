@@ -109,7 +109,7 @@ openDomEventCard = function (id) {
   const def = DOM_EVENTS[ev.key], kind = (typeof EVENT_KINDS !== 'undefined' && EVENT_KINDS[def.kind]) || { name: '국내 정치' };
   const k = def.extreme ? 'extreme' : def.kind || 'politics';
   openScene({
-    cast: castOf(k), kind: def.extreme ? `🚨 국가 비상 · ${kind.name}` : `${def.icon} ${kind.name}`, title: ev.title, prop: def.icon || SC_PROP[k], sky: SC_SKY[k], extreme: def.extreme,
+    key: k, cast: castOf(k), kind: def.extreme ? `🚨 국가 비상 · ${kind.name}` : `${def.icon} ${kind.name}`, title: ev.title, prop: def.icon || SC_PROP[k], sky: SC_SKY[k], extreme: def.extreme,
     line: `대통령님, ${ev.desc}`,
     choices: def.choices.map(c => { const d = descChips(c.desc); return { label: c.label, chips: d.chips + (d.rest ? `<i class="fxc note">${esc(d.rest.slice(0, 40))}</i>` : ''), meta: c.pc ? `국고 ${won(c.pc)}` : '', disabled: c.pc && S.pcap < c.pc }; }),
     onPick: i => {
@@ -130,7 +130,7 @@ openEventCard = function (cid) {
     return { label: o.label, best: i === best, chips: fxChips({ e: fx.e, rel: fx.rel, f: fx.f }, 5), meta: `성공 ${(ev.ok * 100).toFixed(0)}%${o.pc ? ` · 국고 ${won(o.pc)}` : ''}`, disabled: o.pc && S.pcap < o.pc }; });
   choices.push({ label: `🤖 ${ClaudeAI.enabled() ? 'Claude' : 'AI 참모'}에게 맡긴다`, chips: '', meta: '참모가 판단해 처리' });
   openScene({
-    cast: castOf(c.tpl), kind: `${c.icon} ${c.kind}${c.good ? ' · 기회' : ` · 심각도 ${'●'.repeat(c.sev)}`}`, title: c.title, prop: SC_PROP[c.tpl] || c.icon, sky: c.good ? 'day' : SC_SKY[c.tpl] || 'dusk', extreme: c.sev >= 3,
+    key: c.tpl, cast: castOf(c.tpl), kind: `${c.icon} ${c.kind}${c.good ? ' · 기회' : ` · 심각도 ${'●'.repeat(c.sev)}`}`, title: c.title, prop: SC_PROP[c.tpl] || c.icon, sky: c.good ? 'day' : SC_SKY[c.tpl] || 'dusk', extreme: c.sev >= 3,
     line: `대통령님, ${c.desc}${p ? ` (원인: ${p.name})` : ''}`,
     choices,
     onPick: async i => {
