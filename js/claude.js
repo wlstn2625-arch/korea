@@ -320,5 +320,5 @@ relDelta는 대화의 설득력·예의·이해관계 일치에 따라 -8~8 정�
     return r;
   }
 
-  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, metricAdvice, test };
+  return { setWorldview: v => { worldview = v; }, MODELS, cfg, setCfg, enabled, hostMode, whenReady, analyzePolicy, analyzeOption, leaderTalk, resolveCrisis, briefing, advise, metricAdvice, test, rawCall: o => call(o) };
 })();

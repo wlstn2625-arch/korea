@@ -1123,3 +1123,27 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .stage.shake-long { animation: quake .45s ease-in-out 4; }
 .nuke-ban { background: linear-gradient(90deg, rgba(60, 40, 5, .96), rgba(150, 100, 10, .96)) !important; border-color: #ffd22e !important; }
 @media (prefers-reduced-motion: reduce) { .nuke-flash, .geo .fxnuke * { animation: none !important; } }
+
+/* ---------- 시국 정책안 · 세계 흐름 ---------- */
+#sit-board { margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+.sit-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.sit-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.sit-card { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.sit-card.ai { border-left-color: #b07cff; }
+.sit-t { display: flex; gap: 10px; align-items: center; }
+.sit-t h4 { margin: 0; font-size: 15px; }
+.sit-ic { font-size: 26px; }
+.sit-ch { display: flex; flex-direction: column; gap: 6px; }
+.sit-opt { text-align: left; background: var(--card2, rgba(255,255,255,.04)); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 2px; font: inherit; }
+.sit-opt:hover:not(:disabled) { border-color: var(--accent); }
+.sit-opt:disabled { opacity: .5; cursor: not-allowed; }
+.sit-ai { display: flex; gap: 6px; align-items: center; }
+.sit-ai input { flex: 1; min-width: 0; }
+.flow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; margin: 6px 0; }
+.flow-i { display: flex; justify-content: space-between; gap: 6px; padding: 6px 8px; border-radius: 8px; background: var(--card2, rgba(255,255,255,.04)); font-size: 13px; }
+.flow-i.good b { color: var(--good); } .flow-i.bad b { color: var(--bad); }
+.flow-i i { font-style: normal; font-size: 10px; margin-left: 3px; } .flow-i i.up { color: var(--good); } .flow-i i.dn { color: var(--bad); }
+.flow-perf { margin-top: 6px; font-size: 13px; }
+.flow-news { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--line); }
+.flow-news.bad { border-left-color: var(--bad); } .flow-news.good { border-left-color: var(--good); }
+@media (max-width: 520px) { .sit-list { grid-template-columns: 1fr; } }
