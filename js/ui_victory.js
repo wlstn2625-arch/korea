@@ -78,3 +78,4 @@ if (typeof afterQuarter === 'function') {
     t.innerHTML = `<span>🏆 엔딩 ${got.size}/${VICTORIES.length}</span>${VICTORIES.map(v => `<i class="${got.has(v.id) ? 'on' : ''}" title="${esc(v.name)}${got.has(v.id) ? ' (달성)' : ''}">${v.icon}</i>`).join('')}${w[0] ? `<small>최근: ${esc(w[0].name)} · ${esc(VICTORIES.find(v => v.id === w[0].id)?.name || '')} · ${esc(DIFFICULTY[w[0].diff]?.name || '')} ${esc(w[0].grade || '')}</small>` : ''}`;
   };
 }
+if (!$('start').classList.contains('hidden')) renderStart();
