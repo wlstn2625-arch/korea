@@ -1251,6 +1251,133 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .seal img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .seal:has(img) { padding: 0; overflow: hidden; border-color: #c9a44c; }
 
+/* =========================================================
+ *  게임 UI 키트 v2 — 각진 금속 버튼 · 금테 모서리 카드 · 칩 · 게이지 · 연출
+ * ========================================================= */
+#game { --chamfer: 7px; --gold-a: #f3d791; --gold-b: #c99a3c; --gold-c: #7a5418; --steel-a: #2f4155; --steel-b: #1a2532; --edge: #5b6f84; }
+/* 버튼 */
+#game .btn, #modal .btn { position: relative; border-radius: 3px; border: 1px solid var(--edge); font-weight: 700; letter-spacing: .02em;
+  background: linear-gradient(180deg, var(--steel-a), var(--steel-b)); color: #eef0f2; text-shadow: 0 1px 0 rgba(0,0,0,.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -2px 0 rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.45);
+  clip-path: polygon(var(--chamfer) 0, 100% 0, 100% calc(100% - var(--chamfer)), calc(100% - var(--chamfer)) 100%, 0 100%, 0 var(--chamfer)); }
+#modal .btn { --chamfer: 7px; --gold-a: #f3d791; --gold-b: #c99a3c; --gold-c: #7a5418; --steel-a: #2f4155; --steel-b: #1a2532; --edge: #5b6f84; }
+#game .btn:hover:not(:disabled), #modal .btn:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+#game .btn:active:not(:disabled), #modal .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0,0,0,.5); }
+#game .btn.primary, #modal .btn.primary { background: linear-gradient(180deg, var(--gold-a), var(--gold-b) 55%, var(--gold-c)); border-color: #f6e2a8; color: #241603; text-shadow: 0 1px 0 rgba(255,240,200,.5);
+  box-shadow: inset 0 1px 0 #fff4d0, inset 0 -2px 0 rgba(90,60,10,.6), 0 0 14px rgba(232,180,90,.25); }
+#game .btn.danger, #modal .btn.danger { background: linear-gradient(180deg, #e87068, #b0362e 55%, #6e1a15); border-color: #f2a39c; color: #fff; }
+#game .btn.ghost { background: linear-gradient(180deg, rgba(47,65,85,.6), rgba(26,37,50,.6)); }
+#game .btn:disabled, #modal .btn:disabled { filter: grayscale(.8) brightness(.7); }
+#game .btn.sm { --chamfer: 5px; }
+.ripple-box { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.ripple-fx { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(255,235,180,.45), transparent 60%); transform: scale(0); animation: rippleFx .55s ease-out forwards; pointer-events: none; }
+@keyframes rippleFx { to { transform: scale(1); opacity: 0; } }
+/* 카드: 금테 모서리 (가상요소 없이 배경으로) */
+#game .pcard, #game .sit-card, #game .fac, #game .panel, #game .cpanel, #game .treasury, #game .debt-box, #game .big-kpi {
+  --cg: rgba(226,194,122,.75);
+  background: linear-gradient(var(--cg), var(--cg)) top left / 14px 2px no-repeat, linear-gradient(var(--cg), var(--cg)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--cg), var(--cg)) bottom right / 14px 2px no-repeat, linear-gradient(var(--cg), var(--cg)) bottom right / 2px 14px no-repeat,
+    repeating-linear-gradient(135deg, rgba(255,255,255,.012) 0 6px, transparent 6px 12px), linear-gradient(180deg, #1d2a39, #131c26);
+  border: 1px solid #34465a; border-radius: 4px; }
+#game .sit-card { border-left: 3px solid var(--accent); }
+#game .pcard.changed { --cg: #6cc48a; border-color: #2f5a42; }
+#game .pcard, #game .sit-card, #game .fac { transition: transform .15s, box-shadow .15s, border-color .15s; }
+#game .pcard:hover, #game .sit-card:hover, #game .fac:hover { transform: translateY(-2px); border-color: #6a5426; box-shadow: 0 10px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(226,194,122,.15); }
+.tab.active > * { animation: cardIn .35s cubic-bezier(.2,.8,.2,1) both; }
+.tab.active > *:nth-child(2) { animation-delay: .04s; } .tab.active > *:nth-child(3) { animation-delay: .08s; } .tab.active > *:nth-child(4) { animation-delay: .12s; } .tab.active > *:nth-child(n+5) { animation-delay: .16s; }
+.policy-list > *, .sit-list > *, .fac-grid > *, .pacts > * { animation: cardIn .35s cubic-bezier(.2,.8,.2,1) both; }
+.policy-list > *:nth-child(2), .sit-list > *:nth-child(2), .fac-grid > *:nth-child(2) { animation-delay: .05s; } .policy-list > *:nth-child(3), .sit-list > *:nth-child(3), .fac-grid > *:nth-child(3) { animation-delay: .1s; } .policy-list > *:nth-child(n+4), .sit-list > *:nth-child(n+4), .fac-grid > *:nth-child(n+4) { animation-delay: .15s; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.98); } }
+/* 선택지 버튼 */
+#game .opt, #game .sit-opt { border-radius: 3px; border: 1px solid #3a4d61; background: linear-gradient(90deg, rgba(47,65,85,.55), rgba(26,37,50,.35)); transition: transform .12s, border-color .12s, background .12s; position: relative; }
+#game .opt:hover:not(:disabled), #game .sit-opt:hover:not(:disabled) { transform: translateX(3px); border-color: var(--accent); background: linear-gradient(90deg, rgba(201,164,76,.18), rgba(26,37,50,.35)); }
+#game .opt.current { border-color: #3d7a57; background: linear-gradient(90deg, rgba(60,160,100,.2), rgba(26,37,50,.3)); }
+#game .opt { flex-wrap: wrap; }
+.ochips { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; margin-top: 4px; }
+.fxc { font-style: normal; display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 5px; border-radius: 3px; font-size: 11.5px; font-weight: 700; line-height: 1.5; white-space: nowrap;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); color: #d9dde2; }
+.fxc b { font-weight: 500; font-size: 10.5px; opacity: .8; }
+.fxc.g { background: rgba(60,190,120,.14); border-color: rgba(60,190,120,.45); color: #8ff0b8; }
+.fxc.b { background: rgba(230,90,80,.14); border-color: rgba(230,90,80,.45); color: #ffa79e; }
+.fxc.risk { background: rgba(230,180,60,.14); border-color: rgba(230,180,60,.5); color: #ffd98a; }
+.fxc.lasting { border-style: dashed; }
+/* 분야 칩 → 아이콘 타일 */
+#game #cat-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+#game #cat-chips .chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 3px; font-size: 11px; line-height: 1.2; text-align: center;
+  background: linear-gradient(180deg, #24344a, #172230); border: 1px solid #3a4d61; position: relative; }
+#game #cat-chips .chip::first-letter { font-size: 22px; }
+#game #cat-chips .chip.active { background: linear-gradient(180deg, #f1d58a, #b88f35); color: #241603; border-color: #f6e2a8; box-shadow: 0 0 14px rgba(232,180,90,.4); }
+#game #cat-chips .chip .cnt { position: absolute; top: 2px; right: 4px; font-size: 9px; color: #6cc48a; }
+/* 분야 아트 배너 */
+.cat-banner { position: relative; overflow: hidden; height: 92px; margin: 10px 0 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,.12); display: flex; align-items: flex-end;
+  background: radial-gradient(120% 140% at 85% 30%, var(--c2), var(--c1) 55%, #0a0f16); box-shadow: inset 0 -40px 40px rgba(0,0,0,.35); animation: cardIn .4s both; }
+.cat-banner::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px); }
+.cb-art { position: absolute; filter: drop-shadow(0 6px 12px rgba(0,0,0,.5)); }
+.cb-art.a1 { right: 26px; top: 6px; font-size: 64px; animation: cbFloat 5s ease-in-out infinite; }
+.cb-art.a2 { right: 110px; top: 34px; font-size: 34px; opacity: .8; animation: cbFloat 4s ease-in-out infinite reverse; }
+@keyframes cbFloat { 50% { transform: translateY(-6px) rotate(-4deg); } }
+.cb-t { position: relative; padding: 10px 14px; display: flex; flex-direction: column; text-shadow: 0 2px 6px rgba(0,0,0,.7); }
+.cb-t small { font-size: 10px; letter-spacing: .3em; opacity: .7; }
+.cb-t b { font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-weight: 400; font-size: 26px; letter-spacing: .04em; color: #fff3d4; }
+.cb-t span { font-size: 11.5px; opacity: .85; }
+.cb-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0,0,0,.4); }
+.cb-prog i { display: block; height: 100%; background: linear-gradient(90deg, #f1d58a, #6cc48a); }
+/* 긴 설명 접기 */
+.txt-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; position: relative; }
+.txt-clamp:not(.open)::after { content: '▾'; position: absolute; right: 0; bottom: 0; padding-left: 14px; background: linear-gradient(90deg, transparent, #172230 40%); color: var(--accent); font-size: 11px; }
+.txt-clamp.open { -webkit-line-clamp: unset; display: block; }
+/* 국정 지표 게이지 */
+#stat-list.gauges { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.gz { position: relative; display: flex; flex-direction: column; align-items: center; padding: 6px 2px 4px; border-radius: 4px; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.05); }
+.gz svg { width: 58px; height: 58px; transform: rotate(-90deg); }
+.gz-bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 5; }
+.gz-fg { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dasharray .8s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 3px currentColor); }
+.gz-ic { position: absolute; top: 22px; font-size: 20px; }
+.gz b { font-size: 13px; margin-top: 2px; }
+.gz small { font-size: 10.5px; color: var(--muted); }
+.gz em { position: absolute; top: 4px; right: 4px; font-style: normal; font-size: 9.5px; }
+/* 도장 */
+.stamp-fx { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; pointer-events: none; }
+.st-seal { width: 180px; height: 180px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #e2382c; border: 7px double #e2382c;
+  background: radial-gradient(circle, rgba(226,56,44,.12), transparent 70%); font-family: 'Black Han Sans', 'Nanum Myeongjo', serif; transform: rotate(-14deg);
+  animation: stampIn .5s cubic-bezier(.3,1.6,.5,1) both, stampOut .5s 1s ease-in forwards; text-shadow: 0 0 1px #e2382c; mix-blend-mode: screen; }
+.stamp-fx.blue .st-seal { color: #5aa2ff; border-color: #5aa2ff; background: radial-gradient(circle, rgba(90,162,255,.12), transparent 70%); }
+.stamp-fx.gray .st-seal { color: #b9b9b9; border-color: #b9b9b9; }
+.st-seal b { font-size: 54px; font-weight: 400; line-height: 1; letter-spacing: .05em; }
+.st-seal small { font-size: 14px; margin-top: 6px; letter-spacing: .2em; }
+@keyframes stampIn { 0% { transform: rotate(-14deg) scale(3); opacity: 0; } 60% { opacity: 1; } 100% { transform: rotate(-14deg) scale(1); opacity: 1; } }
+@keyframes stampOut { to { opacity: 0; transform: rotate(-14deg) scale(1.08); } }
+.shake-mini { animation: shakeMini .3s; }
+@keyframes shakeMini { 25% { transform: translate(3px, -2px); } 50% { transform: translate(-3px, 2px); } 75% { transform: translate(2px, 1px); } }
+.coin-fx { position: fixed; z-index: 9998; font-style: normal; font-size: 22px; pointer-events: none; filter: drop-shadow(0 0 6px rgba(255,210,90,.8)); }
+/* 패널·HUD 손질 */
+#game .panel-head h2 { font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-weight: 400; letter-spacing: .06em; font-size: 22px; color: #f3d791; text-shadow: 0 2px 0 #3a2508, 0 0 14px rgba(232,180,90,.35); }
+#game .dock button { border-radius: 4px; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); }
+#game .dock button.active { animation: dockGlow 2s ease-in-out infinite; }
+@keyframes dockGlow { 50% { box-shadow: 0 0 22px rgba(226,194,122,.75); } }
+#game .res { border-radius: 3px; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); }
+#game .res .ri { filter: drop-shadow(0 0 4px rgba(255,220,150,.4)); }
+#game .tag { border-radius: 2px; }
+#game h3.sec, #game .sit-head b, #game .panel > h3, #game .box > h4 { font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-weight: 400; letter-spacing: .04em; color: #f1d58a; }
+#game .pact { border-radius: 3px; background: linear-gradient(180deg, #24344a, #162130); border: 1px solid #3a4d61; transition: transform .15s, border-color .15s; }
+#game .pact:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--accent); }
+#game .pact small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#game .pact .pi { font-size: 30px; display: inline-block; animation: cbFloat 4s ease-in-out infinite; }
+/* 공장: 시설이 있으면 연기 */
+#game .fac-ic { position: relative; font-size: 30px; }
+#game .fac:has(.fac-lv i.on) .fac-ic::after { content: '💨'; position: absolute; left: 60%; top: -14px; font-size: 14px; opacity: 0; animation: smoke 2.6s ease-out infinite; }
+@keyframes smoke { 0% { opacity: 0; transform: translate(0, 6px) scale(.6); } 30% { opacity: .8; } 100% { opacity: 0; transform: translate(10px, -16px) scale(1.4); } }
+.fac-lv i.on { background: linear-gradient(180deg, #f1d58a, #b88f35) !important; box-shadow: 0 0 6px rgba(241,213,138,.6); }
+.fac-lv i.wip { animation: wipBlink 1s steps(2) infinite; }
+@keyframes wipBlink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .stamp-fx, .coin-fx, .ripple-fx { display: none; } .tab.active > *, .policy-list > *, .cb-art, #game .dock button.active { animation: none !important; } }
+
+#game .treasury > .tr-main { display: flex !important; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; position: relative; padding-left: 64px; min-height: 80px; }
+#game .treasury > .tr-main::before { content: '🏦'; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 46px; filter: drop-shadow(0 0 10px rgba(255,210,110,.45)); animation: cbFloat 4s ease-in-out infinite; }
+#game .treasury > .tr-main > b { font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-weight: 400; font-size: 38px; color: #f3d791; text-shadow: 0 3px 0 #3a2508, 0 0 18px rgba(232,180,90,.35); white-space: nowrap; }
+#game .treasury > .tr-main > span { font-size: 11px; letter-spacing: .2em; }
+#game .sit-opt .tag { align-self: flex-start; }
+
 </style>
 </head>
 <body>
@@ -12567,6 +12694,221 @@ if (typeof renderWarPanel === 'function') {
     if (T?.varFx?.length) { const v = T.varFx.splice(0); v.slice(-2).forEach(x => toast(`⚔️ ${x.text}`, 3800)); }
     return r;
   };
+}
+
+</script>
+<script>
+/* js/gamefx.js */
+/* =========================================================
+ *  게임 느낌 연출 (화면 전용)
+ *  - 효과를 글 대신 아이콘 칩으로 · 긴 설명은 접어 두기
+ *  - 국정 지표를 원형 게이지로 · 정책 분야 아트 배너
+ *  - 결재 도장 쾅 · 국고 동전 · 클릭 물결 · 효과음(끄기 가능)
+ * ========================================================= */
+
+/* ---------------- 아이콘 칩 ---------------- */
+const STAT_ICON = { gdp: '📈', unemp: '👷', infl: '🛒', debt: '🏦', fiscal: '💵', tfr: '👶', gini: '⚖️', security: '🛡️', education: '🎓', safety: '🚓', justice: '🧑‍⚖️', housing: '🏠', env: '🌳', innovation: '🔬', welfare: '🤝', freedom: '🕊️', health: '🏥', happiness: '😊' };
+const STAT_SHORT = { gdp: '성장', unemp: '실업', infl: '물가', debt: '채무', fiscal: '재정', tfr: '출산', gini: '불평등', security: '안보', education: '교육', safety: '치안', justice: '사법', housing: '주거', env: '환경', innovation: '산업', welfare: '복지', freedom: '자유', health: '의료', happiness: '행복' };
+function chipNum(k, v) {
+  const d = Math.abs(v) < 0.1 ? 2 : Math.abs(v) < 1 ? 1 : 0;
+  return `${v > 0 ? '+' : ''}${(+v).toFixed(d)}`;
+}
+// good: 지표가 좋아지는 방향이면 초록
+function fxChips(fx, max = 6) {
+  const out = [];
+  for (const k in fx.e || {}) { const v = fx.e[k]; if (!v) continue; const good = (STATS[k]?.good || 1) * v > 0; out.push({ w: Math.abs(v) / (k === 'tfr' ? 0.02 : k === 'gini' ? 0.005 : ['gdp', 'unemp', 'infl', 'fiscal'].includes(k) ? 0.2 : 2), html: `<i class="fxc ${good ? 'g' : 'b'}" title="${STATS[k]?.name || k}">${STAT_ICON[k] || '•'}<b>${STAT_SHORT[k] || k}</b>${chipNum(k, v)}</i>` }); }
+  for (const k in fx.mods || {}) { const v = fx.mods[k]; if (!v) continue; const good = (STATS[k]?.good || 1) * v > 0; out.push({ w: Math.abs(v) * 3, html: `<i class="fxc ${good ? 'g' : 'b'} lasting" title="${STATS[k]?.name || k} (지속)">${STAT_ICON[k] || '•'}<b>${STAT_SHORT[k] || k}</b>${chipNum(k, v)}⟳</i>` }); }
+  if (fx.ap) out.push({ w: Math.abs(fx.ap) * 2, html: `<i class="fxc ${fx.ap > 0 ? 'g' : 'b'}" title="지지율">📣<b>지지</b>${chipNum('ap', fx.ap)}</i>` });
+  if (fx.pcap) out.push({ w: 9, html: `<i class="fxc ${fx.pcap > 0 ? 'g' : 'b'}" title="국고">💰<b>국고</b>${fx.pcap > 0 ? '+' : '−'}${won(Math.abs(fx.pcap))}</i>` });
+  for (const k in fx.rel || {}) { const v = fx.rel[k]; if (!v) continue; const flag = RELATIONS[k]?.flag || (typeof cinfo === 'function' && cinfo(k)?.flag) || '🏳️'; out.push({ w: Math.abs(v) / 2, html: `<i class="fxc ${v > 0 ? 'g' : 'b'}" title="${RELATIONS[k]?.name || k} 관계">${flag}${chipNum(k, v)}</i>` }); }
+  for (const k in fx.f || {}) { const v = fx.f[k]; if (!v) continue; out.push({ w: Math.abs(v) / 3, html: `<i class="fxc ${v > 0 ? 'g' : 'b'} fct" title="${FACTIONS[k]?.name || k} 지지">${FACTIONS[k]?.icon || '👥'}${chipNum(k, v)}</i>` }); }
+  if (fx.threat) out.push({ w: 3, html: `<i class="fxc ${fx.threat < 0 ? 'g' : 'b'}" title="위협도">🎯${chipNum('t', fx.threat)}</i>` });
+  if (fx.tension) out.push({ w: 2, html: `<i class="fxc ${fx.tension < 0 ? 'g' : 'b'}" title="세계 긴장">🌐${chipNum('t', fx.tension)}</i>` });
+  out.sort((a, b) => b.w - a.w);
+  const extra = fx.risk ? `<i class="fxc risk" title="${esc(fx.risk.text)}">🎲${Math.round(fx.risk.p * 100)}%</i>` : '';
+  return out.slice(0, max).map(x => x.html).join('') + extra;
+}
+
+/* ---------------- 효과음 (Web Audio로 합성, 파일 없음) ---------------- */
+const SFX = (() => {
+  let ctx = null, on = true;
+  try { on = localStorage.getItem('dg_sound') !== 'off'; } catch {}
+  const ac = () => { if (!ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; ctx = new C(); } if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+  function tone(freq, dur, type = 'sine', vol = 0.08, slide = 0, delay = 0) {
+    const c = ac(); if (!c) return; const t = c.currentTime + delay;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(dur, vol = 0.15, lp = 600) {
+    const c = ac(); if (!c) return; const n = c.createBuffer(1, c.sampleRate * dur, c.sampleRate), d = n.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); f.type = 'lowpass'; f.frequency.value = lp; g.gain.value = vol;
+    s.buffer = n; s.connect(f).connect(g).connect(c.destination); s.start();
+  }
+  const fx = {
+    click: () => tone(1250, 0.05, 'triangle', 0.035),
+    open: () => { tone(420, 0.12, 'sine', 0.04, 260); },
+    stamp: () => { noise(0.25, 0.35, 380); tone(90, 0.25, 'sine', 0.18, -40); },
+    coin: () => { tone(1320, 0.08, 'square', 0.03); tone(1760, 0.14, 'square', 0.03, 0, 0.07); },
+    good: () => { [523, 659, 784].forEach((f, i) => tone(f, 0.18, 'triangle', 0.05, 0, i * 0.08)); },
+    bad: () => { tone(220, 0.3, 'sawtooth', 0.04, -80); },
+  };
+  return { play: k => { if (on) try { fx[k]?.(); } catch {} }, get on() { return on; }, toggle() { on = !on; try { localStorage.setItem('dg_sound', on ? 'on' : 'off'); } catch {} if (on) fx.good(); return on; } };
+})();
+
+/* ---------------- 도장·동전·물결 ---------------- */
+function stampFx(text = '결재', sub = '', kind = 'red') {
+  const el = document.createElement('div'); el.className = `stamp-fx ${kind}`;
+  el.innerHTML = `<div class="st-seal"><b>${esc(text)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
+  document.body.appendChild(el); SFX.play('stamp');
+  setTimeout(() => document.querySelector('.stage, #game')?.classList.add('shake-mini'), 180);
+  setTimeout(() => document.querySelector('.stage, #game')?.classList.remove('shake-mini'), 520);
+  setTimeout(() => el.remove(), 1500);
+}
+let lastPointer = { x: innerWidth / 2, y: innerHeight / 2 };
+addEventListener('pointerdown', e => { lastPointer = { x: e.clientX, y: e.clientY }; }, true);
+function coinFx(n = 6, from = lastPointer) {
+  const to = $('hdr-pcap')?.closest('.res')?.getBoundingClientRect(); if (!to) return;
+  const tx = to.left + to.width / 2, ty = to.top + to.height / 2;
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('i'); c.className = 'coin-fx'; c.textContent = '🪙';
+    const sx = from.x + (Math.random() - 0.5) * 60, sy = from.y + (Math.random() - 0.5) * 40;
+    c.style.left = sx + 'px'; c.style.top = sy + 'px';
+    document.body.appendChild(c);
+    const mx = (sx + tx) / 2 + (Math.random() - 0.5) * 200, my = Math.min(sy, ty) - 80 - Math.random() * 80;
+    c.animate([{ transform: 'translate(-50%,-50%) scale(.4)', opacity: 0 }, { transform: `translate(${mx - sx}px, ${my - sy}px) translate(-50%,-50%) scale(1.2)`, opacity: 1, offset: 0.45 }, { transform: `translate(${tx - sx}px, ${ty - sy}px) translate(-50%,-50%) scale(.6)`, opacity: 0.9 }],
+      { duration: 750 + i * 70, easing: 'cubic-bezier(.3,.6,.4,1)', delay: i * 40 }).onfinish = () => { c.remove(); if (i === 0) SFX.play('coin'); };
+  }
+}
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest('.btn, .opt, .sit-opt, .pact, .chip, .dock button, .party-opt, .speed button, .dact button, .res'); if (!b || b.disabled) return;
+  const r = b.getBoundingClientRect(), box = document.createElement('span'), w = document.createElement('span'); box.className = 'ripple-box'; w.className = 'ripple-fx';
+  const s = Math.max(r.width, r.height) * 2; w.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+  if (getComputedStyle(b).position === 'static') b.style.position = 'relative';
+  box.appendChild(w); b.appendChild(box); setTimeout(() => box.remove(), 600);
+  SFX.play('click');
+});
+
+/* ---------------- 결과에 연출 붙이기 ---------------- */
+function wrapFx(name, onOk) {
+  const f = window[name]; if (typeof f !== 'function') return;
+  window[name] = function (...a) { const r = f.apply(this, a); try { if (r && r.ok !== false && !r.refused) onOk(r, a); else if (r && r.ok === false) SFX.play('bad'); } catch {} return r; };
+}
+wrapFx('enactPolicy', r => { if (r.bill) stampFx('발의', '국회 제출', 'blue'); else if (r.passed === false) { stampFx('부결', '', 'gray'); SFX.play('bad'); } else stampFx('결재', '대통령'); });
+wrapFx('adoptSitPolicy', r => stampFx(r.perf?.id === 'back' ? '역풍' : r.perf?.id === 'great' ? '대성공' : '결재', r.perf?.name || '', r.perf?.id === 'back' ? 'gray' : 'red'));
+wrapFx('buildFactory', () => stampFx('착공', '산업 시설', 'blue'));
+wrapFx('diploAction', r => { if (/❌/.test(r.msg || '')) SFX.play('bad'); else stampFx('서명', '외교', 'blue'); });
+wrapFx('financeAction', () => coinFx(8));
+wrapFx('repayDebt', () => stampFx('상환', '나랏빚', 'blue'));
+wrapFx('resolveDomEvent', () => stampFx('재가', '', 'red'));
+
+// 국고가 늘면 동전이 날아감
+{
+  let prevP = null;
+  const _rh = renderHeader;
+  renderHeader = function () { _rh(); if (!S) return; if (prevP != null && S.pcap - prevP >= 10) coinFx(Math.min(10, 3 + Math.round((S.pcap - prevP) / 30))); prevP = S.pcap; };
+}
+
+/* ---------------- 긴 설명은 접어 두기 ---------------- */
+const CLAMP_SEL = '.tab .muted.small, .tab .pdesc, .tab p.muted, .tab .hint, .cpanel .muted.small, .sys-head .muted';
+function clampTexts(root) {
+  root.querySelectorAll(CLAMP_SEL).forEach(el => {
+    if (el.dataset.cl || el.closest('button, .opt, .sit-opt, .pact, .fxc, label, .stat-row, .bar-row, .brow, .ms-row, h3, h4')) return;
+    el.dataset.cl = 1;
+    const len = el.textContent.trim().length; if (len < 70) return;
+    el.classList.add('txt-clamp'); el.title = '눌러서 펼치기';
+    el.addEventListener('click', () => el.classList.toggle('open'));
+  });
+}
+{
+  let pend = false;
+  const mo = new MutationObserver(() => { if (pend) return; pend = true; requestAnimationFrame(() => { pend = false; const pb = document.querySelector('.panel-body'); if (pb) clampTexts(pb); }); });
+  const pb = document.querySelector('.panel-body'); if (pb) mo.observe(pb, { childList: true, subtree: true });
+}
+
+/* ---------------- 정책: 분야 아트 배너 + 선택지에 효과 칩 ---------------- */
+const CAT_ART = { const: ['#3b2a64', '#7a4fc9', '🏛️', '📜'], tax: ['#5a4310', '#c99a2e', '💰', '🧾'], econ: ['#123a4a', '#2a8fb0', '🏭', '⚙️'], labor: ['#4a2e12', '#c4782a', '🦺', '🔧'],
+  welfare: ['#5a1d3b', '#d0628f', '🍼', '❤️'], house: ['#18402c', '#3fa06a', '🏠', '🏗️'], edu: ['#1b3460', '#4f86d9', '🏫', '📚'], defense: ['#2c3a1c', '#6f8f3a', '🪖', '🚀'],
+  diplo: ['#0f3b4f', '#2fa3c7', '🌏', '🤝'], justice: ['#3a1d1d', '#b4463f', '⚖️', '🔨'], civil: ['#38264a', '#9a6ad0', '👨‍👩‍👧', '💍'], env: ['#183e1d', '#4fb04f', '⚡', '🌱'], health: ['#103f3f', '#33b3a8', '🩺', '💊'] };
+function catBanner() {
+  const c = CATEGORIES.find(x => x.id === activeCat); if (!c) return '';
+  const A = CAT_ART[c.id] || ['#22303e', '#4a5a6a', c.icon, '✨'];
+  const list = allPolicies().filter(p => p.cat === c.id), changed = list.filter(p => !currentOption(p, S).cur).length;
+  return `<div class="cat-banner" style="--c1:${A[0]};--c2:${A[1]}"><span class="cb-art a1">${A[2]}</span><span class="cb-art a2">${A[3]}</span>
+    <div class="cb-t"><small>정책 분야</small><b>${c.icon} ${esc(c.name)}</b><span>제도 ${list.length}개 · 바꾼 것 ${changed}개</span></div>
+    <div class="cb-prog"><i style="width:${list.length ? Math.round(changed / list.length * 100) : 0}%"></i></div></div>`;
+}
+{
+  const _rp = renderPolicies;
+  renderPolicies = function () {
+    _rp();
+    const pl = $('policy-list'); if (!pl || !S) return;
+    if (!$('cat-banner-slot')) { const d = document.createElement('div'); d.id = 'cat-banner-slot'; pl.parentNode.insertBefore(d, pl); }
+    $('cat-banner-slot').innerHTML = catBanner();
+    pl.querySelectorAll('.opt[data-p][data-o]').forEach(b => {
+      if (b.querySelector('.ochips')) return;
+      const p = policyById(b.dataset.p, S), o = p && optionOf(p, b.dataset.o); if (!o || o.cur && b.classList.contains('current')) return;
+      const html = fxChips({ e: o.e || {}, f: o.f || {}, rel: o.rel || {} }, 4); if (!html) return;
+      const d = document.createElement('span'); d.className = 'ochips'; d.innerHTML = html; b.appendChild(d);
+    });
+  };
+}
+
+/* ---------------- 국정 지표: 원형 게이지 ---------------- */
+function gaugeVal(k, v) {
+  const m = STATS[k]; let p;
+  if (m.max === 100 && m.min === 0) p = v / 100;
+  else { const lo = { gdp: -2, unemp: 1, infl: 0, debt: 0, fiscal: -8, tfr: 0.5, gini: 0.25 }[k] ?? m.min, hi = { gdp: 5, unemp: 8, infl: 6, debt: 120, fiscal: 3, tfr: 2.1, gini: 0.45 }[k] ?? m.max; p = (v - lo) / (hi - lo); }
+  p = clamp(p, 0, 1);
+  const goodness = k === 'infl' ? 1 - Math.min(1, Math.abs(v - 2) / 3) : m.good > 0 ? p : 1 - p;
+  return { p, goodness };
+}
+{
+  const _rs = renderSide;
+  renderSide = function () {
+    _rs();
+    const el = $('stat-list'); if (!el || !S) return;
+    const prev = S.history.length > 1 ? S.history[S.history.length - 2] : S.history[0];
+    el.classList.add('gauges');
+    el.innerHTML = Object.entries(STATS).map(([k, m]) => {
+      const v = S.stats[k], d = v - prev.stats[k], { p, goodness } = gaugeVal(k, v);
+      const col = goodness >= 0.6 ? 'var(--good)' : goodness >= 0.35 ? 'var(--mid)' : 'var(--bad)';
+      const C = 2 * Math.PI * 22, show = Math.abs(d) >= Math.pow(10, -m.dec) / 2;
+      return `<div class="gz" title="${m.name} ${fmtStat(k, v)}"><svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="22" class="gz-bg"/><circle cx="28" cy="28" r="22" class="gz-fg" style="stroke:${col};stroke-dasharray:${(C * p).toFixed(1)} ${C.toFixed(1)}"/></svg>
+        <span class="gz-ic">${STAT_ICON[k]}</span><b>${fmtStat(k, v)}</b><small>${m.name}</small>${show ? `<em class="${deltaClass(k, d)}">${d > 0 ? '▲' : '▼'}${Math.abs(d).toFixed(m.dec)}</em>` : ''}</div>`;
+    }).join('');
+  };
+}
+
+/* ---------------- 시국 정책안: 글 대신 칩 ---------------- */
+if (typeof renderSitBoard === 'function') {
+  const _sb = renderSitBoard;
+  renderSitBoard = function () {
+    _sb();
+    const el = $('sit-board'); if (!el || !S) return;
+    const head = el.querySelector('.sit-head .muted'); if (head) head.textContent = '지금 상황에 맞춰 올라온 안건 · 결과는 운과 흐름에 따라 달라짐';
+    el.querySelectorAll('.sit-opt').forEach(b => {
+      const p = sitState(S).list.find(x => x.id === b.dataset.sit), c = p?.choices[+b.dataset.i]; if (!c) return;
+      const sm = b.querySelector('.muted.small'); if (sm) { sm.outerHTML = `<span class="ochips">${fxChips(c.fx || {}) || '<i class="fxc">변화 적음</i>'}</span>`; }
+    });
+  };
+}
+
+/* ---------------- 소리 켜고 끄기 버튼 (상단) ---------------- */
+(function () {
+  const hr = document.querySelector('.hud-right'); if (!hr || $('btn-sound')) return;
+  const b = document.createElement('button'); b.id = 'btn-sound'; b.className = 'btn ghost'; b.title = '효과음';
+  const set = () => { b.textContent = SFX.on ? '🔊' : '🔇'; };
+  set(); b.onclick = () => { SFX.toggle(); set(); };
+  hr.insertBefore(b, $('btn-settings'));
+})();
+
+// 패널 열 때 효과음
+{
+  const _st = showTab;
+  showTab = function (name, toggle) { const was = openPanelName; _st(name, toggle); if (openPanelName && openPanelName !== was) SFX.play('open'); };
 }
 
 </script>
