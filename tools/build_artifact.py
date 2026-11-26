@@ -21,7 +21,7 @@ out = f'''<title>대권 — 대한민국 대통령 시뮬레이션</title>
 <meta name="description" content="대한민국 대통령이 되어 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&family=Black+Han+Sans&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&family=Black+Han+Sans&family=Jua&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="{icon_uri}">
 <style>
 {css}
