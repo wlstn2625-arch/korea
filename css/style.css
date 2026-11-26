@@ -1615,3 +1615,72 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 #start .win-row i { font-style: normal; font-size: 18px; filter: grayscale(1) opacity(.35); } #start .win-row i.on { filter: none; animation: cbFloat 3s ease-in-out infinite; }
 #start .win-row small { width: 100%; opacity: .7; }
 @media (max-width: 520px) { .vc-grid { grid-template-columns: repeat(2, 1fr); } .vc-title { font-size: 34px !important; } .vc-trophy { font-size: 84px; } }
+
+/* =========================================================
+ *  엔딩 컷신
+ * ========================================================= */
+.cinema { position: fixed; inset: 0; z-index: 9700; background: #000; color: #fff; font-family: 'Jua', 'Noto Sans KR', sans-serif; overflow: hidden; animation: cnIn .6s ease both; }
+@keyframes cnIn { from { opacity: 0; } }
+.cinema.out { animation: cnOut .6s ease forwards; } @keyframes cnOut { to { opacity: 0; } }
+.cn-bar { position: absolute; left: 0; right: 0; height: 9vh; background: #000; z-index: 5; }
+.cn-bar.top { top: 0; } .cn-bar.bot { bottom: 0; }
+.cn-stage { position: absolute; inset: 9vh 0; overflow: hidden; display: grid; place-items: center; transition: filter 1s, transform 1.2s; }
+.cinema.final .cn-stage { filter: blur(6px) brightness(.45); transform: scale(1.06); }
+.cn-cap { position: absolute; left: 0; right: 0; bottom: 12vh; z-index: 6; text-align: center; font-size: clamp(18px, 3vw, 30px); text-shadow: 0 2px 8px #000, 0 0 2px #000; opacity: 0; transform: translateY(10px); transition: opacity .5s, transform .5s; padding: 0 20px; }
+.cn-cap.show { opacity: 1; transform: none; }
+.cn-title { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; opacity: 0; pointer-events: none; }
+.cinema.final .cn-title { animation: cnTitle 1.2s cubic-bezier(.2,1.2,.3,1) .2s forwards; }
+@keyframes cnTitle { from { opacity: 0; transform: scale(1.4); letter-spacing: .5em; } to { opacity: 1; transform: none; } }
+.cn-title small { font-size: 18px; color: #ffd86b; letter-spacing: .2em; }
+.cn-title b { font: clamp(48px, 9vw, 110px) 'Black Han Sans', sans-serif; background: linear-gradient(180deg, #fff6d6, #f0c968 50%, #b07a26); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 6px 0 #2a1704) drop-shadow(0 0 30px rgba(240,190,100,.5)); }
+.cn-title span { font-size: 18px; opacity: .85; }
+.cn-skip { position: absolute; right: 18px; bottom: calc(9vh + 12px); z-index: 8; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: 6px 14px; font: 13px 'Jua', sans-serif; cursor: pointer; }
+/* 세계 정복 */
+.cn-map { width: 100%; height: 100%; background: radial-gradient(circle at 50% 40%, #12304d, #050b14); }
+.cn-map .sea { fill: #0b1e33; } .cn-map .land { stroke: #050b14; stroke-width: .4; } .cn-map .prov { display: none; }
+.cn-count { position: absolute; right: 4vw; top: 4vh; text-align: right; text-shadow: 0 2px 8px #000; }
+.cn-count b { font: clamp(40px, 7vw, 80px) 'Black Han Sans', sans-serif; color: #7fb2ff; } .cn-count small { display: block; font-size: 16px; opacity: .8; }
+/* 세계 패권 */
+.hg-race { position: relative; width: min(760px, 90vw); height: 432px; }
+.hg-row { position: absolute; left: 0; right: 0; height: 46px; display: flex; align-items: center; gap: 10px; transition: top .35s; }
+.hg-f { font-size: 30px; width: 40px; } .hg-n { width: 120px; font-size: 16px; }
+.hg-bar { flex: 1; height: 30px; background: rgba(255,255,255,.06); border-radius: 6px; overflow: hidden; }
+.hg-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6b7a90, #a9b6c8); border-radius: 6px; }
+.hg-row.me .hg-bar i { background: linear-gradient(90deg, #2f6fe0, #7fb2ff); box-shadow: 0 0 20px #4c8dff; }
+.hg-row.me .hg-n { color: #7fb2ff; font-size: 18px; }
+.hg-r { width: 36px; font: 22px 'Black Han Sans', sans-serif; text-align: center; }
+.hg-crown { position: absolute; left: 50%; top: 18%; font-size: 120px; transform: translateX(-50%); animation: crownDrop .8s cubic-bezier(.3,1.6,.5,1) both; filter: drop-shadow(0 0 30px #ffd86b); }
+@keyframes crownDrop { from { transform: translate(-50%, -300px) rotate(-30deg); } }
+/* 복지 낙원 */
+.ut-sky { position: relative; width: 100%; height: 100%; background: linear-gradient(180deg, #0b1236, #24346b); animation: dawn 7s ease forwards; overflow: hidden; }
+@keyframes dawn { to { background: linear-gradient(180deg, #ffb36b, #ffe2a6); } }
+.ut-sun { position: absolute; left: 50%; bottom: -120px; width: 220px; height: 220px; margin-left: -110px; border-radius: 50%; background: radial-gradient(circle, #fff6c2, #ffb703 60%, transparent 70%); animation: sunUp 7s ease forwards; box-shadow: 0 0 120px #ffb703; }
+@keyframes sunUp { to { bottom: 38%; } }
+.ut-city { position: absolute; left: 0; right: 0; bottom: 0; height: 40%; display: flex; align-items: flex-end; gap: 4px; }
+.ut-city i { flex: 1; background: #141a33; background-image: radial-gradient(#ffd86b 1.2px, transparent 1.6px); background-size: 9px 11px; animation: cityDay 7s ease forwards; }
+@keyframes cityDay { to { background-color: #6a3f5a; } }
+.ut-stats { position: absolute; left: 0; right: 0; top: 10%; display: flex; justify-content: center; gap: 3vw; }
+.ut-stats div { display: flex; flex-direction: column; align-items: center; opacity: 0; animation: statPop .6s cubic-bezier(.2,1.5,.4,1) forwards; background: rgba(0,0,0,.35); padding: 10px 16px; border-radius: 14px; }
+.ut-stats span { font-size: 40px; } .ut-stats b { font: 28px 'Black Han Sans', sans-serif; } .ut-stats small { font-size: 13px; opacity: .8; }
+@keyframes statPop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+/* 기술 특이점 */
+.tc-sky { position: relative; width: 100%; height: 100%; background: radial-gradient(circle at 50% 100%, #1b2a55, #02040c 70%); overflow: hidden; }
+.tc-sky > i { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; animation: tsBlink 1.4s steps(2) infinite; }
+.tc-pad { position: absolute; left: 50%; bottom: 0; width: 160px; height: 40px; margin-left: -80px; background: linear-gradient(180deg, #555, #222); clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%); }
+.tc-rocket { position: absolute; left: 50%; bottom: 36px; font-size: 110px; transform: translateX(-50%) rotate(-45deg); transform-origin: 50% 50%; }
+.tc-sky.launch .tc-rocket { animation: launch 3.2s cubic-bezier(.5,0,.8,.4) forwards, rumble .08s linear 10; }
+@keyframes launch { to { bottom: 120%; } }
+@keyframes rumble { 50% { margin-left: 3px; } }
+.tc-smoke { position: absolute; left: 50%; bottom: 0; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: radial-gradient(circle, #fff, #ffb36b 40%, transparent 70%); opacity: 0; }
+.tc-sky.launch .tc-smoke { animation: smokeBig 3s ease-out forwards; }
+@keyframes smokeBig { 10% { opacity: 1; } to { opacity: 0; width: 900px; height: 300px; margin-left: -450px; bottom: -100px; } }
+.tc-count { position: absolute; inset: 0; display: grid; place-items: center; font: 160px 'Black Han Sans', sans-serif; color: #ffd86b; text-shadow: 0 0 40px #ff9f1c; pointer-events: none; }
+.tc-count.pop { animation: countPop .7s ease-out; } @keyframes countPop { from { transform: scale(2); opacity: 0; } 30% { opacity: 1; } to { transform: scale(.8); opacity: 0; } }
+/* 50년 대장정 */
+.lg-wrap { position: relative; width: min(820px, 92vw); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.lg-year { font: clamp(60px, 12vw, 130px) 'Black Han Sans', sans-serif; color: #ffd86b; text-shadow: 0 0 30px rgba(255,190,90,.6); line-height: 1; }
+.lg-chart { width: 100%; height: auto; } .lg-chart polyline { fill: none; stroke: #7fb2ff; stroke-width: 3; stroke-linejoin: round; stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: draw 6s ease forwards; filter: drop-shadow(0 0 6px #4c8dff); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.lg-pres { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; font-size: 16px; }
+.lg-pres div { opacity: 0; animation: statPop .5s ease forwards; display: flex; align-items: center; gap: 6px; }
+.cinema.rec .cn-skip { display: none; }
