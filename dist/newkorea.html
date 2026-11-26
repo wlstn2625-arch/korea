@@ -12906,9 +12906,6 @@ const VICTORIES = [
   { id: 'hegemon', icon: '👑', name: '세계 패권', title: '팍스 코리아나', desc: '국력 세계 1위를 8분기(2년) 연속 지킵니다.',
     progress: s => { const r = rankNow(s), st = s.vic?.streak?.hegemon || 0; return { p: r === 1 ? Math.min(1, st / 8) : Math.max(0, (20 - r) / 19) * 0.5, text: r === 1 ? `세계 1위 ${st}/8분기 연속` : `지금 국력 ${r}위 → 1위가 되어야 함` }; },
     done: s => (s.vic?.streak?.hegemon || 0) >= 8 },
-  { id: 'unify', icon: '🕊️', name: '통일 강국', title: '통일 대한민국', desc: '북한과 통일하고, 국민 행복 60 · 지지율 55%를 넘깁니다.',
-    progress: s => { const u = !!s.annexed?.nk, h = s.stats.happiness, a = s.approval; return { p: (u ? 0.6 : 0) + Math.min(0.2, h / 60 * 0.2) + Math.min(0.2, a / 55 * 0.2), text: `${u ? '✅ 통일' : '❌ 통일 전'} · 행복 ${h.toFixed(0)}/60 · 지지율 ${a.toFixed(0)}/55%` }; },
-    done: s => !!s.annexed?.nk && s.stats.happiness >= 60 && s.approval >= 55 },
   { id: 'utopia', icon: '🌈', name: '복지 낙원', title: '모두가 행복한 나라', desc: '행복 75 · 출산율 1.3 · 지니 0.28 이하 · 채무 60% 이하를 4분기 연속 유지합니다.',
     progress: s => { const st = s.stats, ok = [st.happiness >= 75, st.tfr >= 1.3, st.gini <= 0.28, st.debt <= 60], k = s.vic?.streak?.utopia || 0;
       return { p: ok.filter(Boolean).length / 4 * 0.6 + Math.min(1, k / 4) * 0.4, text: `행복 ${st.happiness.toFixed(0)}/75 ${ok[0] ? '✅' : ''} · 출산 ${st.tfr.toFixed(2)}/1.3 ${ok[1] ? '✅' : ''} · 지니 ${st.gini.toFixed(3)}/0.28 ${ok[2] ? '✅' : ''} · 채무 ${st.debt.toFixed(0)}/60% ${ok[3] ? '✅' : ''} · 유지 ${k}/4` }; },
