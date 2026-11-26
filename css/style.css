@@ -1581,3 +1581,37 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 #start .diff-desc { margin-top: 8px; padding: 8px 10px; border-radius: 3px; background: rgba(232,196,110,.08); border-left: 3px solid var(--tg); font-size: 12.5px; color: rgba(233,226,207,.85); letter-spacing: 0; font-weight: 500; line-height: 1.45; }
 #start .diff-desc b { color: #fff0c8; }
 @media (max-width: 420px) { #start .diff-pick .party-opt b { font-size: 11px !important; } #start .diff-pick .d-ic { font-size: 22px; } }
+
+/* ---------- 엔딩 목표·엔딩 연출 ---------- */
+.vic-list { display: flex; flex-direction: column; gap: 8px; }
+.vic-row { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 6px; background: rgba(0,0,0,.18); }
+.vic-row.won { background: linear-gradient(90deg, rgba(255,216,107,.18), rgba(0,0,0,.1)); box-shadow: inset 0 0 0 1px rgba(255,216,107,.5); }
+.vic-ic { font-size: 28px; width: 36px; text-align: center; }
+.vic-b { flex: 1; min-width: 0; }
+.vic-t { display: flex; justify-content: space-between; align-items: baseline; }
+.vic-t b { font-family: 'Jua', 'Noto Sans KR', sans-serif; font-weight: 400; font-size: 15px; }
+.vic-t em { font-style: normal; font-size: 12px; color: #ffd86b; }
+.vic-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; margin: 3px 0; }
+.vic-bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffb703, #ffd86b, #7ee37a); border-radius: 99px; transition: width .8s; }
+.vic-row small { font-size: 11px; color: var(--muted); display: block; }
+#modal.victory-mode .modal-card { max-width: 720px; }
+.victory { position: relative; overflow: hidden; border-radius: 12px; padding: 34px 22px 22px; text-align: center; color: #fff; font-family: 'Jua', 'Noto Sans KR', sans-serif;
+  background: radial-gradient(circle at 50% 30%, #3a2a6a, #120a26 75%); min-height: 520px; }
+.vc-rays { position: absolute; left: 50%; top: 120px; width: 900px; height: 900px; margin: -450px 0 0 -450px; background: repeating-conic-gradient(rgba(255,216,107,.13) 0 10deg, transparent 10deg 20deg); animation: spinSlow 30s linear infinite; pointer-events: none; }
+.vc-confetti i { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; animation: confetti linear infinite; pointer-events: none; }
+@keyframes confetti { to { transform: translateY(640px) rotate(720deg); } }
+.vc-trophy { position: relative; font-size: 110px; filter: drop-shadow(0 0 30px rgba(255,216,107,.8)); animation: trophyIn .9s cubic-bezier(.2,1.6,.4,1) both, cbFloat 3s ease-in-out 1s infinite; }
+@keyframes trophyIn { from { transform: scale(0) rotate(-40deg); } }
+.vc-kind { position: relative; display: inline-block; margin-top: 6px; padding: 4px 14px; border-radius: 999px; background: rgba(255,216,107,.2); border: 1px solid #ffd86b; color: #ffd86b; font-size: 15px; }
+.vc-title { position: relative; font: 46px 'Black Han Sans', sans-serif !important; margin: 8px 0 6px; padding: 0 !important; background: linear-gradient(180deg, #fff6d6, #f0c968 50%, #b07a26); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #2a1704); }
+.vc-desc { position: relative; font-size: 16px; opacity: .92; line-height: 1.5; }
+.vc-desc b { color: #ffd86b; font-weight: 400; }
+.vc-grid { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+.vc-grid div { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 8px; }
+.vc-grid small { display: block; font-size: 11px; opacity: .7; } .vc-grid b { font: 18px 'Black Han Sans', sans-serif; font-weight: 400; }
+.vc-grade { color: #ffd86b; font-size: 26px !important; }
+.vc-btns { position: relative; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+#start .win-row { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: rgba(233,226,207,.8); letter-spacing: 0; }
+#start .win-row i { font-style: normal; font-size: 18px; filter: grayscale(1) opacity(.35); } #start .win-row i.on { filter: none; animation: cbFloat 3s ease-in-out infinite; }
+#start .win-row small { width: 100%; opacity: .7; }
+@media (max-width: 520px) { .vc-grid { grid-template-columns: repeat(2, 1fr); } .vc-title { font-size: 34px !important; } .vc-trophy { font-size: 84px; } }

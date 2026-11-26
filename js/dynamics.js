@@ -154,7 +154,7 @@ function fxText(fx) {
 
 const inWar = s => !!(s.war && s.war.theater);
 const terrCount = s => Object.keys(s.terr || {}).length;
-const rankOf = s => { try { return powerRank(s); } catch { return 20; } };
+const rankOf = s => { try { const r = powerRank(s); return (typeof r === 'number' ? r : r?.rank) ?? 20; } catch { return 20; } };
 
 // 시국 정책 템플릿: cond(조건), score(지금 얼마나 절실한가), make(구체적 내용·수치는 매번 다름)
 const SIT_POLICIES = [
