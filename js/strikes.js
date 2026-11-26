@@ -91,3 +91,45 @@ function mergeArmy(s, aid) {
 }
 // 군단의 사단 수 (화면 표시)
 function armyDivs(s, a) { const f = sideForces(s, 'kr'); const live = s.war.theater.armies.filter(x => x.str > 0).reduce((x, y) => x + y.share, 0) || 1; return Math.max(1, Math.round(f.rawDivs * 0.65 * a.share / live)); }
+
+/* ---------------- ☢️ 핵 공격 (핵보유국만) ----------------
+ * 탄두는 처음 핵보유국이 될 때 3발, 이후 4분기마다 1발 생산(최대 6발)
+ * 목표 지역: 적군 괴멸, 60일간 방어 사실상 소멸, 적 병력·조직력·장비 폭락
+ * 대가: 주요국 관계 폭락, 위협도 +35, 지지율 -6, 세계 긴장 최고, 평가 감점
+ *       적(또는 적 동맹)이 핵보유국이면 보복 핵 위험 — 미사일 방어 기술이 막아 줌
+ */
+function nukeStock(s) { if (!hasNukes(s, 'kr')) return 0; if (s.nukeStock == null) s.nukeStock = 3; return s.nukeStock; }
+function nukeRetaliationChance(s) {
+  const w = s.war; if (!w) return 0;
+  const enemyNuke = hasNukes(s, w.k) || w.enemyAllies.some(c => cinfo(c)?.nukes); if (!enemyNuke) return 0;
+  const done = id => typeof techDone === 'function' && techDone(s, id);
+  return clamp(0.65 - (done('m5') ? 0.25 : 0) - (done('m1') ? 0.08 : 0) - (done('m7') ? 0.1 : 0) - (done('n5') ? 0.07 : 0), 0.1, 0.65);
+}
+function playerNuke(s, pid) {
+  const w = s.war, T = w?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  if (!hasNukes(s, 'kr')) return { ok: false, msg: '핵무기가 없습니다. 독자 핵무장 정책이나 무기 개발이 필요합니다.' };
+  if (nukeStock(s) < 1) return { ok: false, msg: '남은 핵탄두가 없습니다. 4분기마다 1발씩 생산됩니다.' };
+  const p = T.provs.find(x => x.id === pid); if (!p || p.owner === 'kr') return { ok: false, msg: '적 지역을 고르세요.' };
+  s.nukeStock--; (s.cnt = s.cnt || {}).nukeUsed = (s.cnt.nukeUsed || 0) + 1;
+  // 전장 효과
+  p.nuked = true; (T.strikes = T.strikes || {})[pid] = { def: 0.1, until: T.days + 60, icon: '☢️' };
+  T.en.mp = clamp(T.en.mp - 15 - p.vp, 20, 100); T.en.org = clamp(T.en.org - 40, 5, 100); T.en.equip = clamp(T.en.equip - 0.15, 0.15, 1); T.en.cas += 150000 + p.vp * 60000;
+  // 맞닿은 아군 군단이 있으면 곧바로 진입 가능할 만큼 무너짐
+  for (const key of Object.keys(T.edges)) if (key.endsWith('>' + pid)) T.edges[key].prog = Math.max(T.edges[key].prog, 70);
+  // 국제 사회의 대가
+  for (const k of ['us', 'cn', 'jp', 'eu', 'ru']) if (k !== w.k && cinfo(k)) relBump(s, k, -25, -18);
+  if (typeof addThreat === 'function') addThreat(s, 35, '핵무기 사용');
+  if (s.world) s.world.tension = 100;
+  s.approval = clamp(s.approval - 6, 0, 100); s.scoreBonus = (s.scoreBonus || 0) - 10; s.factions.lib = clamp(s.factions.lib - 12, 0, 100);
+  warFx(T, { type: 'nuke', c: p.c, name: p.n });
+  warLog(s, `☢️ 대한민국이 ${p.n}에 핵무기를 사용했습니다.`, 'bad');
+  addLog(s, 'bad', `☢️ ${cname(w.k)} ${p.n}에 핵 공격. 세계가 경악했습니다.`);
+  if (typeof worldNews === 'function') worldNews(s, `☢️ 속보: 대한민국, ${cname(w.k)} ${p.n}에 핵 공격 — 국제 사회 경악`, 'bad');
+  // 보복
+  const rc = nukeRetaliationChance(s);
+  let msg = `☢️ ${p.n}에 핵 공격. 적군이 괴멸했습니다.`;
+  if (rc && Math.random() < rc) { nuclearStrike(s); msg += ` 그러나 ${cname(w.k)} 진영이 보복 핵 공격을 가했습니다!`; }
+  else if (rc) msg += ` 적의 보복은 없었습니다(보복 위험 ${Math.round(rc * 100)}%).`;
+  return { ok: true, msg };
+}
+HOOKS.postTurn.push(s => { if (hasNukes(s, 'kr')) { nukeStock(s); s.nukeTimer = (s.nukeTimer || 0) + 1; if (s.nukeTimer >= 4) { s.nukeTimer = 0; s.nukeStock = Math.min(6, s.nukeStock + 1); } } });

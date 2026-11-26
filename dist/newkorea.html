@@ -1111,6 +1111,25 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .srv-box { margin: 0 0 10px; padding: 9px 12px; border-radius: 11px; background: rgba(90, 140, 230, .12); border: 1px solid rgba(90, 140, 230, .45); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 @media (max-width: 760px) { .cloud-chip { display: none; } }
 
+/* 핵 공격 */
+.ev-opt.nuke-opt { border-color: #ffd22e; background: linear-gradient(90deg, rgba(255, 210, 46, .14), var(--card2)); } .ev-opt.nuke-opt small { color: #ffd27a; margin-left: 6px; }
+.bad-box { border-color: rgba(224, 82, 82, .5) !important; background: rgba(224, 82, 82, .07) !important; }
+.nuke-flash { position: absolute; inset: 0; z-index: 35; pointer-events: none; background: radial-gradient(circle at 50% 45%, #fff 0%, #fff6c8 25%, rgba(255, 180, 60, .6) 55%, transparent 80%); animation: nukeFlash 2.6s ease-out forwards; }
+@keyframes nukeFlash { 0% { opacity: 0; } 6% { opacity: 1; } 30% { opacity: .85; } 100% { opacity: 0; } }
+.geo .fxnuke { transform: scale(var(--u)); }
+.geo .fxnuke circle { fill: none; transform-box: fill-box; transform-origin: center; }
+.geo .fxnuke .nk-r1 { stroke: #fff6c8; stroke-width: 4px; animation: nkRing 2.2s ease-out forwards; }
+.geo .fxnuke .nk-r2 { stroke: #ffb02e; stroke-width: 3px; animation: nkRing 2.6s .3s ease-out forwards; opacity: 0; }
+.geo .fxnuke .nk-r3 { stroke: #ff5a2a; stroke-width: 2px; animation: nkRing 3s .6s ease-out forwards; opacity: 0; }
+.geo .fxnuke .nk-core { fill: #fff; animation: nkCore 3.6s ease-out forwards; }
+.geo .fxnuke .nk-mush { font-size: 40px; text-anchor: middle; animation: nkMush 4s ease-out forwards; transform-box: fill-box; transform-origin: center bottom; }
+@keyframes nkRing { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(6); opacity: 0; } }
+@keyframes nkCore { 0% { transform: scale(.5); fill: #fff; } 40% { transform: scale(2.2); fill: #ffb02e; } 100% { transform: scale(1.6); fill: #5a2a10; opacity: .2; } }
+@keyframes nkMush { 0% { transform: translateY(10px) scale(.2); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-22px) scale(1.6); opacity: .15; } }
+.stage.shake-long { animation: quake .45s ease-in-out 4; }
+.nuke-ban { background: linear-gradient(90deg, rgba(60, 40, 5, .96), rgba(150, 100, 10, .96)) !important; border-color: #ffd22e !important; }
+@media (prefers-reduced-motion: reduce) { .nuke-flash, .geo .fxnuke * { animation: none !important; } }
+
 </style>
 <!-- 시작 화면 -->
   <section id="start" class="screen">
@@ -6493,6 +6512,48 @@ function mergeArmy(s, aid) {
 // 군단의 사단 수 (화면 표시)
 function armyDivs(s, a) { const f = sideForces(s, 'kr'); const live = s.war.theater.armies.filter(x => x.str > 0).reduce((x, y) => x + y.share, 0) || 1; return Math.max(1, Math.round(f.rawDivs * 0.65 * a.share / live)); }
 
+/* ---------------- ☢️ 핵 공격 (핵보유국만) ----------------
+ * 탄두는 처음 핵보유국이 될 때 3발, 이후 4분기마다 1발 생산(최대 6발)
+ * 목표 지역: 적군 괴멸, 60일간 방어 사실상 소멸, 적 병력·조직력·장비 폭락
+ * 대가: 주요국 관계 폭락, 위협도 +35, 지지율 -6, 세계 긴장 최고, 평가 감점
+ *       적(또는 적 동맹)이 핵보유국이면 보복 핵 위험 — 미사일 방어 기술이 막아 줌
+ */
+function nukeStock(s) { if (!hasNukes(s, 'kr')) return 0; if (s.nukeStock == null) s.nukeStock = 3; return s.nukeStock; }
+function nukeRetaliationChance(s) {
+  const w = s.war; if (!w) return 0;
+  const enemyNuke = hasNukes(s, w.k) || w.enemyAllies.some(c => cinfo(c)?.nukes); if (!enemyNuke) return 0;
+  const done = id => typeof techDone === 'function' && techDone(s, id);
+  return clamp(0.65 - (done('m5') ? 0.25 : 0) - (done('m1') ? 0.08 : 0) - (done('m7') ? 0.1 : 0) - (done('n5') ? 0.07 : 0), 0.1, 0.65);
+}
+function playerNuke(s, pid) {
+  const w = s.war, T = w?.theater; if (!T) return { ok: false, msg: '전쟁 중이 아닙니다.' };
+  if (!hasNukes(s, 'kr')) return { ok: false, msg: '핵무기가 없습니다. 독자 핵무장 정책이나 무기 개발이 필요합니다.' };
+  if (nukeStock(s) < 1) return { ok: false, msg: '남은 핵탄두가 없습니다. 4분기마다 1발씩 생산됩니다.' };
+  const p = T.provs.find(x => x.id === pid); if (!p || p.owner === 'kr') return { ok: false, msg: '적 지역을 고르세요.' };
+  s.nukeStock--; (s.cnt = s.cnt || {}).nukeUsed = (s.cnt.nukeUsed || 0) + 1;
+  // 전장 효과
+  p.nuked = true; (T.strikes = T.strikes || {})[pid] = { def: 0.1, until: T.days + 60, icon: '☢️' };
+  T.en.mp = clamp(T.en.mp - 15 - p.vp, 20, 100); T.en.org = clamp(T.en.org - 40, 5, 100); T.en.equip = clamp(T.en.equip - 0.15, 0.15, 1); T.en.cas += 150000 + p.vp * 60000;
+  // 맞닿은 아군 군단이 있으면 곧바로 진입 가능할 만큼 무너짐
+  for (const key of Object.keys(T.edges)) if (key.endsWith('>' + pid)) T.edges[key].prog = Math.max(T.edges[key].prog, 70);
+  // 국제 사회의 대가
+  for (const k of ['us', 'cn', 'jp', 'eu', 'ru']) if (k !== w.k && cinfo(k)) relBump(s, k, -25, -18);
+  if (typeof addThreat === 'function') addThreat(s, 35, '핵무기 사용');
+  if (s.world) s.world.tension = 100;
+  s.approval = clamp(s.approval - 6, 0, 100); s.scoreBonus = (s.scoreBonus || 0) - 10; s.factions.lib = clamp(s.factions.lib - 12, 0, 100);
+  warFx(T, { type: 'nuke', c: p.c, name: p.n });
+  warLog(s, `☢️ 대한민국이 ${p.n}에 핵무기를 사용했습니다.`, 'bad');
+  addLog(s, 'bad', `☢️ ${cname(w.k)} ${p.n}에 핵 공격. 세계가 경악했습니다.`);
+  if (typeof worldNews === 'function') worldNews(s, `☢️ 속보: 대한민국, ${cname(w.k)} ${p.n}에 핵 공격 — 국제 사회 경악`, 'bad');
+  // 보복
+  const rc = nukeRetaliationChance(s);
+  let msg = `☢️ ${p.n}에 핵 공격. 적군이 괴멸했습니다.`;
+  if (rc && Math.random() < rc) { nuclearStrike(s); msg += ` 그러나 ${cname(w.k)} 진영이 보복 핵 공격을 가했습니다!`; }
+  else if (rc) msg += ` 적의 보복은 없었습니다(보복 위험 ${Math.round(rc * 100)}%).`;
+  return { ok: true, msg };
+}
+HOOKS.postTurn.push(s => { if (hasNukes(s, 'kr')) { nukeStock(s); s.nukeTimer = (s.nukeTimer || 0) + 1; if (s.nukeTimer >= 4) { s.nukeTimer = 0; s.nukeStock = Math.min(6, s.nukeStock + 1); } } });
+
 </script>
 <script>
 /* js/arsenal.js */
@@ -10491,19 +10552,44 @@ function openStrikeMenu(pid) {
     <div class="ev-banner ev-security"><span class="ev-art">🚀</span><span class="ev-kind">미사일 정밀 타격</span><span class="ev-date">남은 미사일 ${missileStock(S)}/${T.missileCap}발</span></div>
     <h2>${esc(p.n)} — 무엇을 칠까요?</h2>
     <p class="ev-desc">발사 비용 ${won(8)}. 적 방공에 요격될 수 있습니다(미사일 기술·적 공군 피해가 클수록 잘 뚫림). 맞은 지역은 한동안 방어가 약해져 군단이 공략하기 쉬워집니다.</p>
-    <div class="ev-opts">${opts.map(o => `<button class="ev-opt" data-st="${o.id}" ${missileStock(S) < 1 || S.pcap < 8 ? 'disabled' : ''}><b>${o.icon} ${o.name}</b><span>${esc(o.desc)}</span></button>`).join('')}</div>
+    <div class="ev-opts">${opts.map(o => `<button class="ev-opt" data-st="${o.id}" ${missileStock(S) < 1 || S.pcap < 8 ? 'disabled' : ''}><b>${o.icon} ${o.name}</b><span>${esc(o.desc)}</span></button>`).join('')}
+      ${hasNukes(S, 'kr') ? `<button class="ev-opt nuke-opt" id="st-nuke" ${nukeStock(S) < 1 ? 'disabled' : ''}><b>☢️ 핵 공격 <small>남은 탄두 ${nukeStock(S)}발</small></b><span>이 지역의 적군을 괴멸시킵니다. 대신 세계가 등을 돌립니다${nukeRetaliationChance(S) ? ` · 보복 핵 위험 ${Math.round(nukeRetaliationChance(S) * 100)}%` : ''}.</span></button>` : ''}</div>
     <div class="modal-actions"><button class="btn ghost" id="st-cancel">취소</button></div></div>`);
   document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { const r = missileStrike(S, pid, b.dataset.st); closeModal(); toast(esc(r.msg || '')); saveGame(S); consumeWarFx(); updateMap(); if (openPanelName === 'world') renderWarPanel(); if (missileStock(S) < 1) strikeMode = false; });
   $('st-cancel').onclick = () => closeModal();
+  const nb = $('st-nuke'); if (nb) nb.onclick = () => openNukeConfirm(pid);
+}
+function openNukeConfirm(pid) {
+  const T = S.war.theater, p = T.provs.find(x => x.id === pid), rc = nukeRetaliationChance(S);
+  openModal(`<div class="event nuke">
+    <div class="ev-banner ev-nuke"><span class="ev-art">☢️</span><span class="ev-kind">핵무기 사용 승인</span><span class="ev-date">남은 탄두 ${nukeStock(S)}발</span></div>
+    <h2>${esc(p.n)}에 핵 공격을 승인하시겠습니까?</h2>
+    <div class="box"><h4>전장 효과</h4><ul><li>${esc(p.n)}의 적군 괴멸, 60일간 방어 사실상 소멸 → 군단이 바로 밀고 들어갈 수 있음</li><li>적 병력·조직력·장비 폭락, 항복이 빨라짐</li></ul></div>
+    <div class="box bad-box"><h4>대가</h4><ul><li>미국·중국·일본·EU·러시아 관계 폭락, 위협도 +35 (반한 연합·유엔 결의·연합군 선전포고 위험)</li><li>지지율 -6, 진보층 지지 폭락, 임기 평가 감점</li>${rc ? `<li><b>적의 보복 핵 공격 위험 ${Math.round(rc * 100)}%</b> (킬체인·미사일 방어 기술이 낮춰 줌)</li>` : '<li>상대는 핵이 없어 보복 핵 위험은 없음</li>'}</ul></div>
+    <div class="modal-actions"><button class="btn" id="nk-no">취소</button><button class="btn danger" id="nk-yes">☢️ 발사 (두 번 눌러 확정)</button></div></div>`, { closable: false });
+  $('nk-no').onclick = () => closeModal();
+  $('nk-yes').onclick = e => {
+    const b = e.currentTarget; if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = '☢️ 정말 발사합니다 — 한 번 더'; return; }
+    const r = playerNuke(S, pid); closeModal(); strikeMode = false; saveGame(S); consumeWarFx(); toast(esc(r.msg || ''), 6000); updateMap(); renderAll();
+  };
+}
+// 핵 폭발 연출: 섬광 → 충격파 → 버섯구름, 긴 화면 진동
+function fxNuke(c, name) {
+  const st = document.querySelector('.stage'); if (!st) return;
+  const fl = document.createElement('div'); fl.className = 'nuke-flash'; st.appendChild(fl); setTimeout(() => fl.remove(), 2600);
+  if (!reduceMotion()) { st.classList.remove('shake-long'); void st.offsetWidth; st.classList.add('shake-long'); }
+  fxAdd(at(c, `<circle class="nk-r1" r="20"></circle><circle class="nk-r2" r="20"></circle><circle class="nk-r3" r="20"></circle><circle class="nk-core" r="9"></circle><text class="nk-mush" y="-6">🍄</text>`, 'fxnuke'), 4200);
+  const b = document.createElement('div'); b.className = 'cap-banner lose major nuke-ban'; b.innerHTML = `<span class="cb-ic">☢️</span><div><b>${esc(name)} 핵 공격</b><small>세계가 숨을 멈췄습니다</small></div>`; st.appendChild(b); setTimeout(() => b.remove(), 3400);
 }
 
 // 연출: 우리 미사일(명중/요격), 적 미사일(요격 장면 포함)
 const _consumeWarFx = consumeWarFx;
 consumeWarFx = function () {
   const T = S?.war?.theater; if (!T?.fx?.length) return;
-  const mine = T.fx.filter(e => e.type === 'strike' || e.type === 'enemyStrike'); T.fx = T.fx.filter(e => !mine.includes(e));
+  const mine = T.fx.filter(e => e.type === 'strike' || e.type === 'enemyStrike' || e.type === 'nuke'); T.fx = T.fx.filter(e => !mine.includes(e));
   mine.slice(-3).forEach((ev, i) => setTimeout(() => {
-    if (ev.type === 'strike') {
+    if (ev.type === 'nuke') { const from = KOREA_LAUNCH(); fxStrike(from, ev.c, 'missile'); setTimeout(() => fxNuke(ev.c, ev.name), 1050); }
+    else if (ev.type === 'strike') {
       const from = KOREA_LAUNCH();
       if (ev.ok) fxStrike(from, ev.c, 'missile');
       else { fxStrike(from, [from[0] + (ev.c[0] - from[0]) * 0.7, from[1] + (ev.c[1] - from[1]) * 0.7], 'missile'); }
