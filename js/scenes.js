@@ -100,7 +100,7 @@ function sceneResult(r) {
     sc.querySelector('.sc-talk').appendChild(btn); btn.focus();
   });
 }
-{ const _om = openModal; openModal = function (...a) { $('modal').classList.remove('scene-mode', 'deck-mode'); return _om.apply(this, a); }; }
+{ const _om = openModal; openModal = function (...a) { $('modal').classList.remove('scene-mode', 'deck-mode', 'hand-mode'); return _om.apply(this, a); }; }
 
 // 정치·사회 사건 → 집무실 대화
 openDomEventCard = function (id) {

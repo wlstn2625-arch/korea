@@ -1514,6 +1514,74 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .rm-tip { position: absolute; transform: translateX(-50%); background: rgba(0,0,0,.7); color: #fff; font: 12px 'Jua', sans-serif; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .chip-float { position: fixed; z-index: 9500; transform: translate(-50%, -50%); pointer-events: none; animation: floatUp 1.8s ease-out forwards; }
 
+/* =========================================================
+ *  B 정책 카드 덱
+ * ========================================================= */
+#game .policy-list.pol-deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.pol-card { position: relative; aspect-ratio: 5 / 7; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; padding: 0 8px 10px; overflow: hidden; cursor: pointer;
+  border-radius: 14px; border: 3px solid #1a1206; font-family: 'Jua', 'Noto Sans KR', sans-serif; color: #2a1a04; text-align: center;
+  background: linear-gradient(180deg, transparent 0 52%, #fbf0d4 52%), radial-gradient(120% 90% at 50% 20%, var(--c2), var(--c1));
+  box-shadow: 0 4px 0 #1a1206, 0 10px 18px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s; animation: cardIn .35s both; }
+.pol-card:hover { transform: translateY(-6px) rotate(-1.5deg); box-shadow: 0 8px 0 #1a1206, 0 0 22px rgba(255,216,107,.45); }
+.pol-card.changed { border-color: #2f8f4f; box-shadow: 0 4px 0 #1d5c32, 0 10px 18px rgba(0,0,0,.35); }
+.pol-card.locked { filter: grayscale(.85) brightness(.75); }
+.pc-art { position: absolute; top: 9%; left: 0; right: 0; font-size: clamp(42px, 5vw, 56px); filter: drop-shadow(0 6px 8px rgba(0,0,0,.4)); transition: transform .2s; }
+.pol-card:hover .pc-art { transform: scale(1.12) rotate(-6deg); }
+.pc-cost { position: absolute; top: 6px; left: 6px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 15px 'Black Han Sans', sans-serif; color: #3a2400;
+  background: radial-gradient(circle at 35% 30%, #fff1b8, #e0a21b 70%); border: 2px solid #1a1206; z-index: 1; }
+.pc-st { position: absolute; top: 8px; right: 6px; font-style: normal; font-size: 10.5px; padding: 2px 6px; border-radius: 999px; background: #1a1206; color: #fff; z-index: 1; }
+.pc-st.chg { background: #2f8f4f; } .pc-st.bill { background: #2f6fe0; } .pc-st.pend { background: #c77d00; }
+.pc-name { font-size: 15px; line-height: 1.2; font-weight: 400; }
+.pc-cur { font-size: 11px; color: #6b5a3a; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Noto Sans KR', sans-serif; }
+.pc-n { font-size: 10.5px; color: #8a6a2a; }
+/* 손패 장면 */
+#modal.hand-mode .modal-card { max-width: 1040px; }
+.hand-scene { position: relative; min-height: min(700px, 90vh); padding: 14px 14px 12px; border-radius: 10px; overflow: hidden; color: #fff; font-family: 'Jua', 'Noto Sans KR', sans-serif;
+  background: radial-gradient(ellipse at 50% 0%, #2d6a4f, #0b2418 72%); display: flex; flex-direction: column; gap: 8px; }
+.hand-scene::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, rgba(255,255,255,.025) 0 8px, transparent 8px 16px); pointer-events: none; }
+.hs-top { position: relative; display: grid; grid-template-columns: 1fr minmax(240px, 380px) auto; gap: 10px; align-items: start; }
+.hs-title { display: flex; gap: 10px; align-items: flex-start; }
+.hs-art { font-size: 46px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+.hs-title b { display: block; font: 24px 'Black Han Sans', sans-serif; text-shadow: 0 3px 0 #000; }
+.hs-title small { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; opacity: .8; }
+.hs-title .txt-clamp:not(.open)::after { background: linear-gradient(90deg, transparent, #184d36 40%); }
+.hs-arena { position: relative; text-align: center; border-radius: 12px; padding: 4px 6px 6px; border: 2px dashed transparent; transition: border-color .15s, background .15s; }
+.hs-arena.hot { border-color: #ffd86b; background: rgba(255,216,107,.12); box-shadow: 0 0 30px rgba(255,216,107,.35); }
+.ar-seats { width: 100%; height: auto; display: block; }
+.ar-seats circle.rul { fill: #4c8dff; } .ar-seats circle.opp { fill: #ef5a4a; } .ar-seats circle.etc { fill: #aab0b8; }
+.ar-lbl { font: 16px 'Black Han Sans', sans-serif; margin-top: -6px; text-shadow: 0 2px 0 #000; } .ar-lbl small { font: 12px 'Jua', sans-serif; opacity: .85; margin-left: 6px; }
+.ar-drop { font-size: 11px; color: #ffd86b; opacity: .8; }
+.hs-gem { position: relative; width: 74px; height: 74px; display: grid; place-items: center; font: 24px 'Black Han Sans', sans-serif; color: #fff; text-shadow: 0 2px 0 #6b4400;
+  background: radial-gradient(circle at 35% 30%, #ffe9a3, #e0a21b 60%, #8a5a00); clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.hs-gem small { position: absolute; bottom: -2px; font: 9px 'Jua', sans-serif; text-shadow: none; color: #3a2400; white-space: nowrap; }
+.hs-note { position: relative; text-align: center; color: #ffd86b; font-size: 14px; }
+.hs-hand { position: relative; flex: 1; min-height: 300px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 10px; }
+.hc { --dx: 0px; --dy: 0px; position: relative; width: clamp(130px, 17vw, 168px); aspect-ratio: 5 / 7; margin: 0 calc(-1 * clamp(6px, 1.4vw, 18px)); flex-shrink: 0;
+  transform: translate(var(--dx), calc(var(--dy) + (var(--i) - (var(--n) - 1) / 2) * (var(--i) - (var(--n) - 1) / 2) * 6px)) rotate(var(--r));
+  transform-origin: 50% 120%; border-radius: 14px; border: 3px solid #1a1206; background: linear-gradient(180deg, transparent 0 40%, #fbf0d4 40%), radial-gradient(120% 90% at 50% 15%, var(--c2), var(--c1));
+  color: #2a1a04; display: flex; flex-direction: column; align-items: center; padding: 0 8px 8px; gap: 4px; text-align: center; cursor: grab; touch-action: none; user-select: none;
+  box-shadow: 0 8px 18px rgba(0,0,0,.5); transition: transform .2s cubic-bezier(.2,.9,.3,1.2), box-shadow .2s; animation: dealIn .45s cubic-bezier(.2,.9,.3,1.2) both; animation-delay: calc(var(--i) * 70ms); }
+@keyframes dealIn { from { transform: translate(0, 220px) rotate(0); opacity: 0; } }
+.hc:hover { z-index: 3; transform: translate(var(--dx), calc(var(--dy) - 26px)) rotate(0deg) scale(1.06); }
+.hc.sel { z-index: 4; transform: translate(var(--dx), calc(var(--dy) - 46px)) rotate(0deg) scale(1.1); box-shadow: 0 0 0 4px #ffd86b, 0 0 34px #ffd86b, 0 20px 30px rgba(0,0,0,.55); }
+.hc.drag { transition: none; z-index: 6; }
+.hc.cur { filter: saturate(.5) brightness(.85); cursor: default; }
+.hc-art { margin-top: 14%; font-size: clamp(36px, 4.5vw, 48px); height: 30%; display: grid; place-items: center; filter: drop-shadow(0 5px 6px rgba(0,0,0,.4)); }
+.hc-cost { position: absolute; top: 6px; left: 6px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font: 16px 'Black Han Sans', sans-serif; color: #3a2400; background: radial-gradient(circle at 35% 30%, #fff1b8, #e0a21b 70%); border: 2px solid #1a1206; }
+.hc-lt { position: absolute; top: 8px; right: 6px; font-size: 10px; padding: 2px 6px; border-radius: 999px; background: #1a1206; color: #fff; }
+.hc-cur { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #2f8f4f; color: #fff; white-space: nowrap; }
+.hc-name { font-size: clamp(13px, 1.4vw, 15px); line-height: 1.2; margin-top: 4px; }
+.hc-fx { justify-content: center; } .hc-fx .fxc { font-size: 10px; padding: 1px 5px; background: #fff; border-color: #e5d7b6; color: #333; }
+.hc-fx .fxc.g { background: #d8f7e3; color: #11833f; border-color: #8fdcab; } .hc-fx .fxc.b { background: #ffe1dc; color: #c62f1c; border-color: #ffb3a8; } .hc-fx .fxc b { display: none; }
+.hs-own { position: relative; display: flex; gap: 6px; } .hs-own input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.25); background: rgba(0,0,0,.3); color: #fff; font: 14px 'Noto Sans KR', sans-serif; }
+.hs-btns { position: relative; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.hs-play { font-size: 17px !important; padding: 12px 20px !important; }
+@media (max-width: 700px) {
+  .hs-top { grid-template-columns: 1fr auto; } .hs-arena { grid-column: 1 / -1; grid-row: 2; }
+  .hs-hand { min-height: 240px; } .hc { width: 108px; margin: 0 calc(-1 * min(34px, 4px * var(--n) + 12px)); } .hc-fx .fxc:nth-child(n+4) { display: none; }
+  #game .policy-list.pol-deck { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; } .pc-name { font-size: 13px; } .pc-cur { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -13152,7 +13220,7 @@ function sceneResult(r) {
     sc.querySelector('.sc-talk').appendChild(btn); btn.focus();
   });
 }
-{ const _om = openModal; openModal = function (...a) { $('modal').classList.remove('scene-mode', 'deck-mode'); return _om.apply(this, a); }; }
+{ const _om = openModal; openModal = function (...a) { $('modal').classList.remove('scene-mode', 'deck-mode', 'hand-mode'); return _om.apply(this, a); }; }
 
 // 정치·사회 사건 → 집무실 대화
 openDomEventCard = function (id) {
@@ -13331,6 +13399,132 @@ function floatChips(html, at) {
 {
   if (typeof updateMap === 'function') { const _um = updateMap; updateMap = function (...a) { const r = _um.apply(this, a); try { renderPins(); } catch (e) { console.error(e); } return r; }; }
   const _ra = renderAll; renderAll = function () { _ra(); try { renderPins(); } catch (e) { console.error(e); } };
+}
+
+</script>
+<script>
+/* js/ui_cards.js */
+/* =========================================================
+ *  B 정책 카드 덱: 정책을 그림 카드로 모으고,
+ *  카드를 누르면 선택지 카드가 손패로 펼쳐져 국회에 "낸다"
+ * ========================================================= */
+const POL_ART = [
+  [/대통령|정부 형태/, '🧑‍💼'], [/국회 구조/, '🏛️'], [/선거제도|선거 연령/, '🗳️'], [/지방분권/, '🏘️'], [/수도/, '🏙️'], [/국가보안법/, '🕵️'],
+  [/소득세/, '💵'], [/법인세/, '🏢'], [/부가가치세/, '🧾'], [/상속|증여/, '👪'], [/종합부동산세/, '🏠'], [/금융투자/, '📈'], [/탄소세/, '🏭'],
+  [/재벌|대기업/, '🏦'], [/반도체|AI 산업/, '💾'], [/한국은행|통화/, '💱'], [/소상공인|자영업/, '🏪'], [/통상/, '🚢'], [/공기업/, '⚡'],
+  [/최저임금/, '💰'], [/근로시간/, '⏰'], [/정년/, '👴'], [/노조|노란봉투/, '✊'], [/플랫폼|특수고용/, '🛵'], [/국민연금/, '🏦'], [/기초연금/, '👵'],
+  [/기본소득/, '🎁'], [/저출산/, '👶'], [/이민/, '🛂'], [/건강보험/, '🩺'], [/주택담보|대출/, '💳'], [/주택 공급/, '🏗️'], [/토지/, '🗺️'], [/임대차/, '🔑'],
+  [/입시/, '📝'], [/학제/, '🏫'], [/사교육/, '📚'], [/무상교육/, '🎒'], [/디지털 교육|AI·디지털/, '💻'], [/병역/, '🪖'], [/국방비/, '🛡️'], [/핵 정책/, '☢️'],
+  [/전시작전/, '🎖️'], [/대체복무/, '🕊️'], [/한미/, '🇺🇸'], [/대중국/, '🇨🇳'], [/대일본/, '🇯🇵'], [/대북/, '🇰🇵'], [/ODA|원조/, '🌍'],
+  [/검찰/, '⚖️'], [/공수처|고위공직자/, '🔍'], [/경찰/, '👮'], [/사형/, '⛓️'], [/국민참여재판/, '👥'], [/대법원/, '🏛️'], [/형사/, '🚔'],
+  [/성년/, '🎂'], [/혼인|가족/, '💍'], [/차별금지/, '🏳️‍🌈'], [/낙태|임신/, '🤰'], [/존엄사/, '🕯️'], [/성\(姓\)|자녀의 성/, '👶'], [/언론|표현/, '📰'],
+  [/원자력/, '⚛️'], [/탄소중립/, '🌳'], [/재생에너지/, '☀️'], [/일회용품|순환/, '♻️'], [/의대/, '🩺'], [/비대면/, '📱'], [/필수의료|수가/, '🚑'],
+];
+const polArt = p => (POL_ART.find(([re]) => re.test(p.name)) || [])[1] || CATEGORIES.find(c => c.id === p.cat)?.icon || '📜';
+const LT_ICON = { decree: '✍️', law: '🏛️', const: '📜' };
+
+function seatsSvg() {
+  const total = 300, rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling] || 0;
+  const oppMain = Object.entries(S.seats || {}).filter(([k]) => k !== (S.ruling === 'P' ? 'P' : S.ruling)).sort((a, b) => b[1] - a[1])[0]?.[1] || 0;
+  let dots = '', n = 0;
+  for (let r = 0; r < 7; r++) {
+    const R = 46 + r * 11, cnt = Math.round(22 + r * 9);
+    for (let i = 0; i < cnt && n < total; i++, n++) {
+      const a = Math.PI * (i / (cnt - 1)), x = 150 - Math.cos(a) * R * 1.55, y = 128 - Math.sin(a) * R;
+      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" data-n="${n}"></circle>`;
+    }
+  }
+  return { svg: `<svg viewBox="0 0 300 140" class="ar-seats">${dots}</svg>`, rs, oppMain };
+}
+function colorSeats(root) {
+  const rs = S.ruling === 'P' ? S.seats.P : S.seats[S.ruling] || 0;
+  const opp = Object.entries(S.seats || {}).filter(([k]) => k !== (S.ruling === 'P' ? 'P' : S.ruling)).sort((a, b) => b[1] - a[1])[0]?.[1] || 0;
+  const cs = [...root.querySelectorAll('.ar-seats circle')].sort((a, b) => +a.getAttribute('cx') - +b.getAttribute('cx'));
+  cs.forEach((c, i) => c.setAttribute('class', i < rs ? 'rul' : i < rs + opp ? 'opp' : 'etc'));
+}
+
+/* ---------- 카드 모음 ---------- */
+function polCardHTML(p) {
+  const locked = typeof policyLocked === 'function' && policyLocked(S, p);
+  const cur = currentOption(p, S), bill = S.bills?.find(x => x.pid === p.id), pend = S.pending.find(x => x.pid === p.id);
+  const A = (typeof CAT_ART !== 'undefined' && CAT_ART[p.cat]) || ['#22303e', '#4a5a6a'];
+  const cheapest = Math.min(...p.options.filter(o => o.id !== cur.id).map(o => policyCost(S, o.cur ? { pc: 20 } : o)));
+  const status = locked ? '<i class="pc-st lock">🔒 잠김</i>' : bill ? `<i class="pc-st bill">🏛️ 심의 ${Math.round(bill.progress)}%</i>` : pend ? `<i class="pc-st pend">⏳ 반영 ${Math.round((1 - pend.left / pend.lag) * 100)}%</i>` : !cur.cur ? '<i class="pc-st chg">✔ 바꿈</i>' : '';
+  return `<button class="pol-card ${locked ? 'locked' : ''} ${!cur.cur ? 'changed' : ''}" data-pc="${p.id}" style="--c1:${A[0]};--c2:${A[1]}">
+    ${isFinite(cheapest) && !locked ? `<span class="pc-cost">${Math.max(0, Math.round(cheapest / 10))}</span>` : ''}
+    <span class="pc-art">${polArt(p)}</span>${status}
+    <span class="pc-name">${esc(p.name)}</span>
+    <span class="pc-cur">${cur.cur ? '현행' : '지금'}: ${esc(cur.label)}</span>
+    <span class="pc-n">선택지 ${p.options.length}장</span>
+  </button>`;
+}
+{
+  const _rp2 = renderPolicies;
+  renderPolicies = function () {
+    _rp2();
+    const pl = $('policy-list'); if (!pl || !S) return;
+    const list = allPolicies().filter(p => p.cat === activeCat);
+    pl.classList.add('pol-deck');
+    pl.innerHTML = list.map(polCardHTML).join('') || '<div class="empty">이 분야에 정책이 없습니다.</div>';
+    pl.querySelectorAll('[data-pc]').forEach(b => b.onclick = () => {
+      const p = policyById(b.dataset.pc, S);
+      if (typeof policyLocked === 'function' && policyLocked(S, p)) { const E = ERAS[p.era - 1]; return toast(`🔒 ${E.icon} ${E.name} 단계에 해금 (대통령 Lv.${E.need.lv} · 국력 ${E.need.rank}위 이내)`); }
+      openPolicyHand(p.id);
+    });
+  };
+}
+
+/* ---------- 손패: 선택지 카드를 국회에 낸다 ---------- */
+let handSel = null;
+function openPolicyHand(pid) {
+  const p = policyById(pid, S); if (!p) return;
+  setSpeed(0);
+  const cur = currentOption(p, S), locked = S.enactedThisTurn.includes(p.id), bill = S.bills?.find(x => x.pid === p.id);
+  const opts = p.options;
+  if (handSel == null || !opts.some(o => o.id === handSel) || handSel === cur.id) handSel = (opts.find(o => o.id !== cur.id) || opts[0]).id;
+  const A = (typeof CAT_ART !== 'undefined' && CAT_ART[p.cat]) || ['#22303e', '#4a5a6a'];
+  const st = seatsSvg();
+  const n = opts.length, spread = Math.min(14, 46 / Math.max(1, n - 1));
+  const cards = opts.map((o, i) => {
+    const isCur = o.id === cur.id, cost = isCur ? 0 : policyCost(S, o.cur ? { pc: 20 } : o), lt = isCur ? null : (o.cur ? cur.lt || 'law' : o.lt || 'decree');
+    const ang = (i - (n - 1) / 2) * spread, sel = o.id === handSel;
+    const fx = isCur ? '' : fxChips(o.cur ? (() => { const d = diffEffects(o, cur); return { e: d.e, rel: d.rel, f: o.f || {} }; })() : { e: o.e || {}, f: o.f || {}, rel: o.rel || {} }, 4);
+    return `<div class="hc ${isCur ? 'cur' : ''} ${sel ? 'sel' : ''}" data-o="${o.id}" style="--r:${ang}deg;--i:${i};--n:${n};--c1:${A[0]};--c2:${A[1]}">
+      ${isCur ? '<span class="hc-cur">시행 중</span>' : `<span class="hc-cost">${Math.round(cost / 10)}</span><span class="hc-lt" title="${LT_NAME[lt]}">${LT_ICON[lt]} ${LT_NAME[lt]}</span>`}
+      <span class="hc-art">${o.cur ? '📌' : polArt(p)}</span>
+      <span class="hc-name">${esc(o.label)}</span>
+      <span class="ochips hc-fx">${fx}</span>
+    </div>`;
+  }).join('');
+  openModal(`<div class="hand-scene">
+    <div class="hs-top">
+      <div class="hs-title"><span class="hs-art">${polArt(p)}</span><div><b>${esc(p.name)}</b><small class="txt-clamp" onclick="this.classList.toggle('open')">${esc(p.desc)}</small></div></div>
+      <div class="hs-arena" id="hs-arena">${st.svg}<div class="ar-lbl">🏛️ 국회 본회의장 <small>여당 ${st.rs} · 야당 ${st.oppMain}</small></div><div class="ar-drop">여기로 올려서 내기</div></div>
+      <div class="hs-gem" title="국고">${Math.round(S.pcap / 10)}<small>국고 ${won(S.pcap)}</small></div>
+    </div>
+    ${bill ? `<div class="hs-note">🏛️ 국회 심의 중: '${esc(optionOf(p, bill.oid).label)}' ${Math.round(bill.progress)}%</div>` : locked ? '<div class="hs-note">⏳ 이 분야는 이번 분기에 이미 바꿨습니다</div>' : ''}
+    <div class="hs-hand" id="hs-hand">${cards}</div>
+    <div class="hs-own"><input id="own-${p.id}" data-own="${p.id}" maxlength="80" placeholder="✍️ 나만의 카드 만들기: ${esc(typeof ownHint === 'function' ? ownHint(p) : '원하는 안을 문장으로')}"><button class="btn sm" id="hs-ownbtn">AI 분석</button></div>
+    <div class="hs-btns"><button class="btn" onclick="closeModal()">닫기</button>${p.bg || p.options.some(o => o.pro) ? '<button class="btn" id="hs-explain">📖 해설</button>' : ''}<button class="btn primary hs-play" id="hs-play" ${locked || bill ? 'disabled' : ''}>🃏 이 카드를 국회에 낸다</button></div>
+  </div>`);
+  $('modal').classList.add('scene-mode', 'hand-mode');
+  const root = $('modal-body');
+  colorSeats(root);
+  const play = () => { if ($('hs-play').disabled) return; const o = handSel; closeModal(); SFX.play('stamp'); setTimeout(() => openPreview(p.id, o), 120); };
+  root.querySelectorAll('.hc').forEach(c => {
+    c.onclick = () => { if (c.classList.contains('cur')) return toast('지금 시행 중인 카드입니다.'); handSel = c.dataset.o; root.querySelectorAll('.hc').forEach(x => x.classList.toggle('sel', x === c)); SFX.play('click'); };
+    // 위로 끌어 올리면 내기
+    let sy = null, dy = 0, sx = 0, dx = 0;
+    c.addEventListener('pointerdown', e => { if (c.classList.contains('cur')) return; sy = e.clientY; sx = e.clientX; dy = dx = 0; c.setPointerCapture(e.pointerId); c.classList.add('drag'); });
+    c.addEventListener('pointermove', e => { if (sy == null) return; dy = e.clientY - sy; dx = e.clientX - sx; c.style.setProperty('--dx', dx + 'px'); c.style.setProperty('--dy', Math.min(0, dy) + 'px'); $('hs-arena').classList.toggle('hot', dy < -110); });
+    const up = () => { if (sy == null) return; sy = null; c.classList.remove('drag'); c.style.removeProperty('--dx'); c.style.removeProperty('--dy'); $('hs-arena').classList.remove('hot');
+      if (dy < -110) { handSel = c.dataset.o; play(); } };
+    c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
+  });
+  $('hs-play').onclick = play;
+  if ($('hs-explain')) $('hs-explain').onclick = () => openExplain(p.id);
+  const own = () => submitOwn(p.id);
+  $('hs-ownbtn').onclick = own; $('own-' + p.id).onkeydown = e => { if (e.key === 'Enter') own(); };
 }
 
 </script>
