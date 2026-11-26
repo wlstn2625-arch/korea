@@ -1147,3 +1147,93 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .flow-news { margin-top: 4px; padding-left: 8px; border-left: 2px solid var(--line); }
 .flow-news.bad { border-left-color: var(--bad); } .flow-news.good { border-left-color: var(--good); }
 @media (max-width: 520px) { .sit-list { grid-template-columns: 1fr; } }
+
+/* =========================================================
+ *  타이틀 화면 (게임 시작 화면)
+ * ========================================================= */
+#start.title-screen { position: relative; overflow: hidden; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: stretch; justify-content: center; padding: 56px 20px 40px;
+  background: #04070d; color: #e9e2cf; --tg: #e8c46e; --tg2: #b88a33; --tl: rgba(232,196,110,.28); }
+.ts-bg, .ts-bg > div { position: absolute; inset: 0; pointer-events: none; }
+.ts-bg { background: radial-gradient(900px 600px at 30% 45%, #13254a 0%, #08101f 55%, #03060c 100%); }
+.ts-grid { background-image: linear-gradient(rgba(232,196,110,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,196,110,.06) 1px, transparent 1px); background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at 30% 50%, #000 20%, transparent 75%); animation: tsGrid 30s linear infinite; }
+@keyframes tsGrid { to { background-position: 48px 48px; } }
+.ts-radar { left: calc(30% - 450px) !important; top: calc(50% - 450px) !important; width: 900px; height: 900px; inset: auto !important; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(232,196,110,.16), rgba(232,196,110,0) 22%, transparent 100%); animation: tsSpin 9s linear infinite; mask-image: radial-gradient(circle, #000 30%, transparent 70%); -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 70%); }
+@keyframes tsSpin { to { transform: rotate(360deg); } }
+.ts-hanja { display: grid; place-items: center; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: min(42vw, 520px); color: rgba(232,196,110,.035); letter-spacing: -.05em; transform: translateX(18%); white-space: nowrap; }
+.ts-vignette { background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.75) 100%); }
+.ts-embers i { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: #ffd27a; box-shadow: 0 0 8px 2px rgba(255,190,90,.7); opacity: 0; animation: tsEmber linear infinite; }
+@keyframes tsEmber { 0% { transform: translate(0, 0); opacity: 0; } 10% { opacity: .9; } 100% { transform: translate(var(--dx, 30px), -105vh); opacity: 0; } }
+.ts-bar { position: absolute; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; padding: 8px max(18px, env(safe-area-inset-left)); font-size: 11px; letter-spacing: .18em; color: rgba(232,196,110,.6); text-transform: uppercase;
+  border-bottom: 1px solid var(--tl); background: linear-gradient(180deg, rgba(0,0,0,.6), transparent); }
+.ts-bar.top { top: 0; padding-top: max(8px, env(safe-area-inset-top)); }
+.ts-bar span:first-child { color: #ff6b5e; animation: tsBlink 1.6s steps(2) infinite; }
+@keyframes tsBlink { 50% { opacity: .35; } }
+.ts-wrap { position: relative; z-index: 1; width: 100%; max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+.ts-hero { display: flex; flex-direction: column; align-items: center; text-align: center; animation: tsIn .9s cubic-bezier(.2,.8,.2,1) both; }
+.ts-emblem { width: min(230px, 46vw); height: auto; filter: drop-shadow(0 0 28px rgba(255,200,110,.35)) drop-shadow(0 10px 20px rgba(0,0,0,.6)); animation: tsFloat 6s ease-in-out infinite; }
+@keyframes tsFloat { 50% { transform: translateY(-8px); filter: drop-shadow(0 0 42px rgba(255,200,110,.55)) drop-shadow(0 16px 24px rgba(0,0,0,.6)); } }
+#start .ts-logo { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 6px 0 0; background: none; color: inherit; -webkit-text-fill-color: initial; letter-spacing: 0; }
+.logo-ko { position: relative; font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-weight: 400; font-size: clamp(84px, 12vw, 148px); line-height: 1; letter-spacing: .05em; padding: 0 0 0 .05em;
+  background: linear-gradient(180deg, #ffeeb5 0%, #f0c968 45%, #b07a26 52%, #e2b55a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; -webkit-text-stroke: 2px #5a3a0a;
+  filter: drop-shadow(0 6px 0 #1d1203) drop-shadow(0 12px 18px rgba(0,0,0,.6)) drop-shadow(0 0 30px rgba(240,190,100,.3)); }
+.logo-ko::after { content: '대권'; position: absolute; inset: 0; padding-left: .05em; -webkit-text-stroke: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.85) 50%, transparent 60%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; animation: tsShine 5s ease-in-out infinite 1s; }
+@keyframes tsShine { 0% { background-position: 150% 0; } 35%, 100% { background-position: -60% 0; } }
+.logo-en { font-family: 'Cinzel', 'Nanum Myeongjo', serif; font-weight: 800; font-size: clamp(13px, 1.7vw, 19px); letter-spacing: .55em; padding-left: .55em; color: var(--tg); display: flex; align-items: center; gap: 14px; }
+.logo-en::before, .logo-en::after { content: ''; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--tg)); }
+.logo-en::after { transform: scaleX(-1); }
+#start .ts-logo small { margin-top: 8px; font-size: 12.5px; letter-spacing: .3em; color: rgba(233,226,207,.55); -webkit-text-fill-color: rgba(233,226,207,.55); font-family: 'Noto Sans KR', sans-serif; font-weight: 500; }
+#start .ts-tag { margin: 18px 0 14px; color: #f2ead5; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: clamp(16px, 2vw, 21px); text-shadow: 0 2px 10px rgba(0,0,0,.8); }
+.ts-feats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ts-feats span { font-size: 12.5px; padding: 6px 12px; border: 1px solid var(--tl); border-radius: 3px; background: rgba(10,16,30,.6); color: #e9dcb8; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+/* 인증 패널 */
+#start .ts-panel { position: relative; max-width: 470px; width: 100%; justify-self: center; text-align: left; padding: 0 22px 20px; border-radius: 4px; color: #e9e2cf;
+  background: linear-gradient(180deg, rgba(20,30,52,.88), rgba(8,13,24,.92)); border: 1px solid var(--tl); box-shadow: 0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,230,170,.08);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: tsIn .9s .15s cubic-bezier(.2,.8,.2,1) both; }
+#start .ts-panel::before, #start .ts-panel::after { content: ''; position: absolute; width: 18px; height: 18px; border: 2px solid var(--tg); pointer-events: none; }
+#start .ts-panel::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+#start .ts-panel::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+@keyframes tsIn { from { opacity: 0; transform: translateY(24px); } }
+.ts-panel-h { display: flex; align-items: center; gap: 8px; margin: 0 -22px 6px; padding: 11px 22px; font-size: 13px; font-weight: 700; letter-spacing: .12em; color: var(--tg); border-bottom: 1px solid var(--tl); background: rgba(232,196,110,.06); }
+.ts-panel-h span { margin-left: auto; font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: .3em; color: #ff6b5e; border: 1px solid rgba(255,107,94,.6); padding: 2px 6px; }
+.ts-dot { width: 8px; height: 8px; border-radius: 50%; background: #3ccf8e; box-shadow: 0 0 10px #3ccf8e; animation: tsBlink 1.2s steps(2) infinite; }
+#start .field { color: rgba(233,226,207,.8); font-size: 12px; letter-spacing: .14em; font-weight: 700; margin: 12px 0; }
+#start .field input, #start .acc-form input { background: rgba(0,0,0,.35); border: 1px solid rgba(232,196,110,.25); border-radius: 3px; color: #fff3d6; font-size: 15px; letter-spacing: 0; }
+#start .field input:focus, #start .acc-form input:focus { outline: none; border-color: var(--tg); box-shadow: 0 0 0 3px rgba(232,196,110,.15); }
+#start .diff-pick { gap: 8px; }
+#start .party-opt { position: relative; background: rgba(0,0,0,.3); border: 1px solid rgba(232,196,110,.18); border-radius: 3px; padding: 10px 10px 9px; letter-spacing: 0; transition: transform .15s, border-color .15s, background .15s; }
+#start .party-opt:hover { transform: translateY(-2px); border-color: rgba(232,196,110,.5); }
+#start .party-opt.sel { border-color: var(--tg); background: linear-gradient(180deg, rgba(232,196,110,.16), rgba(232,196,110,.04)); box-shadow: 0 0 18px rgba(232,196,110,.2); }
+#start .party-opt b { color: #fff0c8; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+#start .party-opt .d-stars { font-style: normal; color: var(--tg); font-size: 12px; letter-spacing: 1px; }
+#start .party-opt span { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.45; color: rgba(233,226,207,.6); }
+#start .acc-box { background: rgba(0,0,0,.28); border: 1px dashed rgba(232,196,110,.25); border-radius: 3px; margin: 10px 0 4px; }
+#start .acc-box .muted { color: rgba(233,226,207,.55); }
+#start .srv-box { border-radius: 3px; }
+#start .start-actions { margin-top: 16px; }
+.ts-go { position: relative; overflow: hidden; width: 100%; display: flex !important; flex-direction: column; align-items: center; gap: 0; padding: 14px 20px !important; border-radius: 3px !important;
+  background: linear-gradient(180deg, #f6dc92, #d0a347 55%, #a87a2a) !important; border: 1px solid #f7e2a6 !important; color: #2a1a04 !important; box-shadow: 0 0 0 1px #5a3c0c, 0 10px 30px rgba(232,180,90,.35), inset 0 1px 0 #fff6d8 !important;
+  font-family: 'Black Han Sans', 'Noto Sans KR', sans-serif; font-size: 24px !important; letter-spacing: .2em; transition: transform .12s, box-shadow .12s; }
+.ts-go small { font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: .45em; opacity: .7; }
+.ts-go::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); animation: tsBtnShine 3.2s ease-in-out infinite; }
+@keyframes tsBtnShine { 0% { left: -60%; } 45%, 100% { left: 130%; } }
+.ts-go:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px #5a3c0c, 0 14px 40px rgba(232,180,90,.55), inset 0 1px 0 #fff6d8 !important; }
+.ts-go:active { transform: translateY(1px); }
+.ts-cont { width: 100%; border-radius: 3px !important; background: rgba(232,196,110,.08) !important; border: 1px solid var(--tg) !important; color: #fff0c8 !important; font-weight: 700; }
+#start .small-row .btn { background: transparent; border: 1px solid rgba(232,196,110,.2); color: rgba(233,226,207,.75); border-radius: 3px; flex: 1; }
+#start .small-row .btn:hover { border-color: var(--tg); color: #fff0c8; }
+.ts-foot { position: relative; z-index: 1; text-align: center; color: rgba(233,226,207,.4) !important; font-size: 11.5px !important; margin: 28px auto 0 !important; max-width: 720px; }
+@media (max-width: 900px) {
+  #start.title-screen { justify-content: flex-start; padding: 46px 16px 28px; }
+  .ts-wrap { grid-template-columns: 1fr; gap: 22px; }
+  .ts-radar { left: calc(50% - 450px) !important; top: -180px !important; }
+  .ts-hanja { transform: none; align-items: start; padding-top: 40px; }
+  .ts-emblem { width: min(150px, 38vw); }
+  #start .ts-tag { margin: 12px 0 10px; }
+}
+@media (max-width: 520px) { .logo-en { letter-spacing: .32em; padding-left: .32em; gap: 8px; } .logo-en::before, .logo-en::after { width: 22px; } #start .party-opt b { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 420px) { #start .diff-pick { grid-template-columns: repeat(3, 1fr); } #start .party-opt span { display: none; } .ts-bar .ts-clock { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ts-grid, .ts-radar, .ts-embers i, .ts-emblem, .logo-ko::after, .ts-go::after { animation: none !important; } }
+.seal img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.seal:has(img) { padding: 0; overflow: hidden; border-color: #c9a44c; }

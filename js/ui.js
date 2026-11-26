@@ -38,8 +38,10 @@ function ltTag(o) { const lt = o.lt || 'decree'; return `<span class="tag ${lt}"
 
 /* ---------------- 시작 화면 ---------------- */
 function renderStart() {
+  const em = document.querySelector('#start .ts-embers');
+  if (em && !em.childElementCount) em.innerHTML = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${8 + Math.random() * 10}s;animation-delay:${-Math.random() * 18}s;--dx:${Math.round(Math.random() * 120 - 60)}px;width:${(1.5 + Math.random() * 3).toFixed(1)}px;height:${(1.5 + Math.random() * 3).toFixed(1)}px"></i>`).join('');
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
-    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}</b><span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}<i class="d-stars">${{ easy: '★☆☆', normal: '★★☆', hard: '★★★' }[k] || ''}</i></b><span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
   $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);

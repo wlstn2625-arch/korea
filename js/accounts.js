@@ -126,7 +126,7 @@ function renderAccountBox() {
     $('acc-out').onclick = () => logOut();
     cloud().then(c => { const el = $('acc-cloud'); if (el && !cloudState) el.textContent = c ? '☁️ 서버 자동 저장 켜짐' : '📱 이 기기에 저장'; });
   } else {
-    box.innerHTML = `<div class="acc-form"><input id="acc-id" placeholder="아이디" maxlength="16" autocomplete="username"><input id="acc-pw" type="password" placeholder="비밀번호 (4자 이상)" autocomplete="current-password">
+    box.innerHTML = `<div class="acc-form"><input id="acc-id" placeholder="아이디" maxlength="16" autocomplete="username"><input id="acc-pw" type="password" placeholder="비밀번호 (4자+)" autocomplete="current-password">
       <button class="btn sm primary" id="acc-login">로그인</button><button class="btn sm" id="acc-join">회원가입</button></div>
       <div class="muted small" id="acc-msg">로그인하면 계정별로 저장되고, claude.ai에서는 다른 기기에서도 이어서 할 수 있어요. 안 해도 게스트로 바로 플레이할 수 있습니다.</div>`;
     const go = async fn => { const id = $('acc-id').value, pw = $('acc-pw').value; $('acc-msg').textContent = '확인 중…'; const r = await fn(id, pw); if (!r.ok) { $('acc-msg').innerHTML = `<span class="bad-t">${esc(r.msg)}</span>`; return; } toast(esc(r.msg), 4000); renderStart(); };

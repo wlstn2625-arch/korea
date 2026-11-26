@@ -3,11 +3,14 @@
   → dist/newkorea.html          claude.ai 아티팩트용 (API 키 대신 보는 사람의 Claude 계정으로 AI 동작)
   → dist/daegwon-offline.html  오프라인용 단일 파일 (저장해 두고 브라우저로 열면 인터넷 없이 실행)
   → sw.js                       웹 서버·앱 설치(PWA)용 서비스 워커 (파일 목록·버전 자동 갱신)"""
-import pathlib, re, hashlib, json
+import pathlib, re, hashlib, json, base64
 root = pathlib.Path(__file__).resolve().parent.parent
 html = (root / 'index.html').read_text(encoding='utf-8')
 css = (root / 'css/style.css').read_text(encoding='utf-8')
 body = re.search(r'<body>(.*?)<script', html, re.S).group(1)
+# 아이콘 이미지는 data URI로 넣어 단일 파일에서도 보이게
+icon_uri = 'data:image/png;base64,' + base64.b64encode((root / 'icons/icon-192.png').read_bytes()).decode()
+body = body.replace('src="icons/icon-192.png"', f'src="{icon_uri}"')
 scripts = re.findall(r'<script src="([^"]+)"></script>', html)
 js = ['<script>/* boot */ window.__BODY0 = document.body.innerHTML;</script>']
 for src in scripts:
@@ -18,7 +21,8 @@ out = f'''<title>대권 — 대한민국 대통령 시뮬레이션</title>
 <meta name="description" content="대한민국 대통령이 되어 모든 제도를 바꿔가며 새로운 대한민국을 만드는 정책 시뮬레이션 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Nanum+Myeongjo:wght@700;800&family=Black+Han+Sans&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="{icon_uri}">
 <style>
 {css}
 </style>
