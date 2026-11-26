@@ -88,6 +88,7 @@ function openPresidentialCard() {
   const r = S.pendingSuccession; if (!r) return;
   setSpeed(0);
   const g = r.term;
+  if (typeof recordClear === 'function' && g?.grade) recordClear(S.difficulty, g.grade);
   const winner = r.won ? r.rulingCandidate : r.oppCandidate;
   const newParty = r.won ? r.rulingParty : r.oppParty;
   openModal(`<div class="event">

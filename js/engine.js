@@ -4,9 +4,11 @@
 
 // 난이도: 국고 시작값·분기 수입 배율·정책 비용 배율 (내부 단위 10 = 1조 원)
 const DIFFICULTY = {
-  easy:   { name: '쉬움',   desc: '국고가 넉넉하고 정책 비용 30% 할인. 마음껏 바꿔 보세요.', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
-  normal: { name: '보통',   desc: '분기마다 정책 2~3개를 바꿀 수 있는 수준.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
-  hard:   { name: '어려움', desc: '국고가 빠듯합니다. 한 분기에 한 개 바꾸기도 벅찹니다.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
+  easy:   { name: '신생국',     icon: '🌱', star: 1, desc: '국고가 넉넉하고 정책 비용 30% 할인. 처음이라면 여기서!', start: 300, base: 40, k: 0.6, cap: 5000, incomeMul: 1.8, costMul: 0.7, crisisBonus: 8 },
+  dev:    { name: '개발도상국', icon: '🌿', star: 2, desc: '조금 빠듯해집니다. 정책 비용 15% 할인.', start: 250, base: 34, k: 0.55, cap: 5000, incomeMul: 1.55, costMul: 0.85, crisisBonus: 6 },
+  normal: { name: '중진국',     icon: '🏙️', star: 3, desc: '분기마다 정책 2~3개를 바꿀 수 있는 표준 난이도.', start: 200, base: 28, k: 0.5, cap: 5000, incomeMul: 1.3, costMul: 1, crisisBonus: 5 },
+  hard:   { name: '선진국',     icon: '🏛️', star: 4, desc: '국고가 빠듯합니다. 한 분기에 하나 바꾸기도 벅참.', start: 120, base: 10, k: 0.3, cap: 5000, incomeMul: 0.75, costMul: 1, crisisBonus: 0 },
+  super:  { name: '초강대국',   icon: '👑', star: 5, desc: '세계가 지켜보는 자리. 수입은 적고 정책은 비싸며 위기 보상도 없음.', start: 90, base: 6, k: 0.25, cap: 5000, incomeMul: 0.6, costMul: 1.2, crisisBonus: -2 },
 };
 const diff = s => DIFFICULTY[s.difficulty] || DIFFICULTY.normal;
 const policyCost = (s, o) => Math.round((o.pc || 0) * diff(s).costMul);
@@ -139,7 +141,7 @@ function analyzeOptionRule(s, p, text) {
 }
 
 /* ---------------- 상태 생성 ---------------- */
-function newGame(partyKey, presidentName, difficulty = 'normal', worldview = 'con') {
+function newGame(partyKey, presidentName, difficulty = 'easy', worldview = 'con') {
   const party = PARTIES[partyKey];
   const stats = {}, mods = {}, rel = {}, relMods = {}, factions = {};
   for (const k in STATS) { stats[k] = STATS[k].base; mods[k] = 0; }

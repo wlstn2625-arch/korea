@@ -4,7 +4,7 @@
 let S = null;
 let activeCat = 'const';
 let selectedParty = 'pres';
-let selectedDiff = 'normal';
+let selectedDiff = (() => { try { return localStorage.getItem('dg_diff') || 'easy'; } catch { return 'easy'; } })();
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -37,12 +37,21 @@ const LT_NAME = { decree: '행정', law: '법률', const: '개헌' };
 function ltTag(o) { const lt = o.lt || 'decree'; return `<span class="tag ${lt}">${LT_NAME[lt]}</span>`; }
 
 /* ---------------- 시작 화면 ---------------- */
+// 등급별 최고 성적(임기 평가) 기록
+function diffClears() { try { return JSON.parse(localStorage.getItem('dg_clears') || '{}'); } catch { return {}; } }
+function recordClear(diffKey, grade) {
+  const order = ['S', 'A', 'B', 'C', 'D', 'F'], c = diffClears();
+  if (!c[diffKey] || order.indexOf(grade) < order.indexOf(c[diffKey])) { c[diffKey] = grade; try { localStorage.setItem('dg_clears', JSON.stringify(c)); } catch {} }
+}
+function diffMedal(k) { const g = diffClears()[k]; return g ? `<em class="d-medal g-${g}" title="이 등급 최고 임기 평가">🏅${g}</em>` : ''; }
 function renderStart() {
   const em = document.querySelector('#start .ts-embers');
   if (em && !em.childElementCount) em.innerHTML = Array.from({ length: 26 }, () => `<i style="left:${Math.random() * 100}%;animation-duration:${8 + Math.random() * 10}s;animation-delay:${-Math.random() * 18}s;--dx:${Math.round(Math.random() * 120 - 60)}px;width:${(1.5 + Math.random() * 3).toFixed(1)}px;height:${(1.5 + Math.random() * 3).toFixed(1)}px"></i>`).join('');
   $('diff-pick').innerHTML = Object.entries(DIFFICULTY).map(([k, d]) =>
-    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><b>${d.name}<i class="d-stars">${{ easy: '★☆☆', normal: '★★☆', hard: '★★★' }[k] || ''}</i></b><span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
-  $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; renderStart(); });
+    `<div class="party-opt ${k === selectedDiff ? 'sel' : ''}" data-d="${k}"><i class="d-ic">${d.icon}</i><b>${d.name}<i class="d-stars">${'★'.repeat(d.star)}${'☆'.repeat(5 - d.star)}</i></b>${diffMedal(k)}<span>${d.desc} 시작 국고 ${won(d.start)}</span></div>`).join('');
+  { let dd = $('diff-desc'); if (!dd) { dd = document.createElement('div'); dd.id = 'diff-desc'; dd.className = 'diff-desc'; $('diff-pick').after(dd); }
+    const D = DIFFICULTY[selectedDiff]; dd.innerHTML = `${D.icon} <b>${D.name}</b> ${'★'.repeat(D.star)} — ${D.desc} 시작 국고 ${won(D.start)}${diffClears()[selectedDiff] ? ` · 최고 평가 ${diffClears()[selectedDiff]}` : ''}`; }
+  $('diff-pick').querySelectorAll('.party-opt').forEach(el => el.onclick = () => { selectedDiff = el.dataset.d; try { localStorage.setItem('dg_diff', selectedDiff); } catch {} renderStart(); });
   const sv = loadGame();
   $('btn-continue').classList.toggle('hidden', !sv || sv.over);
   if (sv && !sv.over) { const t = turnLabel(sv.turn); $('btn-continue').textContent = `이어하기 (${sv.name}, ${t.year}년 ${t.q}분기)`; }
@@ -52,7 +61,7 @@ $('btn-start').onclick = () => {
   S = newGame(selectedParty, name, selectedDiff);
   saveGame(S); enterGame();
   openModal(`<h2>🇰🇷 취임을 축하합니다, ${esc(name)} 대통령님</h2>
-    <p class="lead">여당 155석으로 시작 · 난이도 ${DIFFICULTY[selectedDiff].name} · 제21대 대통령 · 임기 5년마다 대선, 정권이 바뀌어도 계속 플레이 · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
+    <p class="lead">여당 155석으로 시작 · 국가 등급 ${DIFFICULTY[selectedDiff].icon} ${DIFFICULTY[selectedDiff].name} · 제21대 대통령 · 임기 5년마다 대선, 정권이 바뀌어도 계속 플레이 · ${turnLabel(0).year}년 ${turnLabel(0).q}분기 시작</p>
     <div class="box"><h4>게임 방법</h4><ul>
       <li><b>📜 정책 결정</b>: 헌법·세제·국방·외교·교육·검경·민법 등 13개 분야 ${POLICIES.length}개 제도가 <b>현재 대한민국 그대로</b> 설정되어 있습니다. 원하는 제도를 바꾸세요.</li>
       <li>바꾸기 전에 <b>AI 참모가 이득·손해·부작용·국회 통과 가능성</b>을 분석해 줍니다.</li>
@@ -118,7 +127,7 @@ function renderAll() {
 function renderHeader() {
   const t = turnLabel(S.turn), T = termInfo(S);
   $('hdr-date').textContent = typeof gameDateText === 'function' ? gameDateText() : `${t.year}년 ${t.q}분기`;
-  $('hdr-term').textContent = `제${T.ord}대 ${S.name} · 임기 ${T.year}년차 ${T.q}/${TERM_TURNS}분기`;
+  $('hdr-term').textContent = `${DIFFICULTY[S.difficulty]?.icon || ''} ${DIFFICULTY[S.difficulty]?.name || ''} · 제${T.ord}대 ${S.name} · 임기 ${T.year}년차 ${T.q}/${TERM_TURNS}분기`;
   hudFloat('hdr-appr', S.approval, 1, '%p'); hudFloat('hdr-pcap', S.pcap / 10, 1, '조'); hudFloat('hdr-gdp', S.stats.gdp, 1, '%p');
   const a = $('hdr-appr'); rollNum(a, S.approval, v => v.toFixed(1) + '%'); a.style.color = S.approval >= 50 ? 'var(--good)' : S.approval >= 30 ? 'var(--mid)' : 'var(--bad)';
   { const g = pcapGain(S); const el = $('hdr-pcap'); rollNum(el, S.pcap, v => won(v)); el.style.color = S.pcap < 0 ? 'var(--bad)' : ''; el.closest('.res').title = `국고 ${won(S.pcap)} · 분기 순수입 ${g >= 0 ? '+' : ''}${won(g)} (경제 패널에서 내역 확인)`; }
