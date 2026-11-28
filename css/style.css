@@ -1810,3 +1810,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @media (max-width: 900px) { .ts-logoimg { width: min(260px, 64vw); } }
 .tr-vwrap.oldfilm video { filter: grayscale(1) sepia(.35) contrast(1.3) brightness(.9) blur(.3px); } .tr-vwrap.oldfilm::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 220px, rgba(255,255,255,.06) 220px 221px); animation: flicker .12s steps(2) infinite; pointer-events: none; } @keyframes flicker { 50% { opacity: .5; } }
 .ts-music { margin-left: 12px; background: rgba(0,0,0,.4); border: 1px solid rgba(232,196,110,.35); color: #e8c46e; border-radius: 999px; padding: 2px 10px; font: 11px 'Noto Sans KR', sans-serif; letter-spacing: .05em; cursor: pointer; animation: none !important; }
+/* 편입한 나라 */
+.bar-row.gone .rel-gone { flex: 1; font-size: 12px; color: #8fc0ff; }
+.pol-card.obsolete { border-color: #2f6fe0; box-shadow: 0 4px 0 #1d3f8a, 0 0 18px rgba(80,150,255,.3); }
+.pol-card.obsolete .pc-name { color: #1d3f8a; }

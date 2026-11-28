@@ -670,7 +670,8 @@ HOOKS.events.push((s, report, list) => { for (let i = list.length - 1; i >= 0; i
 // 정치·외교 사건 카드: 사라진 나라를 고르면 다시 뽑고, 끝내 안 되면 사건 자체를 건너뜀
 for (const key in DOM_EVENTS) {
   const e = DOM_EVENTS[key], mk = e.make, c0 = e.cond;
-  e.make = function (s) { let v; for (let i = 0; i < 8; i++) { v = mk(s); if (!countryGone(s, v?.k) && !countryGone(s, v?.a) && !mentionsGone(s, (v?.title || '') + (v?.desc || ''))) return v; } v._void = true; return v; };
+  // make는 한 번만(대기열을 꺼내 쓰는 사건이 있어 여러 번 부르면 안 됨). 사라진 나라가 나오면 이번 사건은 건너뜀
+  e.make = function (s) { let v; try { v = mk(s); } catch { v = null; } if (!v) return { title: '', desc: '', _void: true }; if (countryGone(s, v.k) || countryGone(s, v.a) || mentionsGone(s, (v.title || '') + (v.desc || ''))) v._void = true; return v; };
   e.cond = s => { try { return c0(s); } catch { return false; } };
 }
 HOOKS.postTurn.push(s => { if (s.dom?.pending) s.dom.pending = s.dom.pending.filter(ev => !ev._void); });
