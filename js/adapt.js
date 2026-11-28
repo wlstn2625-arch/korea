@@ -23,7 +23,8 @@ const goneCore = s => Object.keys(RELATIONS).filter(k => isGone(s, k));
 // 관계 정리: 매 분기 거시 계산 전에, 사라진 나라와의 관계를 중립값으로 고정(안보·경제·여론 계산에 영향 없게)
 function settleGone(s) {
   for (const k of goneCore(s)) {
-    s.rel[k] = RELATIONS[k].base; s.relMods[k] = 0;
+    // 우리 영토가 됐으니 위협·적대는 사라진 것으로(북한 100, 그 외 90) → 안보·산업 계산에서 '국내 시장'처럼
+    s.rel[k] = k === 'nk' ? 100 : 90; s.relMods[k] = 0;
     const d = s.diplo?.[k]; if (d) { d.alliance = false; d.fta = false; d.sanction = false; d.swap = false; d.visa = false; }
   }
   // 진행 중인 정책 효과에 남은 그 나라 관계 효과도 제거
@@ -84,3 +85,43 @@ if (typeof FOCUS_BRANCHES !== 'undefined') {
   const b = FOCUS_BRANCHES.find(x => x.id === 'uni');
   if (b) { const n0 = b.name, i0 = b.icon; Object.defineProperty(b, 'name', { get: () => (curS() && isGone(curS(), 'nk')) ? '통일 이후' : n0, configurable: true }); Object.defineProperty(b, 'icon', { get: () => (curS() && isGone(curS(), 'nk')) ? '🇰🇷' : i0, configurable: true }); }
 }
+
+
+/* ---------------- 점령 상황에 맞춘 추가 전환 ---------------- */
+// 1) 그 나라 전용 정책 '선택지'도 막기 (미 전술핵 재배치·한중 FTA 등)
+const OPTION_TIES = { 'nuke/redeploy': 'us', 'nuke/nfz': 'nk', 'trade/cnfta': 'cn' };
+const optionObsolete = (s, pid, oid) => isGone(s, OPTION_TIES[pid + '/' + oid]);
+{
+  const _ep2 = enactPolicy;
+  enactPolicy = function (s, pid, oid, ...a) {
+    if (optionObsolete(s, pid, oid)) return { ok: false, msg: `${cname(OPTION_TIES[pid + '/' + oid])}은(는) 이미 대한민국 영토라 이 선택지는 의미가 없습니다.` };
+    return _ep2(s, pid, oid, ...a);
+  };
+}
+// 2) 핵보유국을 점령하면 그 나라 핵무기를 손에 넣음
+const NUKE_STATES = ['us', 'cn', 'ru', 'gbr', 'fra', 'ind', 'pak', 'isr', 'nk'];
+const seizedNukes = s => NUKE_STATES.filter(k => isGone(s, k));
+{
+  const _hn = hasNukes;
+  hasNukes = (s, k) => k === 'kr' ? (_hn(s, k) || seizedNukes(s).length > 0) : (isGone(s, k) ? false : _hn(s, k));
+}
+HOOKS.postTurn.push(s => {
+  const got = seizedNukes(s); s.seizedNk = s.seizedNk || [];
+  for (const k of got) if (!s.seizedNk.includes(k)) {
+    s.seizedNk.push(k); const add = ['us', 'ru'].includes(k) ? 3 : k === 'cn' ? 2 : 1;
+    s.nukeStock = Math.min(9, (s.nukeStock ?? 3) + add);
+    addLog(s, 'bad', `☢️ ${cname(k)}의 핵무기를 접수했습니다. 핵탄두 +${add} — 대한민국이 핵보유국이 되었습니다. 세계가 경계합니다.`);
+    if (typeof addThreat === 'function') addThreat(s, 6, `${cname(k)} 핵무기 접수`);
+  }
+});
+// 3) 상임이사국(미·중·러·영·프)을 점령하면 그 거부권을 물려받음 → 유엔 결의 사건이 나오지 않음
+const P5 = ['us', 'cn', 'ru', 'gbr', 'fra'];
+const holdsVeto = s => P5.some(k => isGone(s, k));
+if (DOM_EVENTS.unResolution) { const c0 = DOM_EVENTS.unResolution.cond; DOM_EVENTS.unResolution.cond = s => !holdsVeto(s) && c0(s); }
+HOOKS.postTurn.push(s => { if (holdsVeto(s) && !s.vetoNoted) { s.vetoNoted = true; addLog(s, 'good', '🇺🇳 상임이사국을 편입해 안보리 거부권을 물려받았습니다. 유엔 제재 결의는 이제 통과되지 않습니다.'); } });
+// 4) 사건·시국 정책 선택지 중 사라진 나라가 등장하는 것은 숨김
+const choiceGone = (s, c) => typeof mentionsGone === 'function' && mentionsGone(s, (c.label || '') + ' ' + (c.desc || ''));
+HOOKS.postTurn.push(s => {
+  for (const p of s.sit?.list || []) { const keep = p.choices.filter(c => !choiceGone(s, c)); if (keep.length >= 2) p.choices = keep; else p.exp = -1; }
+  if (s.sit) s.sit.list = s.sit.list.filter(p => p.exp >= 0);
+});

@@ -71,7 +71,7 @@ function sanctionAllies(s, k) {
   if (hegCd(s, k, 'coal')) return { ok: false, msg: '이미 동참을 요청했습니다.' };
   if (s.pcap < 15) return { ok: false, msg: `국고 ${won(15)}이(가) 필요합니다.` };
   s.pcap -= 15; setCd(s, k, 'coal', 8);
-  const join = ['us', 'jp', 'eu', 'gbr', 'aus', 'can', ...Object.keys(H.sphere)].filter(x => x !== k && cinfo(x) && relOf(s, x) >= 55 && relOf(s, x) > relOf(s, k) + 10);
+  const join = ['us', 'jp', 'eu', 'gbr', 'aus', 'can', ...Object.keys(H.sphere)].filter(x => x !== k && cinfo(x) && !(typeof isGone === 'function' && isGone(s, x)) && relOf(s, x) >= 55 && relOf(s, x) > relOf(s, k) + 10);
   H.sancPartners = { ...(H.sancPartners || {}), [k]: join };
   hegLog(s, k, `🚫 ${cname(k)} 제재에 ${join.length}개국 동참: ${join.slice(0, 6).map(cname).join(', ')}`, join.length ? 'good' : 'info');
   return { ok: true, msg: `${join.length}개국이 제재에 동참했습니다.` };

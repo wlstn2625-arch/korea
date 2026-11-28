@@ -73,7 +73,7 @@ function openScene(o) {
     <div class="sc-head"><span class="sc-kind">${esc(o.kind || '')}</span><b class="sc-title">${esc(o.title)}</b></div>
     <div class="sc-char" style="--h:${C.hue}">${C.face}</div>
     ${o.side ? `<div class="sc-char side">${o.side}</div>` : ''}
-    <div class="sc-choices hidden">${o.choices.map((c, i) => `<button class="sc-ch ${c.best ? 'best' : ''}" data-i="${i}" ${c.disabled ? 'disabled' : ''}>
+    <div class="sc-choices hidden">${o.choices.map((c, i) => `<button class="sc-ch ${c.best ? 'best' : ''}" data-i="${i}" ${c.disabled ? 'disabled' : ''} ${c.hide ? 'hidden' : ''}>
       <span class="sc-lbl">${esc(c.label)}${c.best ? ' <em class="sc-rec">추천</em>' : ''}</span><span class="ochips">${c.chips || ''}</span>${c.meta ? `<small>${esc(c.meta)}</small>` : ''}</button>`).join('')}</div>
     <div class="sc-talk"><div class="sc-name">${esc(C.title)} · ${esc(C.name)}</div><div class="sc-line"></div><div class="sc-more">▼</div></div>
   </div>`, { closable: false });
@@ -111,7 +111,7 @@ openDomEventCard = function (id) {
   openScene({
     key: k, cast: castOf(k), kind: def.extreme ? `🚨 국가 비상 · ${kind.name}` : `${def.icon} ${kind.name}`, title: ev.title, prop: def.icon || SC_PROP[k], sky: SC_SKY[k], extreme: def.extreme,
     line: `대통령님, ${ev.desc}`,
-    choices: def.choices.map(c => { const d = descChips(c.desc); return { label: c.label, chips: d.chips + (d.rest ? `<i class="fxc note">${esc(d.rest.slice(0, 40))}</i>` : ''), meta: c.pc ? `국고 ${won(c.pc)}` : '', disabled: c.pc && S.pcap < c.pc }; }),
+    choices: def.choices.map(c => { const d = descChips(c.desc); return { label: c.label, chips: d.chips + (d.rest ? `<i class="fxc note">${esc(d.rest.slice(0, 40))}</i>` : ''), meta: c.pc ? `국고 ${won(c.pc)}` : '', disabled: c.pc && S.pcap < c.pc, hide: typeof choiceGone === 'function' && def.choices.filter(x => !choiceGone(S, x)).length >= 1 && choiceGone(S, c) }; }),
     onPick: i => {
       const r = resolveDomEvent(S, id, i);
       if (!r?.ok) { toast(esc(r?.msg || '처리할 수 없습니다.')); return null; }

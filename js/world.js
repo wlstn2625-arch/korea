@@ -105,7 +105,7 @@ function reachOf(s, k) {
   for (const h of Object.keys(s.heg?.bases || {})) if (C[h]?.ll) best = Math.max(best, clamp(1 - (kmBetween(C[h].ll, C[k].ll) - 1500) / 14000, 0.35, 1));
   return best;
 }
-const hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' || !!s.tech?.done?.includes('s5') : cinfo(k).nukes;
+let hasNukes = (s, k) => k === 'kr' ? s.policies.nuke === 'armed' || !!s.tech?.done?.includes('s5') : cinfo(k).nukes;
 
 /* ---------------- 외교 행동 ---------------- */
 const ecoK = k => clamp(cinfo(k).eco / 60, 0.1, 1.4);

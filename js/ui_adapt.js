@@ -86,3 +86,9 @@ if (typeof renderFocus === 'function') {
     return r;
   };
 }
+
+// 정책 손패: 의미 없어진 선택지 카드 흐리게
+if (typeof openPolicyHand === 'function') {
+  const _oph3 = openPolicyHand;
+  openPolicyHand = function (pid) { _oph3(pid); if (!S) return; document.querySelectorAll('#modal-body .hc[data-o]').forEach(c => { if (optionObsolete(S, pid, c.dataset.o)) { c.classList.add('cur', 'obsolete'); c.querySelector('.hc-name').insertAdjacentHTML('afterend', '<span class="hc-cur" style="top:auto;bottom:8px;background:#2f6fe0">🗺️ 영토라 불필요</span>'); } }); };
+}
