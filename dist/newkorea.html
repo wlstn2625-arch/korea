@@ -1816,6 +1816,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .sp-logo img { width: min(380px, 70vw); height: auto; border-radius: 6px; box-shadow: 0 30px 70px rgba(0,0,0,.7), 0 0 60px rgba(255,200,110,.3); }
 @media (max-width: 900px) { .ts-logoimg { width: min(260px, 64vw); } }
 .tr-vwrap.oldfilm video { filter: grayscale(1) sepia(.35) contrast(1.3) brightness(.9) blur(.3px); } .tr-vwrap.oldfilm::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 220px, rgba(255,255,255,.06) 220px 221px); animation: flicker .12s steps(2) infinite; pointer-events: none; } @keyframes flicker { 50% { opacity: .5; } }
+.ts-music { margin-left: 12px; background: rgba(0,0,0,.4); border: 1px solid rgba(232,196,110,.35); color: #e8c46e; border-radius: 999px; padding: 2px 10px; font: 11px 'Noto Sans KR', sans-serif; letter-spacing: .05em; cursor: pointer; animation: none !important; }
 
 </style>
 <!-- 시작 화면 -->
@@ -12434,8 +12435,8 @@ const DYN = {
 const FLOW_INFO = {
   econ: { name: '세계 경기', icon: '💹', fmt: v => v > 45 ? '호황' : v > 15 ? '확장' : v > -15 ? '보합' : v > -45 ? '둔화' : '침체' },
   oil: { name: '국제 유가', icon: '🛢️', fmt: v => `$${Math.round(v * 0.8)}` },
-  us: { name: '미국 노선', icon: '🇺🇸', fmt: v => v > 40 ? '적극 개입' : v > 0 ? '동맹 중시' : v > -40 ? '거래주의' : '고립주의' },
-  cn: { name: '중국 공세', icon: '🇨🇳', fmt: v => v > 70 ? '강경' : v > 45 ? '압박' : v > 25 ? '관망' : '유화' },
+  us: { name: '미국 노선', icon: '🇺🇸', fmt: v => v === 0 ? '없음' : v > 40 ? '적극 개입' : v > 0 ? '동맹 중시' : v > -40 ? '거래주의' : '고립주의' },
+  cn: { name: '중국 공세', icon: '🇨🇳', fmt: v => v <= 0 ? '없음(합병)' : v > 70 ? '강경' : v > 45 ? '압박' : v > 25 ? '관망' : '유화' },
   tech: { name: '기술 붐', icon: '🤖', fmt: v => v > 70 ? 'AI 대호황' : v > 45 ? '활발' : v > 25 ? '보통' : '정체' },
   climate: { name: '기후 위험', icon: '🌪️', fmt: v => v > 70 ? '극심' : v > 45 ? '높음' : v > 25 ? '보통' : '낮음' },
   mood: { name: '민심', icon: '🧭', fmt: v => v > 20 ? '낙관' : v > 5 ? '안정' : v > -10 ? '냉담' : v > -25 ? '불만' : '분노' },
@@ -12470,15 +12471,15 @@ function flowStep(s) {
   if (DYN.chance(0.04)) { F.oil += rnd(30, 55); flowNews(s, `🛢️ ${DYN.pick(['호르무즈 해협 긴장', '산유국 감산 합의', '주요 송유관 테러', '중동 무력 충돌'])}으로 국제 유가가 급등했습니다.`, 'bad'); }
   F.oil = clamp(F.oil, 45, 220);
   // 미국 노선: 대선 때 크게 바뀜
-  if (s.turn >= F.nextUsElect) {
+  if (s.turn >= F.nextUsElect && !countryGone(s, 'us')) {
     F.nextUsElect = s.turn + 16;
     const old = F.us; F.us = clamp(Math.round(gauss() * 50 + 10), -90, 90);
     const iso = F.us < -30, inter = F.us > 40;
     flowNews(s, `🇺🇸 미국 대선 결과: ${iso ? '"미국 우선" 고립주의 후보' : inter ? '동맹 복원을 내건 국제주의 후보' : F.us > 0 ? '중도 성향 후보' : '거래주의 성향 후보'} 당선. ${F.us < old - 30 ? '동맹국에 방위비 압박이 커질 전망입니다.' : F.us > old + 30 ? '동맹 관계가 강화될 전망입니다.' : '대외 노선은 큰 변화가 없을 전망입니다.'}`, F.us < old - 30 ? 'bad' : 'info');
   } else F.us = clamp(F.us + gauss() * 4, -90, 90);
   // 중국 공세: 경기가 나쁘면 대외 강경
-  F.cn = clamp(F.cn + gauss() * 5 + (F.econ < -30 ? 2 : 0) + (s.rel?.cn < 30 ? 1.5 : 0) - (F.cn - 50) * 0.05, 0, 100);
-  if (DYN.chance(0.03)) { F.cn = clamp(F.cn + 25, 0, 100); flowNews(s, `🇨🇳 중국 지도부가 "${DYN.pick(['핵심 이익 수호', '해양 주권 확립', '외세 간섭 배격'])}"을 선언하며 대외 노선을 강경하게 틀었습니다.`, 'bad'); }
+  if (!countryGone(s, 'cn')) F.cn = clamp(F.cn + gauss() * 5 + (F.econ < -30 ? 2 : 0) + (s.rel?.cn < 30 ? 1.5 : 0) - (F.cn - 50) * 0.05, 0, 100);
+  if (!countryGone(s, 'cn') && DYN.chance(0.03)) { F.cn = clamp(F.cn + 25, 0, 100); flowNews(s, `🇨🇳 중국 지도부가 "${DYN.pick(['핵심 이익 수호', '해양 주권 확립', '외세 간섭 배격'])}"을 선언하며 대외 노선을 강경하게 틀었습니다.`, 'bad'); }
   // 기술 붐·기후·민심
   F.tech = clamp(F.tech + gauss() * 5 + 0.6 - (F.tech - 50) * 0.04, 0, 100);
   F.climate = clamp(F.climate + 0.8 + gauss() * 3, 0, 100);
@@ -13076,6 +13077,28 @@ HOOKS.postTurn.push(s => {
   flowStep(s);
   genSitPolicies(s);
 });
+
+/* ---------------- 합병·점령한 나라의 사건은 나오지 않게 ---------------- */
+const countryGone = (s, k) => !!(k && (s.annexed?.[k] || s.terr?.[k] || s.world?.owner?.[k]));
+const goneNames = s => Object.keys(RELATIONS).concat(Object.keys(s.annexed || {}), Object.keys(s.terr || {})).filter(k => countryGone(s, k)).map(k => cname(k));
+const mentionsGone = (s, text) => { const ns = goneNames(s); return ns.length && ns.some(n => n && String(text || '').includes(n)); };
+// 돌발 사건(WORLD_EVENTS): 대상 나라가 사라졌으면 제외
+for (const ev of WORLD_EVENTS) { const c0 = ev.cond; ev.cond = s => !(ev.target && countryGone(s, ev.target)) && (c0 ? c0(s) : true); }
+// 정책 부작용·사건으로 생긴 위기: 대상 나라가 사라졌거나 제목에 그 나라가 나오면 취소
+HOOKS.events.push((s, report, list) => { for (let i = list.length - 1; i >= 0; i--) { const c = list[i]; if (countryGone(s, c.relTarget) || mentionsGone(s, c.title + c.desc)) list.splice(i, 1); } });
+// 정치·외교 사건 카드: 사라진 나라를 고르면 다시 뽑고, 끝내 안 되면 사건 자체를 건너뜀
+for (const key in DOM_EVENTS) {
+  const e = DOM_EVENTS[key], mk = e.make, c0 = e.cond;
+  e.make = function (s) { let v; for (let i = 0; i < 8; i++) { v = mk(s); if (!countryGone(s, v?.k) && !countryGone(s, v?.a) && !mentionsGone(s, (v?.title || '') + (v?.desc || ''))) return v; } v._void = true; return v; };
+  e.cond = s => { try { return c0(s); } catch { return false; } };
+}
+HOOKS.postTurn.push(s => { if (s.dom?.pending) s.dom.pending = s.dom.pending.filter(ev => !ev._void); });
+// 시국 정책안
+for (const t of SIT_POLICIES) { const c0 = t.cond; t.cond = s => c0(s) && !(t.key === 'cnPress' && countryGone(s, 'cn')) && !(t.key === 'usBurden' && countryGone(s, 'us')); }
+// 세계 흐름: 사라진 강대국은 흐름에서 빠짐
+HOOKS.postTurn.push(s => { const F = flowOf(s); if (countryGone(s, 'cn')) F.cn = 0; if (countryGone(s, 'us')) { F.us = 0; F.nextUsElect = 1e9; } });
+for (const t of SIT_POLICIES) { const mk = t.make; t.make = s => { const v = mk(s); if (mentionsGone(s, (v.title || '') + (v.desc || ''))) throw new Error('gone'); return v; }; }
+HOOKS.postTurn.push(s => { if (s.sit?.list) s.sit.list = s.sit.list.filter(p => !mentionsGone(s, (p.title || '') + (p.desc || ''))); });
 
 </script>
 <script>
@@ -14062,7 +14085,7 @@ async function shotVideo(id, { dur = 3600, cap = '', hit = false, from = 0.3, zo
   const d = trShot(`<div class="tr-vwrap ${zoom ? 'zoom' : ''} ${look}"></div>${cap ? `<div class="tr-vcap">${esc(cap)}</div>` : ''}`, 'video');
   d.querySelector('.tr-vwrap').appendChild(v); v.className = 'tr-video';
   try { v.currentTime = from; } catch {}
-  v.play().catch(() => {});
+  if (typeof clipSound === 'function' && !window.CINE_REC) clipSound(v, 0.7); else v.play().catch(() => {});
   if (hit) setTimeout(() => !TR.skip && trHit(), 250);
   await trSleep(dur); return true;
 }
@@ -14221,6 +14244,12 @@ function imgCheck(id) {
   return new Promise(r => { const i = new Image(); i.onload = () => r(imgOK[id] = true); i.onerror = () => r(imgOK[id] = false); i.src = imgUrl(id); });
 }
 
+// 효과음이 들어 있는 영상은 소리를 켜고 재생(브라우저가 막으면 무음으로)
+function clipSound(v, vol = 0.8) {
+  const want = typeof SFX === 'undefined' || SFX.on;
+  v.muted = !want; v.volume = vol;
+  v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+}
 /* ---------------- 짧은 컷신 ---------------- */
 async function playClip(id, { title = '', sub = '', dur = 4200, kind = 'gold', from = 0.2 } = {}) {
   const v = await clipLoad(id); if (!v) return false;
@@ -14231,7 +14260,7 @@ async function playClip(id, { title = '', sub = '', dur = 4200, kind = 'gold', f
     el.querySelector('.cf-vid').appendChild(v);
     document.body.appendChild(el);
     try { v.currentTime = from; } catch {}
-    v.play().catch(() => {});
+    clipSound(v, 0.9);
     if (typeof SFX !== 'undefined' && title) setTimeout(() => SFX.play('stamp'), 900);
     let closed = false;
     const close = () => { if (closed) return; closed = true; el.classList.add('out'); setTimeout(() => { el.remove(); resolve(true); }, 600); };
@@ -14371,5 +14400,77 @@ if (typeof openPolicyHand === 'function') {
   const _oph = openPolicyHand;
   openPolicyHand = function (pid) { _oph(pid); if (!mediaUsable()) return; document.querySelectorAll('#modal-body .hc').forEach(c => { if (!c.classList.contains('cur')) c.insertAdjacentHTML('afterbegin', photoDiv('hc-photo', 'pl_' + pid)); }); const a = document.querySelector('#modal-body .hand-scene'); if (a) a.insertAdjacentHTML('afterbegin', photoDiv('hs-photo', 'pl_' + pid)); };
 }
+
+</script>
+<script>
+/* js/audio.js */
+/* =========================================================
+ *  배경음악(BGM) — 상황에 따라 자동으로 곡을 바꾸고 부드럽게 넘김
+ *  타이틀 · 평소 국정 · 전쟁 · 엔딩(승리/희망) · 몰락
+ *  🎵 버튼으로 음악만 끄기 (효과음 🔊은 따로)
+ * ========================================================= */
+const BGM = (() => {
+  const TRACKS = { title: 'bgm_title', game: 'bgm_game', war: 'bgm_war', crisis: 'bgm_crisis', victory: 'bgm_victory', somber: 'bgm_somber', hope: 'bgm_hope' };
+  let on = true, cur = null, want = null, el = null, duck = 1, unlocked = false;
+  try { on = localStorage.getItem('dg_music') !== 'off'; } catch {}
+  const usable = () => location.protocol !== 'file:' && (typeof mediaOn !== 'function' || mediaOn());
+  const VOL = 0.38;
+  function fade(a, to, ms, done) {
+    const from = a.volume, t0 = performance.now();
+    const step = now => { const k = Math.min(1, (now - t0) / ms); a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); if (k < 1) requestAnimationFrame(step); else done && done(); };
+    requestAnimationFrame(step);
+  }
+  function play(name) {
+    want = name;
+    if (!on || !unlocked || !usable() || !TRACKS[name]) return;
+    if (cur === name && el && !el.paused) return;
+    const old = el; cur = name;
+    const a = new Audio(`media/audio/${TRACKS[name]}.mp3`); a.loop = true; a.volume = 0; a.preload = 'auto';
+    a.play().then(() => fade(a, VOL * duck, 1800)).catch(() => {});
+    el = a;
+    if (old) fade(old, 0, 1500, () => { old.pause(); old.src = ''; });
+  }
+  function stop(ms = 1200) { const old = el; el = null; cur = null; if (old) fade(old, 0, ms, () => { old.pause(); old.src = ''; }); }
+  function setDuck(k) { duck = k; if (el) fade(el, VOL * duck, 500); }
+  function toggle() { on = !on; try { localStorage.setItem('dg_music', on ? 'on' : 'off'); } catch {} if (on) { const w = want; cur = null; play(w || 'title'); } else stop(600); return on; }
+  // 브라우저는 사용자가 한 번 누른 뒤에야 소리를 허용함
+  addEventListener('pointerdown', () => { if (unlocked) return; unlocked = true; play(want || 'title'); }, { capture: true });
+  return { play, stop, setDuck, toggle, get on() { return on; }, get cur() { return cur; } };
+})();
+
+/* ---------------- 상황에 맞게 곡 고르기 ---------------- */
+function bgmAuto() {
+  if (!S || $('game')?.classList.contains('hidden')) return BGM.play('title');
+  if (S.over) return BGM.play('somber');
+  if (S.war) return BGM.play('war');
+  BGM.play('game');
+}
+{
+  const _ra = renderAll; renderAll = function () { _ra(); try { if (!document.querySelector('.trailer')) bgmAuto(); } catch {} };
+  if (typeof restart === 'function') { const _r = restart; restart = function (...a) { const r = _r.apply(this, a); BGM.play('title'); return r; }; }
+}
+// 엔딩 트레일러 동안은 음악을 멈추고(트레일러 자체 사운드), 엔딩 카드에서 승리곡
+if (typeof playEndingCinema === 'function') {
+  const _pec = playEndingCinema;
+  playEndingCinema = function (id, then) { BGM.stop(800); return _pec(id, () => { BGM.play(id === 'utopia' ? 'hope' : 'victory'); then && then(); }); };
+}
+if (typeof showEnding === 'function') { const _se2 = showEnding; showEnding = function (...a) { const r = _se2.apply(this, a); BGM.play('somber'); return r; }; }
+// 짧은 컷신(효과음 있는 영상) 동안 음악 줄이기
+if (typeof playClip === 'function') {
+  const _pc = playClip;
+  playClip = async function (id, o = {}) { BGM.setDuck(0.25); try { return await _pc(id, o); } finally { BGM.setDuck(1); } };
+}
+
+/* ---------------- 🎵 버튼 ---------------- */
+(function () {
+  const hr = document.querySelector('.hud-right'); if (!hr || $('btn-music')) return;
+  const b = document.createElement('button'); b.id = 'btn-music'; b.className = 'btn ghost'; b.title = '배경음악';
+  const set = () => { b.textContent = BGM.on ? '🎵' : '🔕'; b.style.opacity = BGM.on ? 1 : .6; };
+  set(); b.onclick = () => { BGM.toggle(); set(); };
+  hr.insertBefore(b, $('btn-sound') || $('btn-settings'));
+  // 타이틀 화면에도 작은 음악 버튼
+  const st = document.querySelector('#start .ts-bar.top');
+  if (st) { const t = document.createElement('button'); t.className = 'ts-music'; const s2 = () => { t.textContent = BGM.on ? '🎵 음악 켜짐' : '🔕 음악 꺼짐'; }; s2(); t.onclick = e => { e.stopPropagation(); BGM.toggle(); s2(); set(); }; st.appendChild(t); }
+})();
 
 </script>

@@ -140,7 +140,7 @@ async function shotVideo(id, { dur = 3600, cap = '', hit = false, from = 0.3, zo
   const d = trShot(`<div class="tr-vwrap ${zoom ? 'zoom' : ''} ${look}"></div>${cap ? `<div class="tr-vcap">${esc(cap)}</div>` : ''}`, 'video');
   d.querySelector('.tr-vwrap').appendChild(v); v.className = 'tr-video';
   try { v.currentTime = from; } catch {}
-  v.play().catch(() => {});
+  if (typeof clipSound === 'function' && !window.CINE_REC) clipSound(v, 0.7); else v.play().catch(() => {});
   if (hit) setTimeout(() => !TR.skip && trHit(), 250);
   await trSleep(dur); return true;
 }

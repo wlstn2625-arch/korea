@@ -32,6 +32,12 @@ function imgCheck(id) {
   return new Promise(r => { const i = new Image(); i.onload = () => r(imgOK[id] = true); i.onerror = () => r(imgOK[id] = false); i.src = imgUrl(id); });
 }
 
+// 효과음이 들어 있는 영상은 소리를 켜고 재생(브라우저가 막으면 무음으로)
+function clipSound(v, vol = 0.8) {
+  const want = typeof SFX === 'undefined' || SFX.on;
+  v.muted = !want; v.volume = vol;
+  v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+}
 /* ---------------- 짧은 컷신 ---------------- */
 async function playClip(id, { title = '', sub = '', dur = 4200, kind = 'gold', from = 0.2 } = {}) {
   const v = await clipLoad(id); if (!v) return false;
@@ -42,7 +48,7 @@ async function playClip(id, { title = '', sub = '', dur = 4200, kind = 'gold', f
     el.querySelector('.cf-vid').appendChild(v);
     document.body.appendChild(el);
     try { v.currentTime = from; } catch {}
-    v.play().catch(() => {});
+    clipSound(v, 0.9);
     if (typeof SFX !== 'undefined' && title) setTimeout(() => SFX.play('stamp'), 900);
     let closed = false;
     const close = () => { if (closed) return; closed = true; el.classList.add('out'); setTimeout(() => { el.remove(); resolve(true); }, 600); };

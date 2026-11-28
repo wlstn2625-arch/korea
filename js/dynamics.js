@@ -16,8 +16,8 @@ const DYN = {
 const FLOW_INFO = {
   econ: { name: '세계 경기', icon: '💹', fmt: v => v > 45 ? '호황' : v > 15 ? '확장' : v > -15 ? '보합' : v > -45 ? '둔화' : '침체' },
   oil: { name: '국제 유가', icon: '🛢️', fmt: v => `$${Math.round(v * 0.8)}` },
-  us: { name: '미국 노선', icon: '🇺🇸', fmt: v => v > 40 ? '적극 개입' : v > 0 ? '동맹 중시' : v > -40 ? '거래주의' : '고립주의' },
-  cn: { name: '중국 공세', icon: '🇨🇳', fmt: v => v > 70 ? '강경' : v > 45 ? '압박' : v > 25 ? '관망' : '유화' },
+  us: { name: '미국 노선', icon: '🇺🇸', fmt: v => v === 0 ? '없음' : v > 40 ? '적극 개입' : v > 0 ? '동맹 중시' : v > -40 ? '거래주의' : '고립주의' },
+  cn: { name: '중국 공세', icon: '🇨🇳', fmt: v => v <= 0 ? '없음(합병)' : v > 70 ? '강경' : v > 45 ? '압박' : v > 25 ? '관망' : '유화' },
   tech: { name: '기술 붐', icon: '🤖', fmt: v => v > 70 ? 'AI 대호황' : v > 45 ? '활발' : v > 25 ? '보통' : '정체' },
   climate: { name: '기후 위험', icon: '🌪️', fmt: v => v > 70 ? '극심' : v > 45 ? '높음' : v > 25 ? '보통' : '낮음' },
   mood: { name: '민심', icon: '🧭', fmt: v => v > 20 ? '낙관' : v > 5 ? '안정' : v > -10 ? '냉담' : v > -25 ? '불만' : '분노' },
@@ -52,15 +52,15 @@ function flowStep(s) {
   if (DYN.chance(0.04)) { F.oil += rnd(30, 55); flowNews(s, `🛢️ ${DYN.pick(['호르무즈 해협 긴장', '산유국 감산 합의', '주요 송유관 테러', '중동 무력 충돌'])}으로 국제 유가가 급등했습니다.`, 'bad'); }
   F.oil = clamp(F.oil, 45, 220);
   // 미국 노선: 대선 때 크게 바뀜
-  if (s.turn >= F.nextUsElect) {
+  if (s.turn >= F.nextUsElect && !countryGone(s, 'us')) {
     F.nextUsElect = s.turn + 16;
     const old = F.us; F.us = clamp(Math.round(gauss() * 50 + 10), -90, 90);
     const iso = F.us < -30, inter = F.us > 40;
     flowNews(s, `🇺🇸 미국 대선 결과: ${iso ? '"미국 우선" 고립주의 후보' : inter ? '동맹 복원을 내건 국제주의 후보' : F.us > 0 ? '중도 성향 후보' : '거래주의 성향 후보'} 당선. ${F.us < old - 30 ? '동맹국에 방위비 압박이 커질 전망입니다.' : F.us > old + 30 ? '동맹 관계가 강화될 전망입니다.' : '대외 노선은 큰 변화가 없을 전망입니다.'}`, F.us < old - 30 ? 'bad' : 'info');
   } else F.us = clamp(F.us + gauss() * 4, -90, 90);
   // 중국 공세: 경기가 나쁘면 대외 강경
-  F.cn = clamp(F.cn + gauss() * 5 + (F.econ < -30 ? 2 : 0) + (s.rel?.cn < 30 ? 1.5 : 0) - (F.cn - 50) * 0.05, 0, 100);
-  if (DYN.chance(0.03)) { F.cn = clamp(F.cn + 25, 0, 100); flowNews(s, `🇨🇳 중국 지도부가 "${DYN.pick(['핵심 이익 수호', '해양 주권 확립', '외세 간섭 배격'])}"을 선언하며 대외 노선을 강경하게 틀었습니다.`, 'bad'); }
+  if (!countryGone(s, 'cn')) F.cn = clamp(F.cn + gauss() * 5 + (F.econ < -30 ? 2 : 0) + (s.rel?.cn < 30 ? 1.5 : 0) - (F.cn - 50) * 0.05, 0, 100);
+  if (!countryGone(s, 'cn') && DYN.chance(0.03)) { F.cn = clamp(F.cn + 25, 0, 100); flowNews(s, `🇨🇳 중국 지도부가 "${DYN.pick(['핵심 이익 수호', '해양 주권 확립', '외세 간섭 배격'])}"을 선언하며 대외 노선을 강경하게 틀었습니다.`, 'bad'); }
   // 기술 붐·기후·민심
   F.tech = clamp(F.tech + gauss() * 5 + 0.6 - (F.tech - 50) * 0.04, 0, 100);
   F.climate = clamp(F.climate + 0.8 + gauss() * 3, 0, 100);
@@ -658,3 +658,25 @@ HOOKS.postTurn.push(s => {
   flowStep(s);
   genSitPolicies(s);
 });
+
+/* ---------------- 합병·점령한 나라의 사건은 나오지 않게 ---------------- */
+const countryGone = (s, k) => !!(k && (s.annexed?.[k] || s.terr?.[k] || s.world?.owner?.[k]));
+const goneNames = s => Object.keys(RELATIONS).concat(Object.keys(s.annexed || {}), Object.keys(s.terr || {})).filter(k => countryGone(s, k)).map(k => cname(k));
+const mentionsGone = (s, text) => { const ns = goneNames(s); return ns.length && ns.some(n => n && String(text || '').includes(n)); };
+// 돌발 사건(WORLD_EVENTS): 대상 나라가 사라졌으면 제외
+for (const ev of WORLD_EVENTS) { const c0 = ev.cond; ev.cond = s => !(ev.target && countryGone(s, ev.target)) && (c0 ? c0(s) : true); }
+// 정책 부작용·사건으로 생긴 위기: 대상 나라가 사라졌거나 제목에 그 나라가 나오면 취소
+HOOKS.events.push((s, report, list) => { for (let i = list.length - 1; i >= 0; i--) { const c = list[i]; if (countryGone(s, c.relTarget) || mentionsGone(s, c.title + c.desc)) list.splice(i, 1); } });
+// 정치·외교 사건 카드: 사라진 나라를 고르면 다시 뽑고, 끝내 안 되면 사건 자체를 건너뜀
+for (const key in DOM_EVENTS) {
+  const e = DOM_EVENTS[key], mk = e.make, c0 = e.cond;
+  e.make = function (s) { let v; for (let i = 0; i < 8; i++) { v = mk(s); if (!countryGone(s, v?.k) && !countryGone(s, v?.a) && !mentionsGone(s, (v?.title || '') + (v?.desc || ''))) return v; } v._void = true; return v; };
+  e.cond = s => { try { return c0(s); } catch { return false; } };
+}
+HOOKS.postTurn.push(s => { if (s.dom?.pending) s.dom.pending = s.dom.pending.filter(ev => !ev._void); });
+// 시국 정책안
+for (const t of SIT_POLICIES) { const c0 = t.cond; t.cond = s => c0(s) && !(t.key === 'cnPress' && countryGone(s, 'cn')) && !(t.key === 'usBurden' && countryGone(s, 'us')); }
+// 세계 흐름: 사라진 강대국은 흐름에서 빠짐
+HOOKS.postTurn.push(s => { const F = flowOf(s); if (countryGone(s, 'cn')) F.cn = 0; if (countryGone(s, 'us')) { F.us = 0; F.nextUsElect = 1e9; } });
+for (const t of SIT_POLICIES) { const mk = t.make; t.make = s => { const v = mk(s); if (mentionsGone(s, (v.title || '') + (v.desc || ''))) throw new Error('gone'); return v; }; }
+HOOKS.postTurn.push(s => { if (s.sit?.list) s.sit.list = s.sit.list.filter(p => !mentionsGone(s, (p.title || '') + (p.desc || ''))); });
