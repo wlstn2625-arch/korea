@@ -1853,3 +1853,22 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 @keyframes anRing { from { r: 0.5; opacity: 1; } to { r: var(--R); opacity: 0; } }
 .an-boom { text-anchor: middle; dominant-baseline: middle; animation: anBoom 1.1s ease-out forwards; transform-box: fill-box; transform-origin: center; }
 @keyframes anBoom { 0% { transform: scale(.3); opacity: 1; } 40% { transform: scale(1.2); } 100% { transform: scale(1.4); opacity: 0; } }
+/* 대한민국 주도 국제기구 */
+.lg-card { margin: 0 0 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid #4c8dff; background: linear-gradient(180deg, rgba(47,111,224,.16), rgba(20,30,45,.6)); }
+.lg-card.empty { border-style: dashed; }
+.lg-h { display: flex; gap: 10px; align-items: center; } .lg-h > span { font-size: 30px; } .lg-h b { display: block; font: 17px 'Black Han Sans', sans-serif; color: #9cc4ff; } .lg-h small { color: #9ba7b3; font-size: 11.5px; }
+.lg-h .btn { margin-left: auto; }
+.lg-row { display: flex; gap: 6px; margin-top: 8px; } .lg-row input { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 6px; border: 1px solid #3f5469; background: rgba(0,0,0,.3); color: #fff; }
+.lg-meter { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 6px 0; } .lg-meter .cp-bar { max-width: 220px; }
+.lg-flags { font-size: 16px; letter-spacing: 1px; margin: 2px 0 4px; }
+.lg-modal { max-height: 80vh; overflow: auto; }
+.lg-top { display: flex; gap: 12px; align-items: center; } .lg-emblem { font-size: 46px; } .lg-top h2 { margin: 0; font-family: 'Black Han Sans', sans-serif; font-weight: 400; color: #9cc4ff; }
+.lg-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.lg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.lg-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.05); font-size: 13px; } .lg-item span { flex: 1; } .lg-item small { color: #9ba7b3; }
+.lg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.lg-organ { display: flex; flex-direction: column; gap: 4px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid #3f5469; }
+.lg-organ.have { border-color: #3ccf8e; background: rgba(60,207,142,.08); } .lg-organ > span { font-size: 26px; } .lg-organ small { color: #b8c0c8; font-size: 11.5px; } .lg-organ em { font-style: normal; color: #6cc48a; font-size: 12px; }
+.lg-organ select { padding: 4px; border-radius: 6px; background: #142030; color: #fff; border: 1px solid #3f5469; }
+.lg-dues { display: flex; gap: 8px; flex-wrap: wrap; } .lg-dues .btn { display: flex; flex-direction: column; } .lg-dues small { font-size: 10.5px; opacity: .8; }
+.lg-log div { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px; } .lg-log small { color: #9ba7b3; margin-right: 6px; }
