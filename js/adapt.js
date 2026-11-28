@@ -125,3 +125,35 @@ HOOKS.postTurn.push(s => {
   for (const p of s.sit?.list || []) { const keep = p.choices.filter(c => !choiceGone(s, c)); if (keep.length >= 2) p.choices = keep; else p.exp = -1; }
   if (s.sit) s.sit.list = s.sit.list.filter(p => p.exp >= 0);
 });
+
+/* ---------------- 국력에 맞춘 국제 반발 ----------------
+ * 점령한 나라가 많고 국력이 높을수록 외국의 반발(관계 악화·외교 부작용)이 약해짐.
+ * 사라진 나라와의 관계 변화는 아예 계산에서 빠짐. Claude 분석에도 이 판도를 알려 줌 */
+function worldStanding(s) {
+  const owned = Object.keys(s.annexed || {}).filter(k => s.annexed[k]).length + Object.keys(s.terr || {}).filter(k => !s.annexed?.[k]).length;
+  let rank = 20; try { const r = powerRank(s); rank = (typeof r === 'number' ? r : r?.rank) ?? 20; } catch {}
+  const veto = typeof holdsVeto === 'function' && holdsVeto(s), nukes = typeof hasNukes === 'function' && hasNukes(s, 'kr');
+  const dom = clamp(owned / 40 + (rank === 1 ? 0.35 : rank <= 3 ? 0.18 : rank <= 10 ? 0.06 : 0) + (veto ? 0.12 : 0) + (nukes ? 0.05 : 0), 0, 0.85);
+  return { owned, rank, veto, nukes, dom, gone: goneCore(s) };
+}
+function worldStandingText(s) {
+  const W = worldStanding(s), names = Object.keys(s.annexed || {}).filter(k => s.annexed[k]).map(cname);
+  return `세계 판도: 대한민국이 점령·편입한 나라 ${W.owned}개국${names.length ? `(${names.slice(0, 15).join(', ')}${names.length > 15 ? ' 등' : ''})` : ''}, 국력 세계 ${W.rank}위${W.veto ? ', 유엔 안보리 거부권 보유' : ''}${W.nukes ? ', 핵보유국' : ''}. 국제적 반발에 대한 내성 ${Math.round(W.dom * 100)}%.`;
+}
+{
+  const _de = diffEffects;
+  diffEffects = function (newOpt, oldOpt) {
+    const d = _de(newOpt, oldOpt), s = curS(); if (!s || !d.rel) return d;
+    const W = worldStanding(s), rel = {};
+    for (const k in d.rel) { if (isGone(s, k)) continue; const v = d.rel[k]; rel[k] = v < 0 ? v * (1 - W.dom) : v; }
+    d.rel = rel; return d;
+  };
+  const _pp = previewPolicy;
+  previewPolicy = function (s, p, opt, lobby) {
+    const r = _pp(s, p, opt, lobby), W = worldStanding(s);
+    if (W.dom > 0) for (const x of r.risks) if (x.tpl === 'diplomacy') { x.prob *= (1 - W.dom); if (W.dom > 0.3) x.desc += ` (세계 최강국 지위로 위험이 ${Math.round(W.dom * 100)}% 줄어듦)`; }
+    return r;
+  };
+}
+// 실제 발생: 외교형 부작용 위기는 국력만큼 덜 터짐
+HOOKS.events.push((s, report, list) => { const W = worldStanding(s); if (W.dom <= 0) return; for (let i = list.length - 1; i >= 0; i--) if (list[i].tpl === 'diplomacy' && !list[i].good && Math.random() < W.dom) list.splice(i, 1); });

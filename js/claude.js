@@ -82,7 +82,7 @@ const ClaudeAI = (() => {
     const T = termInfo(s);
     return `[${t.year}년 ${t.q}분기, 제${T.ord}대 대통령 임기 ${T.year}년차] 지지율 ${s.approval.toFixed(1)}%, 국고 ${won(s.pcap)}, 여당 의석 ${rulingSeats}/300
 지표: ${st}
-외교관계(0~100): ${rel}
+외교관계(0~100): ${rel}${typeof worldStandingText === 'function' ? '\n' + worldStandingText(s) + (typeof goneCore === 'function' && goneCore(s).length ? `\n이미 대한민국 영토가 된 나라(외교 관계 없음, rel 효과는 반드시 0): ${goneCore(s).map(k => RELATIONS[k].name).join(', ')}` : '') : ''}
 세력별 지지(0~100): ${fac}
 현행 대비 바뀐 제도: ${changed.length ? changed.join('; ') : '없음(모두 현행)'}
 국정 연합: ${(s.coalition || []).map(k => FACTIONS[k].name).join(', ') || '없음'}${s.war ? `\n전쟁 중: ${typeof cname === 'function' ? cname(s.war.k) : s.war.k} (전황 ${s.war.score.toFixed(0)})` : ''}${s.annexed && s.annexed.nk ? '\n한반도 통일 달성' : ''}${s.annexed && Object.keys(s.annexed).filter(k => k !== 'nk').length ? `\n합병한 나라: ${Object.keys(s.annexed).filter(k => k !== 'nk').map(k => typeof cname === 'function' ? cname(k) : k).join(', ')}` : ''}${s.bills && s.bills.length ? `\n국회 계류 법안 ${s.bills.length}건` : ''}`;
@@ -191,7 +191,8 @@ ${stateSummary(s)}
 - e 단위: gdp/unemp/infl/fiscal/debt는 %p, tfr은 명, gini는 0~1 지니계수 변화, 나머지는 0~100 지수 포인트. 관련 없으면 0.
 - rel: 외교관계 변화(-25~25), f: 세력 지지도 즉시 변화(-25~25). lt: decree/law/const, lean: L/R/N, pc 10~80, lag 1~16.
 - risks: 현실적 부작용 0~2개(prob 0~1, sev 1~3).
-- 입력이 이 제도와 무관하거나 실현 불가능하면 label에 그 취지를 담고 효과를 작게 잡으세요.`;
+- 입력이 이 제도와 무관하거나 실현 불가능하면 label에 그 취지를 담고 효과를 작게 잡으세요.
+- 반드시 위 '세계 판도'를 반영하세요. 대한민국이 이미 영토로 편입한 나라와의 rel은 0입니다. 국력이 압도적이면(세계 1위·다수 점령·거부권·핵) 다른 나라의 반발과 외교적 부작용은 그만큼 작게, 대신 대한민국이 주도하는 질서의 이득은 크게 잡으세요. 현실 한국이 아니라 지금 게임 속 대한민국의 위상으로 판단하세요.`;
     const a = await call({ system: SYS(), user, schema });
     a.e = clampObj(a.e, statLim); a.rel = clampObj(a.rel, () => 25); a.f = clampObj(a.f, () => 25);
     a.pc = clamp(Math.round(a.pc), 5, 90); a.lag = clamp(Math.round(a.lag), 1, 16);
