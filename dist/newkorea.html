@@ -1821,6 +1821,7 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .bar-row.gone .rel-gone { flex: 1; font-size: 12px; color: #8fc0ff; }
 .pol-card.obsolete { border-color: #2f6fe0; box-shadow: 0 4px 0 #1d3f8a, 0 0 18px rgba(80,150,255,.3); }
 .pol-card.obsolete .pc-name { color: #1d3f8a; }
+.fc-node.adapted { box-shadow: 0 0 0 2px #4c8dff, 0 0 14px rgba(76,141,255,.55) !important; } .fc-node.adapted::after { content: '🗺️'; position: absolute; right: -6px; top: -8px; font-size: 13px; }
 
 </style>
 <!-- 시작 화면 -->
@@ -13222,6 +13223,40 @@ if (typeof ministerProposals === 'function') {
   ministerProposals = cat => _mp(cat).filter(x => !policyObsolete(S, x.p));
 }
 
+/* ---------------- 국가 중점도 상황에 맞게 ----------------
+ * 대상 나라가 사라지면 같은 자리의 중점이 '그 이후'에 맞는 내용으로 바뀜(이름·효과·실행) */
+const curS = () => (typeof S !== 'undefined' && S) ? S : null;
+const tInteg = (s, k, integ, resist) => { const t = s.terr?.[k]; if (t) { t.integ = clamp(t.integ + integ, 0, 100); t.resist = clamp(t.resist + resist, 0, 100); } };
+const FOCUS_ADAPT = {
+  // 통일 갈래 → 통일 이후(북부 통합)
+  u_talk: { k: 'nk', icon: '🫱', name: '북부 민심 수습', fx: '북부 지역 저항 -12, 통합 +8, 지지율 +2', run: s => { tInteg(s, 'nk', 8, -12); s.approval = clamp(s.approval + 2, 0, 100); } },
+  u_peace: { k: 'nk', icon: '🏭', name: '북부 경제특구', fx: '북부 개발 +12, 성장률 +0.06(지속), 저항 -5', run: s => { const t = s.terr?.nk; if (t) t.dev = clamp(t.dev + 12, 0, 100); s.mods.gdp += 0.06; tInteg(s, 'nk', 0, -5); } },
+  u_press: { k: 'nk', icon: '🚓', name: '북부 치안 확립', fx: '북부 저항 -18, 치안 +1, 자유 -1', run: s => { tInteg(s, 'nk', 0, -18); s.mods.safety += 1; s.mods.freedom -= 1; } },
+  u_fed: { k: 'nk', icon: '🧩', name: '남북 행정 통합', fx: '북부 통합 +20, 재정 -0.2', run: s => { tInteg(s, 'nk', 20, -6); s.mods.fiscal -= 0.2; } },
+  u_north: { k: 'nk', icon: '🏯', name: '북방 국경 요새화', fx: '안보 +4, 사단 +3 (압록강·두만강 방어선)', run: s => { s.mods.security += 4; setFB(s, 'u_north', { divs: 3, mil: 4 }); } },
+  // 자주국방: 미국이 사라지면 전작권 환수 대신 미군 전력 흡수
+  d_opcon: { k: 'us', icon: '🦅', name: '옛 주한미군 전력 흡수', fx: '전투력 +7%, 사단 +4, 공군·해군 +15', run: s => { setFB(s, 'd_opcon', { quality: 0.07, divs: 4, mil: 5, air: 15, navy: 15 }); } },
+  // 외교 노선
+  x_us: { k: 'us', icon: '🌊', name: '태평양 패권', fx: '안보 +4, 일본·호주·필리핀 관계 +6, 위협도 +3', run: s => { s.mods.security += 4; for (const k of ['jp', 'aus', 'phl']) if (cinfo(k)) relBump(s, k, 6, 3); if (typeof addThreat === 'function') addThreat(s, 3); } },
+  x_bal: { k: 'cn', icon: '🧭', name: '유라시아 균형', fx: '러시아 +10, 인도 +8, 중앙아시아 +6', run: s => { for (const [k, v] of [['ru', 10], ['ind', 8], ['kaz', 6], ['uzb', 6]]) if (cinfo(k)) relBump(s, k, v, v / 2); } },
+  x_quad: { k: 'us', icon: '🔷', name: '인도태평양 해양 질서', fx: '안보 +3, 호주·인도·필리핀 관계 +6', run: s => { s.mods.security += 3; for (const k of ['aus', 'ind', 'phl']) if (cinfo(k)) relBump(s, k, 6, 3); } },
+};
+for (const [id, A] of Object.entries(FOCUS_ADAPT)) {
+  const f = typeof focusById === 'function' && focusById(id); if (!f) continue;
+  const o = { icon: f.icon, name: f.name, fx: f.fx, run: f.run };
+  const on = s => s && isGone(s, A.k);
+  Object.defineProperty(f, 'icon', { get: () => on(curS()) ? A.icon : o.icon, configurable: true });
+  Object.defineProperty(f, 'name', { get: () => on(curS()) ? A.name : o.name, configurable: true });
+  Object.defineProperty(f, 'fx', { get: () => on(curS()) ? A.fx : o.fx, configurable: true });
+  f.run = s => on(s) ? A.run(s) : o.run(s);
+  f.adaptedBy = A.k;
+}
+// 통일 갈래 이름도 '통일 이후'로
+if (typeof FOCUS_BRANCHES !== 'undefined') {
+  const b = FOCUS_BRANCHES.find(x => x.id === 'uni');
+  if (b) { const n0 = b.name, i0 = b.icon; Object.defineProperty(b, 'name', { get: () => (curS() && isGone(curS(), 'nk')) ? '통일 이후' : n0, configurable: true }); Object.defineProperty(b, 'icon', { get: () => (curS() && isGone(curS(), 'nk')) ? '🇰🇷' : i0, configurable: true }); }
+}
+
 </script>
 <script>
 /* js/ui_dynamics.js */
@@ -14614,6 +14649,16 @@ function openRuleHand(k, p) {
     saveGame(S); closeModal(); renderAll();
   });
   $('rh-terr').onclick = () => { closeModal(); showTab('defense'); };
+}
+
+// 국가 중점: 상황에 맞게 바뀐 중점 표시
+if (typeof renderFocus === 'function') {
+  const _rf = renderFocus;
+  renderFocus = function (...a) {
+    const r = _rf.apply(this, a);
+    if (S) document.querySelectorAll('.fc-node[data-fc]').forEach(n => { const f = focusById(n.dataset.fc); if (f?.adaptedBy && isGone(S, f.adaptedBy)) n.classList.add('adapted'); });
+    return r;
+  };
 }
 
 </script>

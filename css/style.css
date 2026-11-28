@@ -1814,3 +1814,4 @@ h1, h2, .panel-head h2, .event h2, .ev-kind, .seal, .hud-date b, .tr-main b, .bi
 .bar-row.gone .rel-gone { flex: 1; font-size: 12px; color: #8fc0ff; }
 .pol-card.obsolete { border-color: #2f6fe0; box-shadow: 0 4px 0 #1d3f8a, 0 0 18px rgba(80,150,255,.3); }
 .pol-card.obsolete .pc-name { color: #1d3f8a; }
+.fc-node.adapted { box-shadow: 0 0 0 2px #4c8dff, 0 0 14px rgba(76,141,255,.55) !important; } .fc-node.adapted::after { content: '🗺️'; position: absolute; right: -6px; top: -8px; font-size: 13px; }

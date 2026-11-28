@@ -76,3 +76,13 @@ function openRuleHand(k, p) {
   });
   $('rh-terr').onclick = () => { closeModal(); showTab('defense'); };
 }
+
+// 국가 중점: 상황에 맞게 바뀐 중점 표시
+if (typeof renderFocus === 'function') {
+  const _rf = renderFocus;
+  renderFocus = function (...a) {
+    const r = _rf.apply(this, a);
+    if (S) document.querySelectorAll('.fc-node[data-fc]').forEach(n => { const f = focusById(n.dataset.fc); if (f?.adaptedBy && isGone(S, f.adaptedBy)) n.classList.add('adapted'); });
+    return r;
+  };
+}
